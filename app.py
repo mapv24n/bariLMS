@@ -1,37 +1,54 @@
+import copy
 import os
+import sqlite3
 from functools import wraps
 
-from flask import Flask, flash, redirect, render_template, request, session, url_for
+from flask import Flask, flash, g, redirect, render_template, request, session, url_for
+from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "senalearn-dev-key")
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "bari-lms-dev-key")
+app.config["DATABASE"] = os.path.join(app.root_path, "bari_lms.db")
 
-USERS = {
-    "admin@senalearn.edu.co": {
+ROLE_TO_SLUG = {
+    "Administrador": "administrador",
+    "Administrativo": "administrativo",
+    "Instructor": "instructor",
+    "Aprendiz": "aprendiz",
+}
+
+AVAILABLE_ROLES = list(ROLE_TO_SLUG.keys())
+
+DEFAULT_USERS = [
+    {
+        "email": "admin@senalearn.edu.co",
         "password": "Admin123*",
         "role": "Administrador",
         "name": "Laura Moreno",
-        "dashboard_slug": "administrador",
+        "active": 1,
     },
-    "administrativo@senalearn.edu.co": {
+    {
+        "email": "administrativo@senalearn.edu.co",
         "password": "Adminvo123*",
         "role": "Administrativo",
         "name": "Carlos Ruiz",
-        "dashboard_slug": "administrativo",
+        "active": 1,
     },
-    "instructor@senalearn.edu.co": {
+    {
+        "email": "instructor@senalearn.edu.co",
         "password": "Instructor123*",
         "role": "Instructor",
         "name": "Diana Beltran",
-        "dashboard_slug": "instructor",
+        "active": 1,
     },
-    "aprendiz@senalearn.edu.co": {
+    {
+        "email": "aprendiz@senalearn.edu.co",
         "password": "Aprendiz123*",
         "role": "Aprendiz",
         "name": "Miguel Torres",
-        "dashboard_slug": "aprendiz",
+        "active": 1,
     },
-}
+]
 
 DASHBOARDS = {
     "administrador": {
@@ -43,13 +60,13 @@ DASHBOARDS = {
         "footer": "BARÍ LMS SENA - Administrador",
         "menu_heading": "Administracion",
         "menu": [
-            {"icon": "fa-users-cog", "label": "Usuarios y roles"},
-            {"icon": "fa-chart-pie", "label": "Indicadores"},
+            {"icon": "fa-users-cog", "label": "Usuarios y roles", "endpoint": "admin_users"},
+            {"icon": "fa-chart-pie", "label": "Indicadores", "endpoint": "dashboard", "endpoint_kwargs": {"role_slug": "administrador"}},
         ],
         "metrics": [
-            {"label": "Usuarios activos", "value": "1,284", "icon": "fa-users"},
+            {"label": "Usuarios activos", "value": "0", "icon": "fa-users"},
             {"label": "Centros vinculados", "value": "14", "icon": "fa-building"},
-            {"label": "Roles configurados", "value": "4", "icon": "fa-user-shield"},
+            {"label": "Roles configurados", "value": "0", "icon": "fa-user-shield"},
             {"label": "Sesiones hoy", "value": "326", "icon": "fa-sign-in-alt"},
         ],
         "tasks_title": "Frentes prioritarios",
@@ -75,8 +92,8 @@ DASHBOARDS = {
         "footer": "BARÍ LMS SENA - Administrativo",
         "menu_heading": "Operacion",
         "menu": [
-            {"icon": "fa-folder-open", "label": "Fichas y programas"},
-            {"icon": "fa-school", "label": "Ambientes y sedes"},
+            {"icon": "fa-folder-open", "label": "Fichas y programas", "endpoint": "dashboard", "endpoint_kwargs": {"role_slug": "administrativo"}},
+            {"icon": "fa-school", "label": "Ambientes y sedes", "endpoint": "dashboard", "endpoint_kwargs": {"role_slug": "administrativo"}},
         ],
         "metrics": [
             {"label": "Fichas activas", "value": "86", "icon": "fa-id-badge"},
@@ -107,8 +124,8 @@ DASHBOARDS = {
         "footer": "BARÍ LMS SENA - Instructor",
         "menu_heading": "Formacion",
         "menu": [
-            {"icon": "fa-book-reader", "label": "Planeacion"},
-            {"icon": "fa-clipboard-check", "label": "Evaluacion"},
+            {"icon": "fa-book-reader", "label": "Planeacion", "endpoint": "dashboard", "endpoint_kwargs": {"role_slug": "instructor"}},
+            {"icon": "fa-clipboard-check", "label": "Evaluacion", "endpoint": "dashboard", "endpoint_kwargs": {"role_slug": "instructor"}},
         ],
         "metrics": [
             {"label": "Fichas a cargo", "value": "6", "icon": "fa-layer-group"},
@@ -139,8 +156,8 @@ DASHBOARDS = {
         "footer": "BARÍ LMS SENA - Aprendiz",
         "menu_heading": "Aprendizaje",
         "menu": [
-            {"icon": "fa-project-diagram", "label": "Mi proyecto"},
-            {"icon": "fa-file-alt", "label": "Evidencias"},
+            {"icon": "fa-project-diagram", "label": "Mi proyecto", "endpoint": "dashboard", "endpoint_kwargs": {"role_slug": "aprendiz"}},
+            {"icon": "fa-file-alt", "label": "Evidencias", "endpoint": "dashboard", "endpoint_kwargs": {"role_slug": "aprendiz"}},
         ],
         "metrics": [
             {"label": "Avance general", "value": "72%", "icon": "fa-chart-line"},
@@ -165,11 +182,136 @@ DASHBOARDS = {
 }
 
 
+def get_db():
+    if "db" not in g:
+        g.db = sqlite3.connect(app.config["DATABASE"])
+        g.db.row_factory = sqlite3.Row
+    return g.db
+
+
+@app.teardown_appcontext
+def close_db(_error):
+    db = g.pop("db", None)
+    if db is not None:
+        db.close()
+
+
+def initialize_database():
+    db = get_db()
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL,
+            name TEXT NOT NULL,
+            active INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    db.commit()
+
+    user_count = db.execute("SELECT COUNT(*) AS total FROM users").fetchone()["total"]
+    if user_count == 0:
+        for user in DEFAULT_USERS:
+            db.execute(
+                """
+                INSERT INTO users (email, password_hash, role, name, active)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    user["email"],
+                    generate_password_hash(user["password"]),
+                    user["role"],
+                    user["name"],
+                    user["active"],
+                ),
+            )
+        db.commit()
+
+
+with app.app_context():
+    initialize_database()
+
+
+def get_user_by_email(email):
+    if not email:
+        return None
+    return get_db().execute(
+        """
+        SELECT id, email, role, name, active, created_at, password_hash
+        FROM users
+        WHERE lower(email) = lower(?)
+        """,
+        (email,),
+    ).fetchone()
+
+
+def get_user_by_id(user_id):
+    return get_db().execute(
+        """
+        SELECT id, email, role, name, active, created_at
+        FROM users
+        WHERE id = ?
+        """,
+        (user_id,),
+    ).fetchone()
+
+
+def get_all_users():
+    return get_db().execute(
+        """
+        SELECT id, email, role, name, active, created_at
+        FROM users
+        ORDER BY created_at DESC, id DESC
+        """
+    ).fetchall()
+
+
+def get_admin_dashboard_data():
+    db = get_db()
+    total_active = db.execute("SELECT COUNT(*) AS total FROM users WHERE active = 1").fetchone()["total"]
+    total_roles = db.execute("SELECT COUNT(DISTINCT role) AS total FROM users").fetchone()["total"]
+    latest_users = db.execute(
+        """
+        SELECT name, role, email
+        FROM users
+        ORDER BY created_at DESC, id DESC
+        LIMIT 3
+        """
+    ).fetchall()
+
+    config = copy.deepcopy(DASHBOARDS["administrador"])
+    config["metrics"][0]["value"] = str(total_active)
+    config["metrics"][2]["value"] = str(total_roles)
+    config["table_title"] = "Ultimos usuarios registrados"
+    config["table_headers"] = ["Nombre", "Rol", "Correo"]
+    config["table_rows"] = [[row["name"], row["role"], row["email"]] for row in latest_users] or [
+        ["Sin registros", "-", "-"]
+    ]
+    return config
+
+
 def current_user():
     email = session.get("user_email")
     if not email:
         return None
-    return USERS.get(email)
+
+    user = get_user_by_email(email)
+    if user is None or user["active"] != 1:
+        session.clear()
+        return None
+
+    return {
+        "id": user["id"],
+        "email": user["email"],
+        "role": user["role"],
+        "name": user["name"],
+        "active": user["active"],
+        "dashboard_slug": ROLE_TO_SLUG[user["role"]],
+    }
 
 
 def login_required(view):
@@ -181,6 +323,22 @@ def login_required(view):
         return view(**kwargs)
 
     return wrapped_view
+
+
+def role_required(expected_role):
+    def decorator(view):
+        @wraps(view)
+        def wrapped_view(**kwargs):
+            user = current_user()
+            if user is None:
+                return redirect(url_for("login"))
+            if user["role"] != expected_role:
+                return redirect(url_for("dashboard", role_slug=user["dashboard_slug"]))
+            return view(**kwargs)
+
+        return wrapped_view
+
+    return decorator
 
 
 @app.context_processor
@@ -205,20 +363,25 @@ def login():
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
         role = request.form.get("role", "")
-        user = USERS.get(email)
+        user = get_user_by_email(email)
 
-        if not user or user["password"] != password or user["role"] != role:
+        if (
+            user is None
+            or user["active"] != 1
+            or user["role"] != role
+            or not check_password_hash(user["password_hash"], password)
+        ):
             flash("Credenciales o perfil incorrectos. Usa uno de los accesos demo listados.", "danger")
-            return render_template("login.html", demo_users=USERS)
+            return render_template("login.html", demo_users=DEFAULT_USERS)
 
         session.clear()
-        session["user_email"] = email
-        return redirect(url_for("dashboard", role_slug=user["dashboard_slug"]))
+        session["user_email"] = user["email"]
+        return redirect(url_for("dashboard", role_slug=ROLE_TO_SLUG[user["role"]]))
 
     if current_user():
         return redirect(url_for("home"))
 
-    return render_template("login.html", demo_users=USERS)
+    return render_template("login.html", demo_users=DEFAULT_USERS)
 
 
 @app.post("/logout")
@@ -239,7 +402,175 @@ def dashboard(role_slug):
     if user["dashboard_slug"] != role_slug:
         return redirect(url_for("dashboard", role_slug=user["dashboard_slug"]))
 
+    if role_slug == "administrador":
+        config = get_admin_dashboard_data()
+
     return render_template("dashboard.html", dashboard=config, user=user)
+
+
+@app.route("/admin/users")
+@role_required("Administrador")
+def admin_users():
+    return render_template(
+        "admin_users.html",
+        user=current_user(),
+        users=get_all_users(),
+        roles=AVAILABLE_ROLES,
+        form_data={},
+        editing_user=None,
+    )
+
+
+@app.post("/admin/users/create")
+@role_required("Administrador")
+def admin_users_create():
+    name = request.form.get("name", "").strip()
+    email = request.form.get("email", "").strip().lower()
+    role = request.form.get("role", "").strip()
+    password = request.form.get("password", "")
+    active = 1 if request.form.get("active") == "on" else 0
+
+    form_data = {"name": name, "email": email, "role": role, "active": active}
+
+    if not name or not email or not role or not password:
+        flash("Todos los campos son obligatorios para crear el usuario.", "danger")
+        return render_template(
+            "admin_users.html",
+            user=current_user(),
+            users=get_all_users(),
+            roles=AVAILABLE_ROLES,
+            form_data=form_data,
+            editing_user=None,
+        )
+
+    if role not in AVAILABLE_ROLES:
+        flash("El rol seleccionado no es valido.", "danger")
+        return redirect(url_for("admin_users"))
+
+    db = get_db()
+    existing = get_user_by_email(email)
+    if existing is not None:
+        flash("Ya existe un usuario registrado con ese correo.", "danger")
+        return render_template(
+            "admin_users.html",
+            user=current_user(),
+            users=get_all_users(),
+            roles=AVAILABLE_ROLES,
+            form_data=form_data,
+            editing_user=None,
+        )
+
+    db.execute(
+        """
+        INSERT INTO users (email, password_hash, role, name, active)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (email, generate_password_hash(password), role, name, active),
+    )
+    db.commit()
+    flash("Usuario creado correctamente.", "success")
+    return redirect(url_for("admin_users"))
+
+
+@app.get("/admin/users/<int:user_id>/edit")
+@role_required("Administrador")
+def admin_users_edit(user_id):
+    editing_user = get_user_by_id(user_id)
+    if editing_user is None:
+        flash("El usuario solicitado no existe.", "danger")
+        return redirect(url_for("admin_users"))
+
+    return render_template(
+        "admin_users.html",
+        user=current_user(),
+        users=get_all_users(),
+        roles=AVAILABLE_ROLES,
+        form_data={
+            "name": editing_user["name"],
+            "email": editing_user["email"],
+            "role": editing_user["role"],
+            "active": editing_user["active"],
+        },
+        editing_user=editing_user,
+    )
+
+
+@app.post("/admin/users/<int:user_id>/update")
+@role_required("Administrador")
+def admin_users_update(user_id):
+    editing_user = get_user_by_id(user_id)
+    if editing_user is None:
+        flash("El usuario solicitado no existe.", "danger")
+        return redirect(url_for("admin_users"))
+
+    name = request.form.get("name", "").strip()
+    email = request.form.get("email", "").strip().lower()
+    role = request.form.get("role", "").strip()
+    password = request.form.get("password", "")
+    active = 1 if request.form.get("active") == "on" else 0
+
+    if not name or not email or not role:
+        flash("Nombre, correo y rol son obligatorios.", "danger")
+        return redirect(url_for("admin_users_edit", user_id=user_id))
+
+    if role not in AVAILABLE_ROLES:
+        flash("El rol seleccionado no es valido.", "danger")
+        return redirect(url_for("admin_users_edit", user_id=user_id))
+
+    existing = get_user_by_email(email)
+    if existing is not None and existing["id"] != user_id:
+        flash("Ya existe otro usuario con ese correo.", "danger")
+        return redirect(url_for("admin_users_edit", user_id=user_id))
+
+    if current_user()["id"] == user_id and active != 1:
+        flash("No puedes desactivar tu propia cuenta mientras la estas usando.", "danger")
+        return redirect(url_for("admin_users_edit", user_id=user_id))
+
+    db = get_db()
+    if password:
+        db.execute(
+            """
+            UPDATE users
+            SET name = ?, email = ?, role = ?, active = ?, password_hash = ?
+            WHERE id = ?
+            """,
+            (name, email, role, active, generate_password_hash(password), user_id),
+        )
+    else:
+        db.execute(
+            """
+            UPDATE users
+            SET name = ?, email = ?, role = ?, active = ?
+            WHERE id = ?
+            """,
+            (name, email, role, active, user_id),
+        )
+    db.commit()
+
+    if current_user()["id"] == user_id:
+        session["user_email"] = email
+
+    flash("Usuario actualizado correctamente.", "success")
+    return redirect(url_for("admin_users"))
+
+
+@app.post("/admin/users/<int:user_id>/delete")
+@role_required("Administrador")
+def admin_users_delete(user_id):
+    target_user = get_user_by_id(user_id)
+    if target_user is None:
+        flash("El usuario solicitado no existe.", "danger")
+        return redirect(url_for("admin_users"))
+
+    if current_user()["id"] == user_id:
+        flash("No puedes eliminar tu propia cuenta.", "danger")
+        return redirect(url_for("admin_users"))
+
+    db = get_db()
+    db.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    db.commit()
+    flash("Usuario eliminado correctamente.", "success")
+    return redirect(url_for("admin_users"))
 
 
 if __name__ == "__main__":
