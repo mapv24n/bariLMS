@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>BARÍ LMS | Fases - Ficha {{ ficha.numero }}</title>
+    <link href="{{ url_for('static', filename='vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/sena-learn.css') }}" rel="stylesheet">
+    <style>
+        /* ── Árbol de fases ── */
+        .fase-tree { font-size: 0.875rem; }
+
+        .fase-btn {
+            background: #1cc88a;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 10px;
+            width: 100%;
+            text-align: left;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background .15s;
+        }
+        .fase-btn:hover { background: #17a673; }
+        .fase-btn .chevron { transition: transform .2s; }
+        .fase-btn.collapsed .chevron { transform: rotate(-90deg); }
+
+        .act-proy-btn {
+            background: #f6c23e;
+            color: #333;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            width: 100%;
+            text-align: left;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background .15s;
+        }
+        .act-proy-btn:hover { background: #e0ad28; }
+        .act-proy-btn .chevron { transition: transform .2s; }
+        .act-proy-btn.collapsed .chevron { transform: rotate(-90deg); }
+
+        .act-apr-btn {
+            background: #4e73df;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background .15s;
+        }
+        .act-apr-btn:hover,
+        .act-apr-btn.active { background: #2e59d9; }
+
+        .tree-indent-1 { padding-left: 12px; }
+        .tree-indent-2 { padding-left: 22px; }
+
+        /* ── Panel derecho (acciones + tabla) ── */
+        #panel-actividad { display: none; }
+
+        /* ── Badges de calificación ── */
+        .badge-aprobado { background: #1cc88a; color: #fff; }
+        .badge-reprobado { background: #e74a3b; color: #fff; }
+        .badge-pendiente { background: #858796; color: #fff; }
+
+        /* ── Botones de acción superiores ── */
+        .btn-action-row { gap: 8px; }
+
+        /* ── Estado vacío ── */
+        .empty-state { color: #858796; text-align: center; padding: 30px 10px; }
+
+        /* ── Highlight fila aprendiz seleccionado ── */
+        tr.selected-row { background: #f0f7ff; }
+
+        /* ── Modal Evidencia recibida ── */
+        #modalCalificar .modal-content {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,.18);
+        }
+        #modalCalificar .modal-header {
+            background: #fff;
+            border-bottom: 1px solid #e3e6f0;
+            border-radius: 12px 12px 0 0;
+            padding: 16px 20px 12px;
+        }
+        #modalCalificar .modal-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1cc88a;
+        }
+        #modalCalificar .modal-body {
+            padding: 20px 20px 8px;
+        }
+        #modalCalificar .ev-label {
+            font-size: .78rem;
+            font-weight: 700;
+            color: #1cc88a;
+            margin-bottom: 4px;
+            display: block;
+        }
+        #modalCalificar .ev-input {
+            background: #f4f6f9;
+            border: 1px solid #e3e6f0;
+            border-radius: 6px;
+            color: #5a5c69;
+            font-size: .88rem;
+            padding: 8px 12px;
+            width: 100%;
+        }
+        #modalCalificar .ev-input[readonly] { cursor: default; }
+        #modalCalificar textarea.ev-input { resize: none; }
+        #modalCalificar .ev-group { margin-bottom: 14px; }
+        #modalCalificar .btn-aceptar {
+            background: #1cc88a;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 9px 16px;
+            font-weight: 600;
+            font-size: .88rem;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        #modalCalificar .btn-aceptar:hover { background: #17a673; }
+        #modalCalificar .btn-cancelar {
+            background: #e74a3b;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 9px 16px;
+            font-weight: 600;
+            font-size: .88rem;
+            width: 100%;
+        }
+        #modalCalificar .btn-cancelar:hover { background: #c0392b; }
+        #modalCalificar .modal-footer { border: none; padding: 0 20px 20px; display: block; }
+        #modal-estado-badge { min-height: 24px; margin-bottom: 6px; }
+    </style>
+</head>
+<body id="page-top">
+<div id="wrapper">
+
+    <!-- ══ Sidebar ══ -->
+    <ul class="navbar-nav bg-gradient-sena sidebar sidebar-dark accordion" id="accordionSidebar">
+        <a class="sidebar-brand d-flex align-items-center justify-content-center"
+           href="{{ url_for('dashboard', role_slug='instructor') }}">
+            <div class="sidebar-brand-icon">
+                <img src="{{ url_for('static', filename='img/logo-sena-blanco.png') }}" alt="Logo SENA" class="sena-brand-logo">
+            </div>
+            <div class="sidebar-brand-text mx-3">BARÍ LMS</div>
+        </a>
+        <hr class="sidebar-divider my-0">
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('dashboard', role_slug='instructor') }}">
+                <i class="fas fa-fw fa-tachometer-alt"></i><span>Panel principal</span>
+            </a>
+        </li>
+        <hr class="sidebar-divider">
+        <div class="sidebar-heading">Formación</div>
+        <li class="nav-item active">
+            <a class="nav-link" href="{{ url_for('instructor_fichas') }}">
+                <i class="fas fa-fw fa-layer-group"></i><span>Mis Fichas</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('dashboard', role_slug='instructor') }}">
+                <i class="fas fa-fw fa-clipboard-check"></i><span>Evaluación</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('instructor_change_password') }}">
+                <i class="fas fa-fw fa-key"></i><span>Cambiar contraseña</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <form method="post" action="{{ url_for('logout') }}">
+                <button type="submit" class="nav-link btn btn-link text-left w-100 logout-link">
+                    <i class="fas fa-fw fa-sign-out-alt"></i><span>Cerrar sesión</span>
+                </button>
+            </form>
+        </li>
+    </ul>
+    <!-- ══ /Sidebar ══ -->
+
+    <div id="content-wrapper" class="d-flex flex-column">
+        <div id="content">
+
+            <!-- Topbar -->
+            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-3 static-top shadow">
+                <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <div class="mr-auto">
+                    <span class="sena-role-pill">Instructor</span>
+                </div>
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item no-arrow">
+                        <span class="nav-link text-gray-700">
+                            <span class="mr-2 d-none d-lg-inline">{{ user.name }}</span>
+                            <i class="fas fa-user-circle fa-lg"></i>
+                        </span>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="container-fluid">
+
+                <!-- ── Encabezado de ficha ── -->
+                <div class="d-flex align-items-start justify-content-between mb-3 flex-wrap" style="gap:10px;">
+                    <div>
+                        <div class="text-muted small mb-1">
+                            {% if ficha.nivel_nombre %}{{ ficha.nivel_nombre }} &rsaquo; {% endif %}
+                            {{ ficha.programa_nombre }}
+                        </div>
+                        <h4 class="mb-0 text-gray-800 font-weight-bold">
+                            {{ ficha.proyecto_nombre or 'Sin proyecto formativo' }}
+                            <span class="text-muted font-weight-normal" style="font-size:1rem;">
+                                &mdash; Ficha: {{ ficha.numero }}
+                            </span>
+                        </h4>
+                    </div>
+                    <a href="{{ url_for('instructor_fichas') }}" class="btn btn-outline-success btn-sm shadow-sm">
+                        <i class="fas fa-arrow-left mr-1"></i> Mis Fichas
+                    </a>
+                </div>
+
+                <!-- ── Botones de acción (visibles solo al seleccionar actividad de aprendizaje) ── -->
+                <div id="action-buttons" class="d-none mb-3">
+                    <div class="d-flex flex-wrap btn-action-row">
+                        <button class="btn btn-success btn-sm shadow-sm" onclick="verPlanTrabajo()">
+                            <i class="fas fa-file-alt mr-1"></i> Plan de trabajo concertado
+                        </button>
+                        <button class="btn btn-success btn-sm shadow-sm" onclick="abrirModalGuia()">
+                            <i class="fas fa-upload mr-1"></i> <span id="btn-guia-label">Subir guía de aprendizaje</span>
+                        </button>
+                        <button class="btn btn-success btn-sm shadow-sm" onclick="crearEvidencia()">
+                            <i class="fas fa-tasks mr-1"></i> Crear evidencia de aprendizaje
+                        </button>
+                    </div>
+                    <div id="plan-trabajo-panel" class="mt-2 d-none">
+                        <div class="card border-left-success shadow-sm">
+                            <div class="card-body py-2">
+                                <strong>Plan de trabajo concertado</strong>
+                                <div id="plan-trabajo-contenido" class="mt-1 text-gray-700"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Layout principal: Árbol | Panel ── -->
+                <div class="row" style="min-height: 500px;">
+
+                    <!-- ── Árbol de fases (izquierda) ── -->
+                    <div class="col-lg-3 col-md-4 mb-4">
+                        <div class="card shadow border-0 h-100">
+                            <div class="card-header py-2 border-bottom-sena">
+                                <span class="font-weight-bold text-sena small">
+                                    <i class="fas fa-sitemap mr-1"></i> Estructura del Proyecto
+                                </span>
+                            </div>
+                            <div class="card-body p-2">
+                                <div id="fase-tree" class="fase-tree">
+                                    <div class="empty-state">
+                                        <i class="fas fa-spinner fa-spin"></i> Cargando...
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-transparent border-0 pt-0">
+                                <button class="btn btn-outline-success btn-sm btn-block mb-1"
+                                        onclick="nuevaFase()">
+                                    <i class="fas fa-plus mr-1"></i> Nueva Fase
+                                </button>
+                                <button class="btn btn-outline-warning btn-sm btn-block"
+                                        id="btn-nueva-actividad" onclick="nuevaActividadProyecto()" disabled>
+                                    <i class="fas fa-plus mr-1"></i> Nueva Actividad de Proyecto
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm btn-block mt-1"
+                                        id="btn-nueva-act-apr" onclick="nuevaActividadAprendizaje()" disabled>
+                                    <i class="fas fa-plus mr-1"></i> Nueva Act. de Aprendizaje
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Panel derecho (tabla de aprendices) ── -->
+                    <div class="col-lg-9 col-md-8">
+                        <!-- Estado inicial: ninguna actividad seleccionada -->
+                        <div id="panel-vacio" class="card shadow border-0 h-100">
+                            <div class="card-body d-flex align-items-center justify-content-center empty-state">
+                                <div>
+                                    <i class="fas fa-hand-point-left fa-2x mb-2"></i>
+                                    <p class="mb-0">Selecciona una <strong>Actividad de Aprendizaje</strong> del árbol para ver sus opciones.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel activo: aprendices -->
+                        <div id="panel-actividad" class="card shadow border-0">
+                            <div class="card-header py-2 border-bottom-sena d-flex align-items-center justify-content-between">
+                                <span class="font-weight-bold text-sena small">
+                                    <i class="fas fa-users mr-1"></i> Aprendices de la Ficha
+                                </span>
+                                <span id="lbl-actividad-nombre" class="text-muted small"></span>
+                            </div>
+                            <div class="card-body p-0">
+                                <div id="aprendices-loading" class="text-center py-4">
+                                    <i class="fas fa-spinner fa-spin text-sena"></i>
+                                </div>
+                                <div id="aprendices-empty" class="empty-state d-none">
+                                    <i class="fas fa-user-slash fa-2x mb-2"></i>
+                                    <p class="mb-0">No hay aprendices registrados en esta ficha.</p>
+                                </div>
+                                <div id="aprendices-no-evidencia" class="empty-state d-none">
+                                    <i class="fas fa-clipboard fa-2x mb-2 text-warning"></i>
+                                    <p class="mb-1">Aún no has creado la evidencia de aprendizaje para esta actividad.</p>
+                                    <button class="btn btn-warning btn-sm" onclick="crearEvidencia()">
+                                        <i class="fas fa-plus mr-1"></i> Crear evidencia ahora
+                                    </button>
+                                </div>
+                                <div id="aprendices-tabla-wrapper" class="d-none">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover mb-0" style="font-size:.85rem;">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th>Aprendiz</th>
+                                                    <th>Documento</th>
+                                                    <th>Estado</th>
+                                                    <th>Calificación</th>
+                                                    <th class="text-center">Acción</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="aprendices-tbody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- /container-fluid -->
+        </div><!-- /content -->
+
+        <footer class="sticky-footer bg-white mt-4">
+            <div class="container my-auto">
+                <div class="copyright text-center my-auto">
+                    <span>BARÍ LMS SENA - Instructor</span>
+                </div>
+            </div>
+        </footer>
+    </div><!-- /content-wrapper -->
+</div><!-- /wrapper -->
+
+<!-- ══ Modal: Evidencia recibida ══ -->
+<div class="modal fade" id="modalCalificar" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:320px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Evidencia recibida</h6>
+                <button type="button" class="close" data-dismiss="modal" style="color:#1cc88a;font-size:1.3rem;">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="ev-group">
+                    <label class="ev-label">Aprendiz</label>
+                    <input type="text" class="ev-input" id="modal-nombre-aprendiz" readonly>
+                </div>
+                <div class="ev-group">
+                    <label class="ev-label">Actividad</label>
+                    <input type="text" class="ev-input" id="modal-nombre-actividad" readonly>
+                </div>
+                <div class="ev-group">
+                    <label class="ev-label">Evidencia</label>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <input type="text" class="ev-input" id="modal-url-evidencia" readonly style="flex:1;">
+                        <a id="modal-link-evidencia" href="#" target="_blank"
+                           title="Abrir enlace" style="color:#1cc88a;font-size:1.1rem;flex-shrink:0;">
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="ev-group">
+                    <label class="ev-label">Observaciones</label>
+                    <textarea class="ev-input" id="modal-observaciones" rows="3"
+                              placeholder="Escribe la observación al estudiante (Opcional)"></textarea>
+                </div>
+                <div class="ev-group mb-1">
+                    <label class="ev-label">Calificar <span style="color:#858796;font-weight:400;">0 a 100</span></label>
+                    <input type="number" class="ev-input" id="modal-calificacion"
+                           min="0" max="100" step="0.5" placeholder="0 a 100">
+                </div>
+                <div id="modal-estado-badge"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-aceptar" onclick="guardarCalificacion()">
+                    Aceptar y subir calificación
+                </button>
+                <button class="btn-cancelar" data-dismiss="modal">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ Modal: Subir / Actualizar Guía ══ -->
+<div class="modal fade" id="modalGuia" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header border-bottom-sena">
+                <h6 class="modal-title font-weight-bold text-sena">
+                    <i class="fas fa-link mr-1"></i> Guía de Aprendizaje
+                </h6>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div id="guia-actual-info" class="alert alert-info d-none">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Guía actual: <a id="guia-actual-link" href="#" target="_blank" class="alert-link">Ver guía subida</a>
+                </div>
+                <div class="form-group mb-0">
+                    <label class="font-weight-bold small">URL de la guía <span class="text-danger">*</span></label>
+                    <input type="url" class="form-control" id="input-guia-url"
+                           placeholder="https://drive.google.com/...">
+                    <small class="text-muted">Pega el enlace de Google Drive, OneDrive, etc.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-sena" onclick="guardarGuia()">
+                    <i class="fas fa-save mr-1"></i> Guardar guía
+                </button>
+                <button class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══ Scripts ══ -->
+<script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/jquery-easing/jquery.easing.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
+<script>
+const FICHA_ID = {{ ficha.id }};
+
+// ── Estado global ──
+let selectedActAprendizajeId = null;
+let selectedActAprendizajeNombre = null;
+let selectedActAprendizajeGuia = null;
+let selectedFaseId = null;
+let selectedActProyId = null;
+let currentEvidenciaId = null;
+let currentEntregaId = null;
+let currentUsuarioId = null;
+let aprendicesCache = [];   // Evita pasar objetos JSON en onclick
+
+// ═══════════════════════════════
+//  Carga inicial del árbol
+// ═══════════════════════════════
+async function cargarArbol() {
+    const res = await fetch(`/api/instructor/ficha/${FICHA_ID}/tree`);
+    const data = await res.json();
+    renderArbol(data.fases);
+}
+
+function renderArbol(fases) {
+    const container = document.getElementById('fase-tree');
+    if (!fases || fases.length === 0) {
+        container.innerHTML = `<div class="empty-state"><i class="fas fa-info-circle mb-2"></i><p class="small mb-0">Sin fases. Usa el botón <strong>Nueva Fase</strong> para agregar.</p></div>`;
+        return;
+    }
+
+    let html = '';
+    fases.forEach((fase, fi) => {
+        const faseCollapseId = `fase-${fase.id}`;
+        html += `
+        <div class="mb-1">
+            <button class="fase-btn collapsed" data-toggle="collapse" data-target="#${faseCollapseId}"
+                    onclick="setFase(${fase.id})">
+                <span><i class="fas fa-layer-group mr-1" style="font-size:.8em;opacity:.85"></i>${fase.nombre}</span>
+                <i class="fas fa-chevron-down chevron" style="font-size:.75em;"></i>
+            </button>
+            <div class="collapse tree-indent-1" id="${faseCollapseId}">`;
+
+        if (fase.actividades_proyecto.length === 0) {
+            html += `<p class="text-muted small px-2 py-1 mb-1">Sin actividades de proyecto.</p>`;
+        }
+
+        fase.actividades_proyecto.forEach((ap, api) => {
+            const apCollapseId = `ap-${ap.id}`;
+            html += `
+                <div class="mb-1">
+                    <button class="act-proy-btn collapsed" data-toggle="collapse" data-target="#${apCollapseId}"
+                            onclick="setActProy(${fase.id}, ${ap.id})">
+                        <span><i class="fas fa-folder mr-1" style="font-size:.8em;opacity:.8"></i>${ap.nombre}</span>
+                        <i class="fas fa-chevron-down chevron" style="font-size:.75em;"></i>
+                    </button>
+                    <div class="collapse tree-indent-2" id="${apCollapseId}">`;
+
+            if (ap.actividades_aprendizaje.length === 0) {
+                html += `<p class="text-muted small px-2 py-1 mb-1">Sin actividades de aprendizaje.</p>`;
+            }
+
+            ap.actividades_aprendizaje.forEach(aa => {
+                const tieneGuia = !!aa.guia_url;
+                const tieneEvidencia = !!aa.evidencia_id;
+                html += `
+                    <button class="act-apr-btn" id="btn-aa-${aa.id}"
+                            onclick="seleccionarActAprendizaje(${aa.id}, '${escapar(aa.nombre)}', ${JSON.stringify(aa.guia_url)}, ${fase.id}, ${ap.id})">
+                        <i class="fas fa-book-open" style="font-size:.8em;opacity:.85"></i>
+                        <span class="flex-grow-1">${aa.nombre}</span>
+                        ${tieneGuia ? '<i class="fas fa-link" title="Guía subida" style="font-size:.75em;opacity:.8"></i>' : ''}
+                        ${tieneEvidencia ? '<i class="fas fa-tasks" title="Evidencia creada" style="font-size:.75em;opacity:.8"></i>' : ''}
+                    </button>`;
+            });
+
+            html += `</div></div>`;
+        });
+
+        html += `</div></div>`;
+    });
+
+    container.innerHTML = html;
+}
+
+function escapar(s) {
+    return (s || '').replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+
+// ── Selección en árbol ──
+function setFase(faseId) {
+    selectedFaseId = faseId;
+    selectedActProyId = null;
+    document.getElementById('btn-nueva-actividad').disabled = false;
+    document.getElementById('btn-nueva-act-apr').disabled = true;
+}
+
+function setActProy(faseId, actProyId) {
+    selectedFaseId = faseId;
+    selectedActProyId = actProyId;
+    document.getElementById('btn-nueva-actividad').disabled = false;
+    document.getElementById('btn-nueva-act-apr').disabled = false;
+}
+
+function seleccionarActAprendizaje(actId, nombre, guiaUrl, faseId, actProyId) {
+    selectedActAprendizajeId = actId;
+    selectedActAprendizajeNombre = nombre;
+    selectedActAprendizajeGuia = guiaUrl;
+    selectedFaseId = faseId;
+    selectedActProyId = actProyId;
+
+    // Highlight en árbol
+    document.querySelectorAll('.act-apr-btn').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById(`btn-aa-${actId}`);
+    if (btn) btn.classList.add('active');
+
+    // Actualizar botón guía
+    document.getElementById('btn-guia-label').textContent =
+        guiaUrl ? 'Actualizar guía de aprendizaje' : 'Subir guía de aprendizaje';
+
+    // Mostrar panel
+    document.getElementById('panel-vacio').style.display = 'none';
+    document.getElementById('panel-actividad').style.display = 'block';
+    document.getElementById('action-buttons').classList.remove('d-none');
+    document.getElementById('plan-trabajo-panel').classList.add('d-none');
+    document.getElementById('lbl-actividad-nombre').textContent = nombre;
+
+    document.getElementById('btn-nueva-actividad').disabled = false;
+    document.getElementById('btn-nueva-act-apr').disabled = false;
+
+    cargarAprendices(actId);
+}
+
+// ═══════════════════════════════
+//  Plan de trabajo concertado
+// ═══════════════════════════════
+function verPlanTrabajo() {
+    const panel = document.getElementById('plan-trabajo-panel');
+    const contenido = document.getElementById('plan-trabajo-contenido');
+
+    if (!panel.classList.contains('d-none')) {
+        panel.classList.add('d-none');
+        return;
+    }
+
+    if (selectedActAprendizajeGuia) {
+        contenido.innerHTML = `<a href="${selectedActAprendizajeGuia}" target="_blank" class="text-success">
+            <i class="fas fa-external-link-alt mr-1"></i>${selectedActAprendizajeGuia}</a>`;
+    } else {
+        contenido.innerHTML = `<span class="text-muted small">
+            <i class="fas fa-exclamation-circle mr-1"></i>
+            No hay guía de aprendizaje cargada para esta actividad. Usa <em>Subir guía de aprendizaje</em> para adjuntarla.</span>`;
+    }
+    panel.classList.remove('d-none');
+}
+
+// ═══════════════════════════════
+//  Guía de aprendizaje
+// ═══════════════════════════════
+function abrirModalGuia() {
+    if (!selectedActAprendizajeId) return;
+    const inputUrl = document.getElementById('input-guia-url');
+    const guiaInfo = document.getElementById('guia-actual-info');
+    const guiaLink = document.getElementById('guia-actual-link');
+    inputUrl.value = '';
+    if (selectedActAprendizajeGuia) {
+        guiaInfo.classList.remove('d-none');
+        guiaLink.href = selectedActAprendizajeGuia;
+        inputUrl.placeholder = selectedActAprendizajeGuia;
+    } else {
+        guiaInfo.classList.add('d-none');
+        inputUrl.placeholder = 'https://drive.google.com/...';
+    }
+    $('#modalGuia').modal('show');
+}
+
+async function guardarGuia() {
+    const url = document.getElementById('input-guia-url').value.trim();
+    if (!url) { alert('Ingresa una URL válida.'); return; }
+
+    const res = await fetch(`/api/instructor/actividad/${selectedActAprendizajeId}/guia`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ url })
+    });
+    const data = await res.json();
+    if (data.ok) {
+        selectedActAprendizajeGuia = url;
+        document.getElementById('btn-guia-label').textContent = 'Actualizar guía de aprendizaje';
+        $('#modalGuia').modal('hide');
+        // Actualizar ícono en árbol
+        const btn = document.getElementById(`btn-aa-${selectedActAprendizajeId}`);
+        if (btn && !btn.querySelector('.fa-link')) {
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-link';
+            icon.title = 'Guía subida';
+            icon.style.cssText = 'font-size:.75em;opacity:.8';
+            btn.appendChild(icon);
+        }
+    } else {
+        alert('Error al guardar: ' + (data.error || 'Intenta de nuevo.'));
+    }
+}
+
+// ═══════════════════════════════
+//  Crear evidencia
+// ═══════════════════════════════
+async function crearEvidencia() {
+    if (!selectedActAprendizajeId) return;
+    const res = await fetch(`/api/instructor/actividad/${selectedActAprendizajeId}/evidencia`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ descripcion: '' })
+    });
+    const data = await res.json();
+    if (data.ok) {
+        if (data.already_exists) {
+            alert('Ya existe una evidencia para esta actividad. Puedes ver las entregas de los aprendices en la tabla.');
+        } else {
+            alert('Evidencia de aprendizaje creada. Los aprendices ya pueden entregar sus evidencias.');
+            // Actualizar ícono en árbol
+            const btn = document.getElementById(`btn-aa-${selectedActAprendizajeId}`);
+            if (btn && !btn.querySelector('.fa-tasks')) {
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-tasks';
+                icon.title = 'Evidencia creada';
+                icon.style.cssText = 'font-size:.75em;opacity:.8';
+                btn.appendChild(icon);
+            }
+        }
+        cargarAprendices(selectedActAprendizajeId);
+    }
+}
+
+// ═══════════════════════════════
+//  Tabla de aprendices
+// ═══════════════════════════════
+async function cargarAprendices(actId) {
+    const loading = document.getElementById('aprendices-loading');
+    const empty = document.getElementById('aprendices-empty');
+    const noEvidencia = document.getElementById('aprendices-no-evidencia');
+    const tablaWrapper = document.getElementById('aprendices-tabla-wrapper');
+
+    loading.classList.remove('d-none');
+    empty.classList.add('d-none');
+    noEvidencia.classList.add('d-none');
+    tablaWrapper.classList.add('d-none');
+
+    const res = await fetch(`/api/instructor/actividad/${actId}/aprendices`);
+    const data = await res.json();
+
+    loading.classList.add('d-none');
+    currentEvidenciaId = data.evidencia_id;
+
+    if (!data.evidencia_id) {
+        noEvidencia.classList.remove('d-none');
+        return;
+    }
+
+    if (!data.aprendices || data.aprendices.length === 0) {
+        empty.classList.remove('d-none');
+        return;
+    }
+
+    aprendicesCache = data.aprendices;   // Guardar referencia para onclick seguro
+
+    const tbody = document.getElementById('aprendices-tbody');
+    tbody.innerHTML = '';
+    data.aprendices.forEach((ap, idx) => {
+        const tiene = !!ap.entrega;
+        const cal = ap.entrega ? ap.entrega.calificacion : null;
+        const aprobado = cal !== null && cal >= 75;
+        const estadoBadge = tiene
+            ? (cal !== null
+                ? `<span class="badge ${aprobado ? 'badge-aprobado' : 'badge-reprobado'}">${aprobado ? 'Aprobado' : 'Reprobado'}</span>`
+                : `<span class="badge badge-warning">Entregado</span>`)
+            : `<span class="badge badge-pendiente">Pendiente</span>`;
+
+        const calTexto = cal !== null ? `${cal}` : '—';
+
+        // Usar índice en lugar de JSON para evitar quiebre de HTML
+        const accionBtn = tiene
+            ? `<button class="btn btn-sm btn-outline-primary" onclick="abrirModalCalificar(${idx})">
+                <i class="fas fa-eye mr-1"></i> Ver y Calificar
+               </button>`
+            : `<span class="text-muted small">Sin entrega</span>`;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <div class="font-weight-bold">${ap.nombre}</div>
+                <div class="text-muted small">${ap.correo || ''}</div>
+            </td>
+            <td class="text-muted small align-middle">${ap.documento || '—'}</td>
+            <td class="align-middle">${estadoBadge}</td>
+            <td class="align-middle text-center font-weight-bold">${calTexto}</td>
+            <td class="align-middle text-center">${accionBtn}</td>`;
+        tbody.appendChild(tr);
+    });
+
+    tablaWrapper.classList.remove('d-none');
+}
+
+// ═══════════════════════════════
+//  Modal de calificación
+// ═══════════════════════════════
+function abrirModalCalificar(idx) {
+    const ap = aprendicesCache[idx];
+    if (!ap) return;
+
+    currentEntregaId = ap.entrega ? ap.entrega.id : null;
+    currentUsuarioId = ap.usuario_id;
+
+    document.getElementById('modal-nombre-aprendiz').value = ap.nombre;
+    document.getElementById('modal-nombre-actividad').value = selectedActAprendizajeNombre || '';
+
+    const url = ap.entrega ? ap.entrega.url : '';
+    document.getElementById('modal-url-evidencia').value = url;
+    document.getElementById('modal-link-evidencia').href = url || '#';
+
+    document.getElementById('modal-observaciones').value =
+        (ap.entrega && ap.entrega.observaciones) ? ap.entrega.observaciones : '';
+    document.getElementById('modal-calificacion').value =
+        (ap.entrega && ap.entrega.calificacion !== null) ? ap.entrega.calificacion : '';
+
+    actualizarBadgeEstado(ap.entrega ? ap.entrega.calificacion : null);
+
+    $('#modalCalificar').modal('show');
+}
+
+function actualizarBadgeEstado(cal) {
+    const el = document.getElementById('modal-estado-badge');
+    if (cal === null || cal === undefined || cal === '') {
+        el.innerHTML = '';
+        return;
+    }
+    const c = parseFloat(cal);
+    if (c >= 75) {
+        el.innerHTML = `<span class="badge badge-aprobado px-3 py-2"><i class="fas fa-check mr-1"></i> APROBADO (${c})</span>`;
+    } else {
+        el.innerHTML = `<span class="badge badge-reprobado px-3 py-2"><i class="fas fa-times mr-1"></i> REPROBADO (${c})</span>`;
+    }
+}
+
+document.getElementById('modal-calificacion').addEventListener('input', function () {
+    actualizarBadgeEstado(this.value);
+});
+
+async function guardarCalificacion() {
+    if (!currentEntregaId) {
+        alert('No hay entrega seleccionada.');
+        return;
+    }
+    const calVal = document.getElementById('modal-calificacion').value;
+    const obs = document.getElementById('modal-observaciones').value.trim();
+
+    if (calVal === '') { alert('Ingresa una calificación.'); return; }
+    const cal = parseFloat(calVal);
+    if (isNaN(cal) || cal < 0 || cal > 100) { alert('La calificación debe estar entre 0 y 100.'); return; }
+
+    const res = await fetch(`/api/instructor/entrega/${currentEntregaId}/calificar`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ calificacion: cal, observaciones: obs })
+    });
+    const data = await res.json();
+    if (data.ok) {
+        $('#modalCalificar').modal('hide');
+        cargarAprendices(selectedActAprendizajeId);
+    } else {
+        alert('Error al guardar: ' + (data.error || 'Intenta de nuevo.'));
+    }
+}
+
+// ═══════════════════════════════
+//  Nueva Fase / Actividad
+// ═══════════════════════════════
+async function nuevaFase() {
+    const nombre = prompt('Nombre de la nueva fase (ej: Fase 5: Evaluación):');
+    if (!nombre || !nombre.trim()) return;
+
+    const res = await fetch(`/api/instructor/ficha/${FICHA_ID}/fase/nueva`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ nombre: nombre.trim() })
+    });
+    const data = await res.json();
+    if (data.ok) { cargarArbol(); }
+    else { alert('Error: ' + (data.error || 'No se pudo crear la fase.')); }
+}
+
+async function nuevaActividadProyecto() {
+    if (!selectedFaseId) { alert('Selecciona una fase primero.'); return; }
+    const nombre = prompt('Nombre de la nueva Actividad de Proyecto:');
+    if (!nombre || !nombre.trim()) return;
+
+    const res = await fetch(`/api/instructor/fase/${selectedFaseId}/actividad/nueva`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ nombre: nombre.trim() })
+    });
+    const data = await res.json();
+    if (data.ok) { cargarArbol(); }
+    else { alert('Error: ' + (data.error || 'No se pudo crear.')); }
+}
+
+async function nuevaActividadAprendizaje() {
+    if (!selectedActProyId) { alert('Selecciona una Actividad de Proyecto primero.'); return; }
+    const nombre = prompt('Nombre de la nueva Actividad de Aprendizaje:');
+    if (!nombre || !nombre.trim()) return;
+
+    const res = await fetch(`/api/instructor/actividad-proyecto/${selectedActProyId}/aprendizaje/nueva`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ nombre: nombre.trim() })
+    });
+    const data = await res.json();
+    if (data.ok) { cargarArbol(); }
+    else { alert('Error: ' + (data.error || 'No se pudo crear.')); }
+}
+
+// ── Init ──
+cargarArbol();
+</script>
+</body>
+</html>

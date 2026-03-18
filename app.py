@@ -3,7 +3,7 @@ import os
 import sqlite3
 from functools import wraps
 
-from flask import Flask, flash, g, redirect, render_template, request, session, url_for
+from flask import Flask, flash, g, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
@@ -150,10 +150,9 @@ DASHBOARDS = {
         "menu_heading": "Formación",
         "menu": [
             {
-                "icon": "fa-book-reader",
-                "label": "Planeación",
-                "endpoint": "dashboard",
-                "endpoint_kwargs": {"role_slug": "instructor"},
+                "icon": "fa-layer-group",
+                "label": "Mis Fichas",
+                "endpoint": "instructor_fichas",
             },
             {
                 "icon": "fa-clipboard-check",
@@ -276,7 +275,7 @@ ENTITY_CONFIG = {
         "table": "instructor",
         "label": "Instructor",
         "parent_key": "coordinacion_id",
-        "fields": ["id_coordinacion", "id_area", "documento", "nombres", "apellidos", "correo"],
+        "fields": ["id_coordinacion", "id_area", "documento", "nombres", "apellidos", "correo", "genero"],
         "required": ["id_coordinacion", "documento", "nombres", "apellidos"],
         "context_key": "coordinacion_id",
         "select_aliases": {
@@ -553,6 +552,7 @@ def initialize_database():
             apellidos TEXT NOT NULL,
             correo TEXT,
             id_usuario INTEGER,
+            genero TEXT DEFAULT 'M',
             FOREIGN KEY (id_coordinacion) REFERENCES coordinacion(id) ON DELETE CASCADE
         )
         """
@@ -674,6 +674,55 @@ def initialize_database():
         )
         """
     )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS guia_aprendizaje (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_actividad_aprendizaje INTEGER NOT NULL UNIQUE,
+            url TEXT NOT NULL,
+            subido_en TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (id_actividad_aprendizaje) REFERENCES actividad_aprendizaje(id) ON DELETE CASCADE
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS evidencia_aprendizaje (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_actividad_aprendizaje INTEGER NOT NULL,
+            descripcion TEXT,
+            creado_en TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (id_actividad_aprendizaje) REFERENCES actividad_aprendizaje(id) ON DELETE CASCADE
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS entrega_evidencia (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_evidencia_aprendizaje INTEGER NOT NULL,
+            id_usuario INTEGER NOT NULL,
+            url TEXT NOT NULL,
+            calificacion REAL,
+            observaciones TEXT,
+            entregado_en TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (id_evidencia_aprendizaje) REFERENCES evidencia_aprendizaje(id) ON DELETE CASCADE,
+            FOREIGN KEY (id_usuario) REFERENCES usuario(id) ON DELETE CASCADE
+        )
+        """
+    )
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS ficha_instructor_competencia (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_ficha INTEGER NOT NULL,
+            id_instructor INTEGER NOT NULL,
+            UNIQUE(id_ficha, id_instructor),
+            FOREIGN KEY (id_ficha) REFERENCES ficha_formacion(id) ON DELETE CASCADE,
+            FOREIGN KEY (id_instructor) REFERENCES instructor(id) ON DELETE CASCADE
+        )
+        """
+    )
     db.commit()
 
     instructor_columns = {
@@ -685,6 +734,10 @@ def initialize_database():
         instructor_columns.add("id_usuario")
     if "id_area" not in instructor_columns:
         db.execute("ALTER TABLE instructor ADD COLUMN id_area INTEGER")
+        db.commit()
+        instructor_columns.add("id_area")
+    if "genero" not in instructor_columns:
+        db.execute("ALTER TABLE instructor ADD COLUMN genero TEXT DEFAULT 'M'")
         db.commit()
 
     ficha_columns = {
@@ -1675,7 +1728,8 @@ def normalize_academic_context(args):
                    f.id_coordinacion AS coordinacion_id, f.id_instructor AS instructor_id,
                    pf.nombre AS proyecto_formativo_nombre,
                    c.nombre AS coordinacion_nombre,
-                   i.nombres || ' ' || i.apellidos AS instructor_nombre
+                   i.nombres || ' ' || i.apellidos AS instructor_nombre,
+                   i.genero AS instructor_genero
             FROM ficha_formacion f
             LEFT JOIN proyecto_formativo pf ON pf.id = f.id_proyecto_formativo
             JOIN coordinacion c ON c.id = f.id_coordinacion
@@ -1691,12 +1745,29 @@ def normalize_academic_context(args):
         instructores_area = get_db().execute(
             """
             SELECT id, documento, nombres, apellidos, correo AS email,
-                   id_area AS area_id, id_coordinacion AS coordinacion_id
+                   id_area AS area_id, id_coordinacion AS coordinacion_id,
+                   genero
             FROM instructor
             WHERE id_area = ?
             ORDER BY nombres ASC, apellidos ASC
             """,
             (programa["area_id"],),
+        ).fetchall()
+
+    # Instructores a competencias de la ficha que se está editando
+    instructores_competencia_ficha = []
+    if edit_entity == "ficha" and edit_id:
+        instructores_competencia_ficha = get_db().execute(
+            """
+            SELECT ic.id_instructor AS id,
+                   i.nombres, i.apellidos, i.genero,
+                   i.id_area AS area_id, i.id_coordinacion AS coordinacion_id
+            FROM ficha_instructor_competencia ic
+            JOIN instructor i ON i.id = ic.id_instructor
+            WHERE ic.id_ficha = ?
+            ORDER BY i.nombres ASC, i.apellidos ASC
+            """,
+            (edit_id,),
         ).fetchall()
 
     fases_proyecto = (
@@ -1723,6 +1794,7 @@ def normalize_academic_context(args):
         "fichas": fichas,
         "coordinaciones_disponibles": get_entities("coordinacion", order_by="nombre ASC"),
         "instructores_area": instructores_area,
+        "instructores_competencia_ficha": instructores_competencia_ficha,
         "proyectos_formativos": get_entities("proyecto_formativo", order_by="codigo ASC, nombre ASC"),
         "fases_proyecto": fases_proyecto,
         "actividades_proyecto": actividades_proyecto,
@@ -1905,6 +1977,45 @@ def admin_academic_delete(entity, item_id):
     return redirect(url_for("admin_academic", **redirect_args))
 
 
+@app.post("/admin/academic/ficha/<int:ficha_id>/competencia/add")
+@role_required("Administrador")
+def admin_ficha_competencia_add(ficha_id):
+    instructor_id = parse_int(request.form.get("instructor_id"))
+    redirect_args = academic_redirect_args(
+        request.form, {"edit_entity": "ficha", "edit_id": ficha_id}
+    )
+    if instructor_id is None:
+        flash("Selecciona un instructor válido.", "danger")
+        return redirect(url_for("admin_academic", **redirect_args))
+    db = get_db()
+    try:
+        db.execute(
+            "INSERT INTO ficha_instructor_competencia (id_ficha, id_instructor) VALUES (?, ?)",
+            (ficha_id, instructor_id),
+        )
+        db.commit()
+        flash("Instructor/a a competencias agregado correctamente.", "success")
+    except sqlite3.IntegrityError:
+        flash("Ese instructor/a ya está asignado/a a esta ficha.", "warning")
+    return redirect(url_for("admin_academic", **redirect_args))
+
+
+@app.post("/admin/academic/ficha/<int:ficha_id>/competencia/<int:instructor_id>/remove")
+@role_required("Administrador")
+def admin_ficha_competencia_remove(ficha_id, instructor_id):
+    redirect_args = academic_redirect_args(
+        request.form, {"edit_entity": "ficha", "edit_id": ficha_id}
+    )
+    db = get_db()
+    db.execute(
+        "DELETE FROM ficha_instructor_competencia WHERE id_ficha = ? AND id_instructor = ?",
+        (ficha_id, instructor_id),
+    )
+    db.commit()
+    flash("Instructor/a removido/a de competencias.", "success")
+    return redirect(url_for("admin_academic", **redirect_args))
+
+
 @app.route("/instructor/password", methods=["GET", "POST"])
 @role_required("Instructor")
 def instructor_change_password():
@@ -1922,23 +2033,23 @@ def instructor_change_password():
 
         if not current_password or not new_password or not confirm_password:
             flash("Todos los campos son obligatorios.", "danger")
-            return render_template("instructor_change_password.html", user=user)
+            return render_template("instructor/change_password.html", user=user)
 
         if not check_password_hash(user_record["password_hash"], current_password):
             flash("La contraseña actual es incorrecta.", "danger")
-            return render_template("instructor_change_password.html", user=user)
+            return render_template("instructor/change_password.html", user=user)
 
         if new_password != confirm_password:
             flash("La nueva contraseña y su confirmación no coinciden.", "danger")
-            return render_template("instructor_change_password.html", user=user)
+            return render_template("instructor/change_password.html", user=user)
 
         if len(new_password) < 8:
             flash("La nueva contraseña debe tener al menos 8 caracteres.", "danger")
-            return render_template("instructor_change_password.html", user=user)
+            return render_template("instructor/change_password.html", user=user)
 
         if current_password == new_password:
             flash("La nueva contraseña debe ser diferente a la actual.", "danger")
-            return render_template("instructor_change_password.html", user=user)
+            return render_template("instructor/change_password.html", user=user)
 
         db = get_db()
         db.execute(
@@ -1949,7 +2060,340 @@ def instructor_change_password():
         flash("Contraseña actualizada correctamente.", "success")
         return redirect(url_for("instructor_change_password"))
 
-    return render_template("instructor_change_password.html", user=user)
+    return render_template("instructor/change_password.html", user=user)
+
+
+@app.route("/instructor/fichas")
+@role_required("Instructor")
+def instructor_fichas():
+    user = current_user()
+    db = get_db()
+    instructor = db.execute(
+        "SELECT id FROM instructor WHERE id_usuario = ?", (user["id"],)
+    ).fetchone()
+
+    fichas = []
+    if instructor:
+        fichas = db.execute(
+            """
+            SELECT f.id, f.numero,
+                   p.nombre AS programa_nombre,
+                   pf.nombre AS proyecto_nombre,
+                   pf.codigo AS proyecto_codigo,
+                   n.nombre AS nivel_nombre
+            FROM ficha_formacion f
+            JOIN programa_formacion p ON p.id = f.id_programa_formacion
+            LEFT JOIN proyecto_formativo pf ON pf.id = f.id_proyecto_formativo
+            LEFT JOIN nivel_formacion n ON n.id = p.id_nivel_formacion
+            WHERE f.id_instructor = ?
+            ORDER BY f.numero ASC
+            """,
+            (instructor["id"],),
+        ).fetchall()
+
+    return render_template("instructor/fichas.html", user=user, fichas=fichas)
+
+
+@app.route("/instructor/ficha/<int:ficha_id>/fases")
+@role_required("Instructor")
+def instructor_fases(ficha_id):
+    user = current_user()
+    db = get_db()
+    instructor = db.execute(
+        "SELECT id FROM instructor WHERE id_usuario = ?", (user["id"],)
+    ).fetchone()
+
+    ficha = db.execute(
+        """
+        SELECT f.id, f.numero,
+               p.nombre AS programa_nombre,
+               pf.nombre AS proyecto_nombre,
+               pf.codigo AS proyecto_codigo,
+               pf.id AS proyecto_id,
+               n.nombre AS nivel_nombre
+        FROM ficha_formacion f
+        JOIN programa_formacion p ON p.id = f.id_programa_formacion
+        LEFT JOIN proyecto_formativo pf ON pf.id = f.id_proyecto_formativo
+        LEFT JOIN nivel_formacion n ON n.id = p.id_nivel_formacion
+        WHERE f.id = ?
+        """,
+        (ficha_id,),
+    ).fetchone()
+
+    if ficha is None:
+        flash("La ficha solicitada no existe.", "danger")
+        return redirect(url_for("instructor_fichas"))
+
+    if instructor is None or db.execute(
+        "SELECT id FROM ficha_formacion WHERE id = ? AND id_instructor = ?",
+        (ficha_id, instructor["id"]),
+    ).fetchone() is None:
+        flash("No tienes acceso a esta ficha.", "danger")
+        return redirect(url_for("instructor_fichas"))
+
+    return render_template("instructor/fases.html", user=user, ficha=ficha)
+
+
+@app.route("/api/instructor/ficha/<int:ficha_id>/tree")
+@role_required("Instructor")
+def api_instructor_ficha_tree(ficha_id):
+    db = get_db()
+    ficha = db.execute(
+        "SELECT id_proyecto_formativo FROM ficha_formacion WHERE id = ?", (ficha_id,)
+    ).fetchone()
+
+    if ficha is None or ficha["id_proyecto_formativo"] is None:
+        return jsonify({"fases": []})
+
+    proyecto_id = ficha["id_proyecto_formativo"]
+    fases = db.execute(
+        "SELECT id, nombre FROM fase_proyecto WHERE id_proyecto_formativo = ? ORDER BY id ASC",
+        (proyecto_id,),
+    ).fetchall()
+
+    result = []
+    for fase in fases:
+        acts_proy = db.execute(
+            "SELECT id, nombre FROM actividad_proyecto WHERE id_fase_proyecto = ? ORDER BY id ASC",
+            (fase["id"],),
+        ).fetchall()
+
+        fase_data = {"id": fase["id"], "nombre": fase["nombre"], "actividades_proyecto": []}
+        for ap in acts_proy:
+            acts_apr = db.execute(
+                """
+                SELECT aa.id, aa.nombre,
+                       ga.url AS guia_url,
+                       ea.id AS evidencia_id
+                FROM actividad_aprendizaje aa
+                LEFT JOIN guia_aprendizaje ga ON ga.id_actividad_aprendizaje = aa.id
+                LEFT JOIN evidencia_aprendizaje ea ON ea.id_actividad_aprendizaje = aa.id
+                WHERE aa.id_actividad_proyecto = ?
+                ORDER BY aa.id ASC
+                """,
+                (ap["id"],),
+            ).fetchall()
+
+            ap_data = {
+                "id": ap["id"],
+                "nombre": ap["nombre"],
+                "actividades_aprendizaje": [
+                    {
+                        "id": aa["id"],
+                        "nombre": aa["nombre"],
+                        "guia_url": aa["guia_url"],
+                        "evidencia_id": aa["evidencia_id"],
+                    }
+                    for aa in acts_apr
+                ],
+            }
+            fase_data["actividades_proyecto"].append(ap_data)
+        result.append(fase_data)
+
+    return jsonify({"fases": result})
+
+
+@app.post("/api/instructor/actividad/<int:act_id>/guia")
+@role_required("Instructor")
+def api_instructor_guia_save(act_id):
+    data = request.get_json() or {}
+    url = data.get("url", "").strip()
+    if not url:
+        return jsonify({"ok": False, "error": "URL requerida"}), 400
+
+    db = get_db()
+    existing = db.execute(
+        "SELECT id FROM guia_aprendizaje WHERE id_actividad_aprendizaje = ?", (act_id,)
+    ).fetchone()
+
+    if existing:
+        db.execute(
+            "UPDATE guia_aprendizaje SET url = ?, subido_en = CURRENT_TIMESTAMP WHERE id_actividad_aprendizaje = ?",
+            (url, act_id),
+        )
+    else:
+        db.execute(
+            "INSERT INTO guia_aprendizaje (id_actividad_aprendizaje, url) VALUES (?, ?)",
+            (act_id, url),
+        )
+    db.commit()
+    return jsonify({"ok": True})
+
+
+@app.post("/api/instructor/actividad/<int:act_id>/evidencia")
+@role_required("Instructor")
+def api_instructor_evidencia_crear(act_id):
+    data = request.get_json() or {}
+    descripcion = data.get("descripcion", "").strip() or None
+
+    db = get_db()
+    existing = db.execute(
+        "SELECT id FROM evidencia_aprendizaje WHERE id_actividad_aprendizaje = ?", (act_id,)
+    ).fetchone()
+
+    if existing:
+        return jsonify({"ok": True, "id": existing["id"], "already_exists": True})
+
+    cursor = db.execute(
+        "INSERT INTO evidencia_aprendizaje (id_actividad_aprendizaje, descripcion) VALUES (?, ?)",
+        (act_id, descripcion),
+    )
+    db.commit()
+    return jsonify({"ok": True, "id": cursor.lastrowid})
+
+
+@app.route("/api/instructor/actividad/<int:act_id>/aprendices")
+@role_required("Instructor")
+def api_instructor_aprendices(act_id):
+    db = get_db()
+    row = db.execute(
+        """
+        SELECT f.id AS ficha_id, f.numero AS ficha_numero
+        FROM actividad_aprendizaje aa
+        JOIN actividad_proyecto ap ON ap.id = aa.id_actividad_proyecto
+        JOIN fase_proyecto fp ON fp.id = ap.id_fase_proyecto
+        JOIN ficha_formacion f ON f.id_proyecto_formativo = fp.id_proyecto_formativo
+        WHERE aa.id = ?
+        LIMIT 1
+        """,
+        (act_id,),
+    ).fetchone()
+
+    if row is None:
+        return jsonify({"aprendices": [], "evidencia_id": None})
+
+    evidencia = db.execute(
+        "SELECT id FROM evidencia_aprendizaje WHERE id_actividad_aprendizaje = ?", (act_id,)
+    ).fetchone()
+
+    aprendices_raw = db.execute(
+        """
+        SELECT a.id, a.nombres, a.apellidos, a.documento,
+               u.id AS usuario_id, u.correo
+        FROM aprendiz a
+        LEFT JOIN usuario u ON lower(u.nombre) = lower(a.nombres || ' ' || a.apellidos)
+                           AND u.rol = 'Aprendiz'
+        WHERE a.ficha = ?
+        ORDER BY a.nombres ASC, a.apellidos ASC
+        """,
+        (row["ficha_numero"],),
+    ).fetchall()
+
+    result = []
+    for ap in aprendices_raw:
+        entrega = None
+        if evidencia and ap["usuario_id"]:
+            entrega_row = db.execute(
+                """
+                SELECT id, url, calificacion, observaciones, entregado_en
+                FROM entrega_evidencia
+                WHERE id_evidencia_aprendizaje = ? AND id_usuario = ?
+                """,
+                (evidencia["id"], ap["usuario_id"]),
+            ).fetchone()
+            if entrega_row:
+                entrega = {
+                    "id": entrega_row["id"],
+                    "url": entrega_row["url"],
+                    "calificacion": entrega_row["calificacion"],
+                    "observaciones": entrega_row["observaciones"],
+                    "entregado_en": entrega_row["entregado_en"],
+                }
+
+        result.append(
+            {
+                "id": ap["id"],
+                "nombre": f"{ap['nombres']} {ap['apellidos']}",
+                "documento": ap["documento"],
+                "usuario_id": ap["usuario_id"],
+                "correo": ap["correo"],
+                "entrega": entrega,
+            }
+        )
+
+    return jsonify({"aprendices": result, "evidencia_id": evidencia["id"] if evidencia else None})
+
+
+@app.post("/api/instructor/entrega/<int:entrega_id>/calificar")
+@role_required("Instructor")
+def api_instructor_calificar(entrega_id):
+    data = request.get_json() or {}
+    calificacion = data.get("calificacion")
+    observaciones = data.get("observaciones", "").strip() or None
+
+    if calificacion is None:
+        return jsonify({"ok": False, "error": "Calificación requerida"}), 400
+    try:
+        calificacion = float(calificacion)
+        if not (0 <= calificacion <= 100):
+            raise ValueError
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "La calificación debe ser un número entre 0 y 100"}), 400
+
+    db = get_db()
+    db.execute(
+        "UPDATE entrega_evidencia SET calificacion = ?, observaciones = ? WHERE id = ?",
+        (calificacion, observaciones, entrega_id),
+    )
+    db.commit()
+    return jsonify({"ok": True, "aprobado": calificacion >= 75})
+
+
+@app.post("/api/instructor/ficha/<int:ficha_id>/fase/nueva")
+@role_required("Instructor")
+def api_instructor_fase_nueva(ficha_id):
+    data = request.get_json() or {}
+    nombre = data.get("nombre", "").strip()
+    if not nombre:
+        return jsonify({"ok": False, "error": "Nombre requerido"}), 400
+
+    db = get_db()
+    ficha = db.execute(
+        "SELECT id_proyecto_formativo FROM ficha_formacion WHERE id = ?", (ficha_id,)
+    ).fetchone()
+    if ficha is None or ficha["id_proyecto_formativo"] is None:
+        return jsonify({"ok": False, "error": "Ficha no tiene proyecto formativo"}), 400
+
+    cursor = db.execute(
+        "INSERT INTO fase_proyecto (id_proyecto_formativo, nombre) VALUES (?, ?)",
+        (ficha["id_proyecto_formativo"], nombre),
+    )
+    db.commit()
+    return jsonify({"ok": True, "id": cursor.lastrowid, "nombre": nombre})
+
+
+@app.post("/api/instructor/fase/<int:fase_id>/actividad/nueva")
+@role_required("Instructor")
+def api_instructor_actividad_nueva(fase_id):
+    data = request.get_json() or {}
+    nombre = data.get("nombre", "").strip()
+    if not nombre:
+        return jsonify({"ok": False, "error": "Nombre requerido"}), 400
+
+    db = get_db()
+    cursor = db.execute(
+        "INSERT INTO actividad_proyecto (id_fase_proyecto, nombre) VALUES (?, ?)",
+        (fase_id, nombre),
+    )
+    db.commit()
+    return jsonify({"ok": True, "id": cursor.lastrowid, "nombre": nombre})
+
+
+@app.post("/api/instructor/actividad-proyecto/<int:act_proy_id>/aprendizaje/nueva")
+@role_required("Instructor")
+def api_instructor_act_aprendizaje_nueva(act_proy_id):
+    data = request.get_json() or {}
+    nombre = data.get("nombre", "").strip()
+    if not nombre:
+        return jsonify({"ok": False, "error": "Nombre requerido"}), 400
+
+    db = get_db()
+    cursor = db.execute(
+        "INSERT INTO actividad_aprendizaje (id_actividad_proyecto, nombre) VALUES (?, ?)",
+        (act_proy_id, nombre),
+    )
+    db.commit()
+    return jsonify({"ok": True, "id": cursor.lastrowid, "nombre": nombre})
 
 
 if __name__ == "__main__":
