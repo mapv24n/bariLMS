@@ -448,6 +448,8 @@ LEGACY_TABLE_NAMES = {
     "ambientes": "ambiente",
 }
 
+STRUCTURE_ENTITIES = {"regional", "centro", "coordinacion", "sede", "ambiente"}
+
 COLUMN_RENAMES = {
     "usuario": {
         "email": "correo",
@@ -1276,14 +1278,7 @@ def normalize_structure_context(args):
     if edit_entity in {"coordinacion", "sede"} and (editing_item is None or editing_item["centro_id"] != centro_id):
         edit_entity = None
         edit_id = None
-    if edit_entity == "instructor" and (
-        editing_item is None or editing_item["centro_id"] != centro_id
-    ):
-        edit_entity = None
-        edit_id = None
-    if edit_entity == "aprendiz" and (
-        editing_item is None or editing_item["regional_id"] != regional_id
-    ):
+    if edit_entity not in STRUCTURE_ENTITIES and edit_entity is not None:
         edit_entity = None
         edit_id = None
     if edit_entity == "ambiente" and (editing_item is None or editing_item["sede_id"] != sede_id):
@@ -1300,16 +1295,6 @@ def normalize_structure_context(args):
         "centros": get_entities("centro", "id_regional = ?", (regional_id,), "nombre ASC") if regional_id else [],
         "coordinaciones": get_entities("coordinacion", "id_centro = ?", (centro_id,), "nombre ASC") if centro_id else [],
         "sedes": get_entities("sede", "id_centro = ?", (centro_id,), "nombre ASC") if centro_id else [],
-        "instructores": (
-            get_entities("instructor", "id_centro = ?", (centro_id,), "nombres ASC, apellidos ASC")
-            if centro_id
-            else []
-        ),
-        "aprendices": (
-            get_entities("aprendiz", "id_regional = ?", (regional_id,), "nombres ASC, apellidos ASC")
-            if regional_id
-            else []
-        ),
         "ambientes": get_entities("ambiente", "id_sede = ?", (sede_id,), "nombre ASC") if sede_id else [],
         "edit_entity": edit_entity,
         "edit_id": edit_id,
@@ -1747,7 +1732,7 @@ def admin_structure():
 @app.post("/admin/structure/<entity>/create")
 @role_required("Administrador")
 def admin_structure_create(entity):
-    if entity not in ENTITY_CONFIG:
+    if entity not in STRUCTURE_ENTITIES:
         return redirect(url_for("admin_structure"))
 
     data = entity_form_data(entity, request.form)
@@ -1781,7 +1766,7 @@ def admin_structure_create(entity):
 @app.get("/admin/structure/<entity>/<int:item_id>/edit")
 @role_required("Administrador")
 def admin_structure_edit(entity, item_id):
-    if entity not in ENTITY_CONFIG:
+    if entity not in STRUCTURE_ENTITIES:
         return redirect(url_for("admin_structure"))
 
     item = get_entity(entity, item_id)
@@ -1819,7 +1804,7 @@ def admin_structure_edit(entity, item_id):
 @app.post("/admin/structure/<entity>/<int:item_id>/update")
 @role_required("Administrador")
 def admin_structure_update(entity, item_id):
-    if entity not in ENTITY_CONFIG:
+    if entity not in STRUCTURE_ENTITIES:
         return redirect(url_for("admin_structure"))
 
     existing = get_entity(entity, item_id)
@@ -1864,7 +1849,7 @@ def admin_structure_update(entity, item_id):
 @app.post("/admin/structure/<entity>/<int:item_id>/delete")
 @role_required("Administrador")
 def admin_structure_delete(entity, item_id):
-    if entity not in ENTITY_CONFIG:
+    if entity not in STRUCTURE_ENTITIES:
         return redirect(url_for("admin_structure"))
 
     item = get_entity(entity, item_id)
