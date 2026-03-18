@@ -740,6 +740,22 @@ def initialize_database():
         db.execute("ALTER TABLE ficha_formacion ADD COLUMN id_proyecto_formativo INTEGER")
         db.commit()
 
+    act_apr_columns = {
+        row["name"] for row in db.execute("PRAGMA table_info(actividad_aprendizaje)").fetchall()
+    }
+    if "descripcion" not in act_apr_columns:
+        db.execute("ALTER TABLE actividad_aprendizaje ADD COLUMN descripcion TEXT")
+        db.commit()
+    if "fecha_inicio" not in act_apr_columns:
+        db.execute("ALTER TABLE actividad_aprendizaje ADD COLUMN fecha_inicio TEXT")
+        db.commit()
+    if "fecha_fin" not in act_apr_columns:
+        db.execute("ALTER TABLE actividad_aprendizaje ADD COLUMN fecha_fin TEXT")
+        db.commit()
+    if "sub_seccion" not in act_apr_columns:
+        db.execute("ALTER TABLE actividad_aprendizaje ADD COLUMN sub_seccion TEXT")
+        db.commit()
+
     user_count = db.execute("SELECT COUNT(*) AS total FROM usuario").fetchone()["total"]
     if user_count == 0:
         for user in DEFAULT_USERS:
@@ -2380,13 +2396,128 @@ def api_instructor_act_aprendizaje_nueva(act_proy_id):
     if not nombre:
         return jsonify({"ok": False, "error": "Nombre requerido"}), 400
 
+    sub_seccion = data.get("sub_seccion", "").strip() or None
+    descripcion = data.get("descripcion", "").strip() or None
+    fecha_inicio = data.get("fecha_inicio", "").strip() or None
+    fecha_fin = data.get("fecha_fin", "").strip() or None
+    guia_url = data.get("guia_url", "").strip() or None
+
     db = get_db()
     cursor = db.execute(
-        "INSERT INTO actividad_aprendizaje (id_actividad_proyecto, nombre) VALUES (?, ?)",
-        (act_proy_id, nombre),
+        """INSERT INTO actividad_aprendizaje
+           (id_actividad_proyecto, nombre, sub_seccion, descripcion, fecha_inicio, fecha_fin)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (act_proy_id, nombre, sub_seccion, descripcion, fecha_inicio, fecha_fin),
     )
+    aa_id = cursor.lastrowid
+    if guia_url:
+        db.execute(
+            "INSERT INTO guia_aprendizaje (id_actividad_aprendizaje, url) VALUES (?, ?)",
+            (aa_id, guia_url),
+        )
     db.commit()
-    return jsonify({"ok": True, "id": cursor.lastrowid, "nombre": nombre})
+    return jsonify({"ok": True, "id": aa_id, "nombre": nombre})
+
+
+@app.get("/api/instructor/actividad-proyecto/<int:ap_id>/actividades-aprendizaje")
+@role_required("Instructor")
+def api_instructor_actividades_aprendizaje(ap_id):
+    db = get_db()
+    rows = db.execute(
+        """
+        SELECT aa.id, aa.nombre, aa.sub_seccion, aa.descripcion,
+               aa.fecha_inicio, aa.fecha_fin,
+               ga.url AS guia_url,
+               ea.id  AS evidencia_id
+        FROM actividad_aprendizaje aa
+        LEFT JOIN guia_aprendizaje      ga ON ga.id_actividad_aprendizaje = aa.id
+        LEFT JOIN evidencia_aprendizaje ea ON ea.id_actividad_aprendizaje = aa.id
+        WHERE aa.id_actividad_proyecto = ?
+        ORDER BY aa.id ASC
+        """,
+        (ap_id,),
+    ).fetchall()
+    return jsonify({"actividades": [dict(r) for r in rows]})
+
+
+@app.get("/api/instructor/actividad-proyecto/<int:ap_id>/evidencias-matriz")
+@role_required("Instructor")
+def api_instructor_evidencias_matriz(ap_id):
+    db = get_db()
+    ap_row = db.execute(
+        """
+        SELECT f.id AS ficha_id, f.numero AS ficha_numero
+        FROM actividad_proyecto ap
+        JOIN fase_proyecto    fp ON fp.id = ap.id_fase_proyecto
+        JOIN ficha_formacion  f  ON f.id_proyecto_formativo = fp.id_proyecto_formativo
+        WHERE ap.id = ?
+        LIMIT 1
+        """,
+        (ap_id,),
+    ).fetchone()
+    if ap_row is None:
+        return jsonify({"actividades": [], "aprendices": []})
+
+    actividades = db.execute(
+        """
+        SELECT aa.id, aa.nombre, ea.id AS evidencia_id
+        FROM actividad_aprendizaje aa
+        LEFT JOIN evidencia_aprendizaje ea ON ea.id_actividad_aprendizaje = aa.id
+        WHERE aa.id_actividad_proyecto = ?
+        ORDER BY aa.id ASC
+        """,
+        (ap_id,),
+    ).fetchall()
+
+    aprendices = db.execute(
+        """
+        SELECT a.id, a.nombres, a.apellidos, a.documento, u.id AS usuario_id
+        FROM aprendiz a
+        LEFT JOIN usuario u ON lower(u.nombre) = lower(a.nombres || ' ' || a.apellidos)
+                           AND u.rol = 'Aprendiz'
+        WHERE a.ficha = ?
+        ORDER BY a.nombres ASC, a.apellidos ASC
+        """,
+        (ap_row["ficha_numero"],),
+    ).fetchall()
+
+    result_ap = []
+    for apz in aprendices:
+        entregas = []
+        for act in actividades:
+            entrega = None
+            if act["evidencia_id"] and apz["usuario_id"]:
+                row = db.execute(
+                    "SELECT id, url, calificacion FROM entrega_evidencia "
+                    "WHERE id_evidencia_aprendizaje = ? AND id_usuario = ?",
+                    (act["evidencia_id"], apz["usuario_id"]),
+                ).fetchone()
+                if row:
+                    entrega = {"id": row["id"], "url": row["url"], "calificacion": row["calificacion"]}
+            entregas.append({"actividad_id": act["id"], "entrega": entrega})
+        result_ap.append({
+            "id": apz["id"],
+            "nombre": f"{apz['nombres']} {apz['apellidos']}",
+            "documento": apz["documento"],
+            "usuario_id": apz["usuario_id"],
+            "entregas": entregas,
+        })
+
+    return jsonify({
+        "actividades": [{"id": a["id"], "nombre": a["nombre"], "evidencia_id": a["evidencia_id"]} for a in actividades],
+        "aprendices": result_ap,
+    })
+
+
+@app.patch("/api/instructor/actividad-aprendizaje/<int:aa_id>/fecha-fin")
+@role_required("Instructor")
+def api_instructor_act_apr_update_fecha_fin(aa_id):
+    data = request.get_json() or {}
+    fecha_fin = data.get("fecha_fin", "").strip() or None
+    db = get_db()
+    db.execute("UPDATE actividad_aprendizaje SET fecha_fin = ? WHERE id = ?", (fecha_fin, aa_id))
+    db.commit()
+    return jsonify({"ok": True})
 
 
 # ============================================================
