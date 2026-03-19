@@ -1,0 +1,66 @@
+{% extends "aprendiz/base.html" %}
+
+{% block title %}Cambiar Contraseña{% endblock %}
+{% block menu_contrasena %}nav-active{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h4 class="mb-0 text-gray-800 font-weight-bold">
+                <i class="fas fa-key mr-2 text-success"></i>Cambiar Contraseña
+            </h4>
+            <p class="text-muted mb-0 small">Actualiza tus credenciales de acceso</p>
+        </div>
+        <a href="/dashboard/aprendiz" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left mr-1"></i> Volver
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row justify-content-center">
+        <div class="col-xl-5 col-lg-7">
+            <div class="card border-0 shadow-sm" style="border-radius:12px;">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h6 class="m-0 font-weight-bold text-gray-800">
+                        <i class="fas fa-lock mr-2 text-success"></i>Nueva contraseña
+                    </h6>
+                </div>
+                <div class="card-body px-4 py-4">
+                    <form method="POST" action="/aprendiz/cambiar-contrasena">
+                        <div class="form-group">
+                            <label class="font-weight-bold small text-gray-700">Contraseña actual</label>
+                            <input type="password" name="current_password" class="form-control" required
+                                   placeholder="Ingresa tu contraseña actual">
+                        </div>
+                        <div class="form-group">
+                            <label class="font-weight-bold small text-gray-700">Nueva contraseña</label>
+                            <input type="password" name="new_password" class="form-control" required
+                                   placeholder="Mínimo 8 caracteres">
+                            <small class="form-text text-muted">Debe tener al menos 8 caracteres.</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="font-weight-bold small text-gray-700">Confirmar nueva contraseña</label>
+                            <input type="password" name="confirm_password" class="form-control" required
+                                   placeholder="Repite la nueva contraseña">
+                        </div>
+                        <button type="submit" class="btn btn-success btn-block font-weight-bold mt-2">
+                            <i class="fas fa-save mr-2"></i>Guardar nueva contraseña
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
