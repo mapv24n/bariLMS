@@ -1,206 +1,128 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>BARÍ LMS | Mis Fichas</title>
-    <link href="{{ url_for('static', filename='vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/sena-learn.css') }}" rel="stylesheet">
-    <style>
-        .ficha-card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,.08);
-            transition: transform .2s, box-shadow .2s;
-            overflow: hidden;
-        }
-        .ficha-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 25px rgba(0,0,0,.12);
-        }
-        .ficha-card .card-header-sena {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            padding: 16px 20px;
-        }
-        .ficha-card .ficha-numero {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #fff;
-        }
-        .ficha-card .card-body {
-            padding: 20px;
-        }
-        .ficha-card .programa-nombre {
-            color: #5a5c69;
-            font-size: .95rem;
-            margin-bottom: 6px;
-        }
-        .ficha-card .proyecto-nombre {
-            color: #1cc88a;
-            font-weight: 600;
-            font-size: 1rem;
-            margin-bottom: 12px;
-        }
-        .ficha-card .btn-ver-proyecto {
-            background: #1cc88a;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
-            font-weight: 600;
-            width: 100%;
-            transition: background .15s;
-        }
-        .ficha-card .btn-ver-proyecto:hover {
-            background: #17a673;
-            color: #fff;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #858796;
-        }
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 16px;
-            opacity: .5;
-        }
-    </style>
-</head>
-<body id="page-top">
-<div id="wrapper">
+{% extends "aprendiz/base.html" %}
 
-    <!-- Sidebar -->
-    <ul class="navbar-nav bg-gradient-sena sidebar sidebar-dark accordion" id="accordionSidebar">
-        <a class="sidebar-brand d-flex align-items-center justify-content-center"
-           href="{{ url_for('dashboard', role_slug='aprendiz') }}">
-            <div class="sidebar-brand-icon">
-                <img src="{{ url_for('static', filename='img/logo-sena-blanco.png') }}" alt="Logo SENA" class="sena-brand-logo">
-            </div>
-            <div class="sidebar-brand-text mx-3">BARÍ LMS</div>
-        </a>
-        <hr class="sidebar-divider my-0">
-        <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('dashboard', role_slug='aprendiz') }}">
-                <i class="fas fa-fw fa-tachometer-alt"></i><span>Panel principal</span>
-            </a>
-        </li>
-        <hr class="sidebar-divider">
-        <div class="sidebar-heading">Formación</div>
-        <li class="nav-item active">
-            <a class="nav-link" href="{{ url_for('aprendiz_fichas') }}">
-                <i class="fas fa-fw fa-layer-group"></i><span>Mis Fichas</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <form method="post" action="{{ url_for('logout') }}">
-                <button type="submit" class="nav-link btn btn-link text-left w-100 logout-link">
-                    <i class="fas fa-fw fa-sign-out-alt"></i><span>Cerrar sesión</span>
-                </button>
-            </form>
-        </li>
-    </ul>
+{% block title %}Mis Fichas{% endblock %}
+{% block menu_fichas %}nav-active{% endblock %}
 
-    <div id="content-wrapper" class="d-flex flex-column">
-        <div id="content">
+{% block content %}
+<style>
+    /* Mantenemos tus estilos personalizados aquí */
+    .ficha-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,.08);
+        transition: transform .2s, box-shadow .2s;
+        overflow: hidden;
+        background-color: #fff;
+    }
+    .ficha-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,.12);
+    }
+    .ficha-card .card-header-sena {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        padding: 16px 20px;
+    }
+    .ficha-card .ficha-numero {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #fff;
+    }
+    .ficha-card .card-body {
+        padding: 20px;
+    }
+    .ficha-card .programa-nombre {
+        color: #5a5c69;
+        font-size: .95rem;
+        margin-bottom: 6px;
+    }
+    .ficha-card .proyecto-nombre {
+        color: #1cc88a;
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 12px;
+    }
+    .ficha-card .btn-ver-proyecto {
+        background: #1cc88a;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 600;
+        width: 100%;
+        transition: background .15s;
+        text-align: center;
+        display: inline-block;
+        text-decoration: none;
+    }
+    .ficha-card .btn-ver-proyecto:hover {
+        background: #17a673;
+        color: #fff;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #858796;
+    }
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 16px;
+        opacity: .5;
+    }
+</style>
 
-            <!-- Topbar -->
-            <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-                <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
-                    <i class="fa fa-bars"></i>
-                </button>
-                <div class="mr-auto">
-                    <span class="sena-role-pill">Aprendiz</span>
-                </div>
-                <ul class="navbar-nav ml-auto">
-                    <li class="nav-item no-arrow">
-                        <span class="nav-link text-gray-700">
-                            <span class="mr-2 d-none d-lg-inline">{{ user.name }}</span>
-                            <i class="fas fa-user-circle fa-lg"></i>
-                        </span>
-                    </li>
-                </ul>
-            </nav>
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h4 class="mb-0 text-gray-800 font-weight-bold">
+                <i class="fas fa-graduation-cap mr-2 text-sena"></i>
+                Mis Fichas de Formación
+            </h4>
+            <p class="text-muted mb-0 small">Selecciona una ficha para ver tu proyecto y entregar evidencias</p>
+        </div>
+    </div>
 
-            <div class="container-fluid">
-
-                <!-- Encabezado -->
-                <div class="d-flex align-items-center justify-content-between mb-4">
-                    <div>
-                        <h4 class="mb-0 text-gray-800 font-weight-bold">
-                            <i class="fas fa-graduation-cap mr-2 text-sena"></i>
-                            Mis Fichas de Formación
-                        </h4>
-                        <p class="text-muted mb-0 small">Selecciona una ficha para ver tu proyecto y entregar evidencias</p>
-                    </div>
-                </div>
-
-                <!-- Lista de fichas -->
-                {% if fichas %}
-                <div class="row">
-                    {% for ficha in fichas %}
-                    <div class="col-lg-6 col-md-6 mb-4">
-                        <div class="ficha-card">
-                            <div class="card-header-sena">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div>
-                                        <div class="small opacity-75">Ficha</div>
-                                        <div class="ficha-numero">{{ ficha.numero }}</div>
-                                    </div>
-                                    <i class="fas fa-id-card fa-2x text-white opacity-50"></i>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="programa-nombre">
-                                    <i class="fas fa-book mr-1"></i>
-                                    {{ ficha.programa_nombre or 'Sin programa' }}
-                                </div>
-                                <div class="proyecto-nombre">
-                                    <i class="fas fa-project-diagram mr-1"></i>
-                                    {{ ficha.proyecto_nombre or 'Sin proyecto formativo' }}
-                                </div>
-                                {% if ficha.nivel_nombre %}
-                                <div class="text-muted small mb-3">
-                                    <i class="fas fa-layer-group mr-1"></i>
-                                    {{ ficha.nivel_nombre }}
-                                </div>
-                                {% endif %}
-                                <a href="{{ url_for('aprendiz_proyecto', ficha_id=ficha.id) }}"
-                                   class="btn btn-ver-proyecto">
-                                    <i class="fas fa-eye mr-2"></i>Ver Proyecto
-                                </a>
-                            </div>
+    {% if fichas %}
+    <div class="row">
+        {% for ficha in fichas %}
+        <div class="col-lg-6 col-md-6 mb-4">
+            <div class="ficha-card">
+                <div class="card-header-sena">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="small text-white opacity-75">Ficha</div>
+                            <div class="ficha-numero">{{ ficha.numero }}</div>
                         </div>
+                        <i class="fas fa-id-card fa-2x text-white opacity-50"></i>
                     </div>
-                    {% endfor %}
                 </div>
-                {% else %}
-                <div class="empty-state">
-                    <i class="fas fa-folder-open"></i>
-                    <h5>No tienes fichas asignadas</h5>
-                    <p>Contacta a tu coordinación para que te asignen a una ficha de formación.</p>
+                <div class="card-body">
+                    <div class="programa-nombre">
+                        <i class="fas fa-book mr-1 text-sena"></i>
+                        {{ ficha.programa_nombre or 'Sin programa' }}
+                    </div>
+                    <div class="proyecto-nombre">
+                        <i class="fas fa-project-diagram mr-1 text-sena"></i>
+                        {{ ficha.proyecto_nombre or 'Sin proyecto formativo' }}
+                    </div>
+                    
+                    <a href="#" class="btn btn-ver-proyecto">
+                        <i class="fas fa-eye mr-2"></i>Ver Detalles
+                    </a>
                 </div>
-                {% endif %}
-
             </div>
         </div>
-
-        <footer class="sticky-footer bg-white mt-4">
-            <div class="container my-auto">
-                <div class="copyright text-center my-auto">
-                    <span>BARÍ LMS SENA - Aprendiz</span>
-                </div>
-            </div>
-        </footer>
+        {% endfor %}
     </div>
+    {% else %}
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="empty-state">
+                <i class="fas fa-folder-open text-sena"></i>
+                <h5>No tienes fichas asignadas</h5>
+                <p>Contacta a tu coordinación para que te asignen a una ficha de formación.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
-
-<script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
-<script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-<script src="{{ url_for('static', filename='vendor/jquery-easing/jquery.easing.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
-</body>
-</html>
+{% endblock %}
