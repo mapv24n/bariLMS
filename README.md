@@ -87,18 +87,18 @@ PGUSER=postgres          # tu usuario de PostgreSQL
 PGPASSWORD=              # tu contraseña
 ```
 
-### 5. Crear la base de datos en PostgreSQL
+### 5. Crear la base de datos y el schema
 
-Solo necesitas crear la base de datos vacía. Las tablas se crean automáticamente al iniciar la app:
-
-```sql
-CREATE DATABASE bari_lms;
-```
-
-Desde la terminal también puedes hacerlo con:
+Crea la base de datos vacía:
 
 ```bash
 createdb -U postgres bari_lms
+```
+
+Luego aplica el schema:
+
+```bash
+psql -U postgres -d bari_lms -f internal/database/bari_lms_postgresql.sql
 ```
 
 ### 6. (Opcional) Cargar datos de prueba
@@ -159,7 +159,7 @@ bariLMS/
         └── seed_aprendices.py      ← Seed de aprendices de prueba (PostgreSQL)
 ```
 
-> **Nota:** Las tablas se crean automáticamente al iniciar la app. Los scripts `.sql` son de referencia y para entornos donde se prefiera crear el schema manualmente.
+> **Nota:** Las tablas **no** se crean automáticamente. Es necesario ejecutar el schema antes del primer inicio de la app.
 
 ---
 
