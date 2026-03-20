@@ -2,7 +2,7 @@ import csv
 import io
 
 from flask import flash, redirect, render_template, request, session, url_for
-from psycopg2 import IntegrityError
+from psycopg.errors import UniqueViolation as IntegrityError
 from werkzeug.security import generate_password_hash
 
 from bari_lms.config import AVAILABLE_ROLES

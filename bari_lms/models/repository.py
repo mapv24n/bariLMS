@@ -1,8 +1,8 @@
 import copy
 
-import psycopg2
+import psycopg
 from flask import current_app, g
-from psycopg2.extras import RealDictCursor
+from psycopg.rows import dict_row
 from werkzeug.security import generate_password_hash
 
 from bari_lms.config import DASHBOARDS, DEFAULT_LEVELS, DEFAULT_USERS
@@ -289,7 +289,7 @@ class PostgresConnection:
         return query.replace("?", "%s")
 
     def execute(self, query, params=()):
-        cursor = self.connection.cursor(cursor_factory=RealDictCursor)
+        cursor = self.connection.cursor(row_factory=dict_row)
         cursor.execute(self._normalize_query(query), params)
         if cursor.description is None:
             cursor.close()
@@ -323,7 +323,7 @@ def parse_int(value):
 
 def get_db():
     if "db" not in g:
-        connection = psycopg2.connect(
+        connection = psycopg.connect(
             host=current_app.config["PGHOST"],
             port=current_app.config["PGPORT"],
             dbname=current_app.config["PGDATABASE"],

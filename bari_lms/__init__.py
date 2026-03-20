@@ -20,7 +20,7 @@ def create_app():
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "bari-lms-dev-key")
     app.config["PGHOST"] = os.environ.get("PGHOST", "127.0.0.1")
     app.config["PGPORT"] = int(os.environ.get("PGPORT", "5432"))
-    app.config["PGDATABASE"] = os.environ.get("PGDATABASE", "bari_lms")
+    app.config["PGDATABASE"] = os.environ.get("PGDATABASE", "bari_lms_postgresql.sql")
     app.config["PGUSER"] = os.environ.get("PGUSER", "postgres")
     app.config["PGPASSWORD"] = os.environ.get("PGPASSWORD", "")
 
