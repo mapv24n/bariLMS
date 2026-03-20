@@ -1,8 +1,10 @@
 import copy
 
 import psycopg
+import psycopg.conninfo
 from flask import current_app, g
 from psycopg.rows import dict_row
+from psycopg_pool import ConnectionPool
 from werkzeug.security import generate_password_hash
 
 from bari_lms.config import DASHBOARDS, DEFAULT_LEVELS, DEFAULT_USERS
@@ -321,23 +323,31 @@ def parse_int(value):
         return None
 
 
+def create_pool(app):
+    conninfo = psycopg.conninfo.make_conninfo(
+        host=app.config["PGHOST"],
+        port=app.config["PGPORT"],
+        dbname=app.config["PGDATABASE"],
+        user=app.config["PGUSER"],
+        password=app.config["PGPASSWORD"],
+        options="-c TimeZone=America/Bogota",
+    )
+    return ConnectionPool(conninfo, min_size=2, max_size=10, open=True)
+
+
 def get_db():
     if "db" not in g:
-        connection = psycopg.connect(
-            host=current_app.config["PGHOST"],
-            port=current_app.config["PGPORT"],
-            dbname=current_app.config["PGDATABASE"],
-            user=current_app.config["PGUSER"],
-            password=current_app.config["PGPASSWORD"],
-        )
-        g.db = PostgresConnection(connection)
+        conn = current_app.extensions["db_pool"].getconn()
+        g._pool_conn = conn
+        g.db = PostgresConnection(conn)
     return g.db
 
 
 def close_db(_error=None):
-    db = g.pop("db", None)
-    if db is not None:
-        db.close()
+    conn = g.pop("_pool_conn", None)
+    g.pop("db", None)
+    if conn is not None:
+        current_app.extensions["db_pool"].putconn(conn)
 
 
 def get_existing_tables():

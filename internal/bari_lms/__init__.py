@@ -6,7 +6,7 @@ from bari_lms.controllers.admin_controller import register_routes as register_ad
 from bari_lms.controllers.auth_controller import register_routes as register_auth_routes
 from bari_lms.controllers.dashboard_controller import register_routes as register_dashboard_routes
 from bari_lms.controllers.instructor_controller import register_routes as register_instructor_routes
-from bari_lms.models.repository import close_db, initialize_database
+from bari_lms.models.repository import close_db, create_pool, initialize_database
 from bari_lms.services.auth import session_context
 
 
@@ -28,6 +28,7 @@ def create_app():
     os.makedirs(upload_folder, exist_ok=True)
     app.config["UPLOAD_FOLDER_GUIAS"] = upload_folder
 
+    app.extensions["db_pool"] = create_pool(app)
     app.teardown_appcontext(close_db)
     app.context_processor(session_context)
 
