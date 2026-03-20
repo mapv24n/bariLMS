@@ -1,9 +1,14 @@
+import re
+
 from flask import flash, redirect, render_template, request, session, url_for
-from werkzeug.security import check_password_hash
 
 from bari_lms.config import DEFAULT_USERS, ROLE_TO_SLUG
-from bari_lms.models.repository import get_user_by_email
+from bari_lms.models.repository import get_user_by_email, user_has_profile
 from bari_lms.services.auth import current_user
+from bari_lms.services.security import verify_password
+
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+_BAD_CREDS = "Credenciales o perfil incorrectos."
 
 
 def register_routes(app):
@@ -20,20 +25,33 @@ def register_routes(app):
             email = request.form.get("email", "").strip().lower()
             password = request.form.get("password", "")
             role = request.form.get("role", "")
+
+            if not _EMAIL_RE.match(email):
+                flash("Ingresa un correo electrónico válido.", "danger")
+                return render_template("login.html", demo_users=DEFAULT_USERS)
+
             user = get_user_by_email(email)
 
-            if (
-                user is None
-                or not user["active"]
-                or user["role"] != role
-                or not check_password_hash(user["password_hash"], password)
-            ):
-                flash("Credenciales o perfil incorrectos. Usa uno de los accesos demo listados.", "danger")
+            if user is None:
+                flash(_BAD_CREDS, "danger")
+                return render_template("login.html", demo_users=DEFAULT_USERS)
+
+            if not user["active"]:
+                flash("Tu cuenta está desactivada. Contacta al administrador.", "danger")
+                return render_template("login.html", demo_users=DEFAULT_USERS)
+
+            if not user_has_profile(user["id"], role):
+                flash(_BAD_CREDS, "danger")
+                return render_template("login.html", demo_users=DEFAULT_USERS)
+
+            if not verify_password(user["password_hash"], password):
+                flash(_BAD_CREDS, "danger")
                 return render_template("login.html", demo_users=DEFAULT_USERS)
 
             session.clear()
             session["user_email"] = user["email"]
-            return redirect(url_for("dashboard", role_slug=ROLE_TO_SLUG[user["role"]]))
+            session["user_profile"] = role
+            return redirect(url_for("dashboard", role_slug=ROLE_TO_SLUG[role]))
 
         if current_user():
             return redirect(url_for("home"))

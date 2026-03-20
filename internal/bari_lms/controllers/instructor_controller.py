@@ -2,11 +2,11 @@ import os
 import uuid
 
 from flask import current_app, flash, jsonify, redirect, render_template, request, url_for
-from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
 from bari_lms.models.repository import get_db, get_user_by_email
 from bari_lms.services.auth import current_user, role_required
+from bari_lms.services.security import hash_password, verify_password
 
 
 def register_routes(app):
@@ -29,7 +29,7 @@ def register_routes(app):
                 flash("Todos los campos son obligatorios.", "danger")
                 return render_template("instructor/change_password.html", user=user)
 
-            if not check_password_hash(user_record["password_hash"], current_password):
+            if not verify_password(user_record["password_hash"], current_password):
                 flash("La contraseña actual es incorrecta.", "danger")
                 return render_template("instructor/change_password.html", user=user)
 
@@ -48,7 +48,7 @@ def register_routes(app):
             db = get_db()
             db.execute(
                 "UPDATE usuario SET contrasena_hash = ? WHERE id = ?",
-                (generate_password_hash(new_password), user["id"]),
+                (hash_password(new_password), user["id"]),
             )
             db.commit()
             flash("Contraseña actualizada correctamente.", "success")
@@ -266,7 +266,11 @@ def register_routes(app):
                    u.id AS usuario_id, u.correo
             FROM aprendiz a
             LEFT JOIN usuario u ON lower(u.nombre) = lower(a.nombres || ' ' || a.apellidos)
-                               AND u.rol = 'Aprendiz'
+                               AND EXISTS (
+                                   SELECT 1 FROM usuario_perfil up
+                                   JOIN perfil p ON p.id = up.perfil_id
+                                   WHERE up.usuario_id = u.id AND p.nombre = 'Aprendiz'
+                               )
             WHERE a.ficha = ?
             ORDER BY a.nombres ASC, a.apellidos ASC
             """,
@@ -482,7 +486,11 @@ def register_routes(app):
             SELECT a.id, a.nombres, a.apellidos, a.documento, u.id AS usuario_id
             FROM aprendiz a
             LEFT JOIN usuario u ON lower(u.nombre) = lower(a.nombres || ' ' || a.apellidos)
-                               AND u.rol = 'Aprendiz'
+                               AND EXISTS (
+                                   SELECT 1 FROM usuario_perfil up
+                                   JOIN perfil p ON p.id = up.perfil_id
+                                   WHERE up.usuario_id = u.id AND p.nombre = 'Aprendiz'
+                               )
             WHERE a.ficha = ?
             ORDER BY a.nombres ASC, a.apellidos ASC
             """,

@@ -3,12 +3,13 @@ from functools import wraps
 from flask import redirect, session, url_for
 
 from bari_lms.config import ROLE_TO_SLUG
-from bari_lms.models.repository import get_user_by_email
+from bari_lms.models.repository import get_user_by_email, user_has_profile
 
 
 def current_user():
     email = session.get("user_email")
-    if not email:
+    profile = session.get("user_profile")
+    if not email or not profile:
         return None
 
     user = get_user_by_email(email)
@@ -16,13 +17,17 @@ def current_user():
         session.clear()
         return None
 
+    if not user_has_profile(user["id"], profile):
+        session.clear()
+        return None
+
     return {
         "id": user["id"],
         "email": user["email"],
-        "role": user["role"],
+        "role": profile,
         "name": user["name"],
         "active": user["active"],
-        "dashboard_slug": ROLE_TO_SLUG[user["role"]],
+        "dashboard_slug": ROLE_TO_SLUG[profile],
     }
 
 

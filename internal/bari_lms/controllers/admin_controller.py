@@ -1,11 +1,11 @@
 import csv
 import io
+import uuid
 
 from flask import flash, redirect, render_template, request, session, url_for
 from psycopg.errors import UniqueViolation as IntegrityError
-from werkzeug.security import generate_password_hash
-
 from bari_lms.config import AVAILABLE_ROLES
+from bari_lms.services.security import hash_password
 from bari_lms.models.repository import (
     ACADEMIC_ENTITIES,
     ENTITY_CONFIG,
@@ -156,12 +156,21 @@ def register_routes(app):
             return render_template("admin_users.html", user=current_user(), users=get_all_users(), roles=AVAILABLE_ROLES, form_data=form_data, editing_user=None)
 
         db = get_db()
+        user_id = str(uuid.uuid4())
         db.execute(
             """
-            INSERT INTO usuario (correo, contrasena_hash, rol, nombre, activo)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO usuario (id, correo, contrasena_hash, nombre, activo)
+            VALUES (%s, %s, %s, %s, %s)
             """,
-            (email, generate_password_hash(password), role, name, active),
+            (user_id, email, hash_password(password), name, active),
+        )
+        db.execute(
+            """
+            INSERT INTO usuario_perfil (id, usuario_id, perfil_id)
+            SELECT %s, %s, p.id FROM perfil p WHERE p.nombre = %s
+            ON CONFLICT (usuario_id, perfil_id) DO NOTHING
+            """,
+            (str(uuid.uuid4()), user_id, role),
         )
         db.commit()
         flash("Usuario creado correctamente.", "success")
@@ -221,23 +230,33 @@ def register_routes(app):
             db.execute(
                 """
                 UPDATE usuario
-                SET nombre = ?, correo = ?, rol = ?, activo = ?, contrasena_hash = ?
-                WHERE id = ?
+                SET nombre = %s, correo = %s, activo = %s, contrasena_hash = %s
+                WHERE id = %s
                 """,
-                (name, email, role, active, generate_password_hash(password), user_id),
+                (name, email, active, hash_password(password), user_id),
             )
         else:
             db.execute(
                 """
                 UPDATE usuario
-                SET nombre = ?, correo = ?, rol = ?, activo = ?
-                WHERE id = ?
+                SET nombre = %s, correo = %s, activo = %s
+                WHERE id = %s
                 """,
-                (name, email, role, active, user_id),
+                (name, email, active, user_id),
             )
+        db.execute("DELETE FROM usuario_perfil WHERE usuario_id = %s", (user_id,))
+        db.execute(
+            """
+            INSERT INTO usuario_perfil (id, usuario_id, perfil_id)
+            SELECT %s, %s, p.id FROM perfil p WHERE p.nombre = %s
+            ON CONFLICT (usuario_id, perfil_id) DO NOTHING
+            """,
+            (str(uuid.uuid4()), user_id, role),
+        )
         db.commit()
         if current_user()["id"] == user_id:
             session["user_email"] = email
+            session["user_profile"] = role
         flash("Usuario actualizado correctamente.", "success")
         return redirect(url_for("admin_users"))
 
@@ -252,7 +271,7 @@ def register_routes(app):
             flash("No puedes eliminar tu propia cuenta.", "danger")
             return redirect(url_for("admin_users"))
         db = get_db()
-        db.execute("DELETE FROM usuario WHERE id = ?", (user_id,))
+        db.execute("DELETE FROM usuario WHERE id = %s", (user_id,))
         db.commit()
         flash("Usuario eliminado correctamente.", "success")
         return redirect(url_for("admin_users"))

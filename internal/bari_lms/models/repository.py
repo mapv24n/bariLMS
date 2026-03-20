@@ -5,9 +5,8 @@ import psycopg.conninfo
 from flask import current_app, g
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
-from werkzeug.security import generate_password_hash
-
 from bari_lms.config import DASHBOARDS, DEFAULT_LEVELS, DEFAULT_USERS
+from bari_lms.services.security import hash_password
 
 ENTITY_CONFIG = {
     "regional": {
@@ -440,14 +439,13 @@ def initialize_database():
         """
         CREATE TABLE IF NOT EXISTS usuario (
             id              UUID        PRIMARY KEY,
+            creado_por      UUID        REFERENCES usuario(id) ON DELETE SET NULL,
             correo          TEXT        UNIQUE NOT NULL,
             contrasena_hash TEXT        NOT NULL,
-            rol             TEXT        NOT NULL,
             nombre          TEXT        NOT NULL,
             activo          BOOLEAN     NOT NULL DEFAULT TRUE,
             creado_en       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            actualizado_en  TIMESTAMPTZ,
-            creado_por      UUID        REFERENCES usuario(id) ON DELETE SET NULL
+            actualizado_en  TIMESTAMPTZ
         )
         """
     )
@@ -875,21 +873,37 @@ def initialize_database():
     )
     db.commit()
 
+    import uuid as _uuid
+
+    db.execute(
+        """
+        INSERT INTO perfil (id, nombre) VALUES
+            (gen_random_uuid(), 'Administrador'),
+            (gen_random_uuid(), 'Administrativo'),
+            (gen_random_uuid(), 'Instructor'),
+            (gen_random_uuid(), 'Aprendiz')
+        ON CONFLICT (nombre) DO NOTHING
+        """
+    )
+
     user_count = db.execute("SELECT COUNT(*) AS total FROM usuario").fetchone()["total"]
     if user_count == 0:
         for user in DEFAULT_USERS:
+            user_id = str(_uuid.uuid4())
             db.execute(
                 """
-                INSERT INTO usuario (correo, contrasena_hash, rol, nombre, activo)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO usuario (id, correo, contrasena_hash, nombre, activo)
+                VALUES (%s, %s, %s, %s, %s)
                 """,
-                (
-                    user["email"],
-                    generate_password_hash(user["password"]),
-                    user["role"],
-                    user["name"],
-                    user["active"],
-                ),
+                (user_id, user["email"], hash_password(user["password"]), user["name"], user["active"]),
+            )
+            db.execute(
+                """
+                INSERT INTO usuario_perfil (id, usuario_id, perfil_id)
+                SELECT %s, %s, p.id FROM perfil p WHERE p.nombre = %s
+                ON CONFLICT (usuario_id, perfil_id) DO NOTHING
+                """,
+                (str(_uuid.uuid4()), user_id, user["role"]),
             )
         db.commit()
 
@@ -907,21 +921,38 @@ def get_user_by_email(email):
         return None
     return get_db().execute(
         """
-        SELECT id, correo AS email, rol AS role, nombre AS name, activo AS active,
-               creado_en AS created_at, contrasena_hash AS password_hash
-        FROM usuario
-        WHERE lower(correo) = lower(?)
+        SELECT u.id, u.correo AS email, u.nombre AS name, u.activo AS active,
+               u.creado_en AS created_at, u.contrasena_hash AS password_hash
+        FROM usuario u
+        WHERE lower(u.correo) = lower(%s)
         """,
         (email,),
     ).fetchone()
 
 
+def user_has_profile(user_id, profile_name):
+    row = get_db().execute(
+        """
+        SELECT 1
+        FROM usuario_perfil up
+        JOIN perfil p ON p.id = up.perfil_id
+        WHERE up.usuario_id = %s AND p.nombre = %s
+        """,
+        (user_id, profile_name),
+    ).fetchone()
+    return row is not None
+
+
 def get_user_by_id(user_id):
     return get_db().execute(
         """
-        SELECT id, correo AS email, rol AS role, nombre AS name, activo AS active, creado_en AS created_at
-        FROM usuario
-        WHERE id = ?
+        SELECT u.id, u.correo AS email, u.nombre AS name, u.activo AS active,
+               u.creado_en AS created_at,
+               (SELECT p.nombre FROM usuario_perfil up
+                JOIN perfil p ON p.id = up.perfil_id
+                WHERE up.usuario_id = u.id LIMIT 1) AS role
+        FROM usuario u
+        WHERE u.id = %s
         """,
         (user_id,),
     ).fetchone()
@@ -930,9 +961,13 @@ def get_user_by_id(user_id):
 def get_all_users():
     return get_db().execute(
         """
-        SELECT id, correo AS email, rol AS role, nombre AS name, activo AS active, creado_en AS created_at
-        FROM usuario
-        ORDER BY creado_en DESC, id DESC
+        SELECT u.id, u.correo AS email, u.nombre AS name, u.activo AS active,
+               u.creado_en AS created_at,
+               (SELECT p.nombre FROM usuario_perfil up
+                JOIN perfil p ON p.id = up.perfil_id
+                WHERE up.usuario_id = u.id LIMIT 1) AS role
+        FROM usuario u
+        ORDER BY u.creado_en DESC, u.id DESC
         """
     ).fetchall()
 
@@ -954,31 +989,35 @@ def create_linked_person_user(entity, item_id, data):
     if get_user_by_email(login_email) is not None:
         raise ValueError("Ya existe un usuario con el correo que se intenta asignar a la persona.")
 
+    import uuid as _uuid
+
     db = get_db()
-    cursor = db.execute(
+    new_user_id = str(_uuid.uuid4())
+    db.execute(
         """
-        INSERT INTO usuario (correo, contrasena_hash, rol, nombre, activo)
-        VALUES (?, ?, ?, ?, TRUE)
-        RETURNING id
+        INSERT INTO usuario (id, correo, contrasena_hash, nombre, activo)
+        VALUES (%s, %s, %s, %s, TRUE)
         """,
-        (
-            login_email,
-            generate_password_hash(data["documento"]),
-            config["role"],
-            person_full_name(data),
-        ),
+        (new_user_id, login_email, hash_password(data["documento"]), person_full_name(data)),
     )
-    user_id = cursor.fetchone()["id"]
+    db.execute(
+        """
+        INSERT INTO usuario_perfil (id, usuario_id, perfil_id)
+        SELECT %s, %s, p.id FROM perfil p WHERE p.nombre = %s
+        ON CONFLICT (usuario_id, perfil_id) DO NOTHING
+        """,
+        (str(_uuid.uuid4()), new_user_id, config["role"]),
+    )
     db.execute(
         f"""
         UPDATE {config['table']}
-        SET {config['email_column']} = ?, {config['user_column']} = ?
-        WHERE id = ?
+        SET {config['email_column']} = %s, {config['user_column']} = %s
+        WHERE id = %s
         """,
-        (login_email, user_id, item_id),
+        (login_email, new_user_id, item_id),
     )
     db.commit()
-    return user_id
+    return new_user_id
 
 
 def sync_linked_person_user(entity, item_id, data):
@@ -995,25 +1034,29 @@ def sync_linked_person_user(entity, item_id, data):
         if existing_user is not None and existing_user["id"] != item["user_id"]:
             raise ValueError("Ya existe un usuario con el correo que se intenta asignar a la persona.")
 
+        import uuid as _uuid
+
         db.execute(
             """
             UPDATE usuario
-            SET correo = ?, contrasena_hash = ?, rol = ?, nombre = ?, activo = TRUE
-            WHERE id = ?
+            SET correo = %s, contrasena_hash = %s, nombre = %s, activo = TRUE
+            WHERE id = %s
             """,
-            (
-                login_email,
-                generate_password_hash(data["documento"]),
-                config["role"],
-                person_full_name(data),
-                item["user_id"],
-            ),
+            (login_email, hash_password(data["documento"]), person_full_name(data), item["user_id"]),
+        )
+        db.execute(
+            """
+            INSERT INTO usuario_perfil (id, usuario_id, perfil_id)
+            SELECT %s, %s, p.id FROM perfil p WHERE p.nombre = %s
+            ON CONFLICT (usuario_id, perfil_id) DO NOTHING
+            """,
+            (str(_uuid.uuid4()), item["user_id"], config["role"]),
         )
         db.execute(
             f"""
             UPDATE {config['table']}
-            SET {config['email_column']} = ?
-            WHERE id = ?
+            SET {config['email_column']} = %s
+            WHERE id = %s
             """,
             (login_email, item_id),
         )
@@ -1071,14 +1114,17 @@ def get_entities(entity, where=None, params=(), order_by="id DESC"):
 def get_admin_dashboard_data():
     db = get_db()
     total_active = db.execute("SELECT COUNT(*) AS total FROM usuario WHERE activo = TRUE").fetchone()["total"]
-    total_roles = db.execute("SELECT COUNT(DISTINCT rol) AS total FROM usuario").fetchone()["total"]
+    total_roles = db.execute("SELECT COUNT(DISTINCT perfil_id) AS total FROM usuario_perfil").fetchone()["total"]
     total_regionales = db.execute("SELECT COUNT(*) AS total FROM regional").fetchone()["total"]
     total_centros = db.execute("SELECT COUNT(*) AS total FROM centro").fetchone()["total"]
     latest_users = db.execute(
         """
-        SELECT nombre AS name, rol AS role, correo AS email
-        FROM usuario
-        ORDER BY creado_en DESC, id DESC
+        SELECT u.nombre AS name, u.correo AS email,
+               (SELECT p.nombre FROM usuario_perfil up
+                JOIN perfil p ON p.id = up.perfil_id
+                WHERE up.usuario_id = u.id LIMIT 1) AS role
+        FROM usuario u
+        ORDER BY u.creado_en DESC, u.id DESC
         LIMIT 3
         """
     ).fetchall()
