@@ -1,8 +1,10 @@
+"""Controlador del dashboard: redirige a la vista del perfil activo."""
+
 from flask import redirect, render_template, url_for
 
 from bari_lms.config import DASHBOARDS
-from bari_lms.models.repository import get_admin_dashboard_data
-from bari_lms.services.auth import current_user, login_required
+from bari_lms.middleware.auth import current_user, login_required
+from bari_lms.repositories.usuario import get_admin_dashboard_data
 
 
 def register_routes(app):
