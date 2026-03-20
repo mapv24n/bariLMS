@@ -165,18 +165,16 @@
                                     <li class="nav-item">
                                         <a class="nav-link active" id="tab-link-1" href="#"
                                             onclick="setTab(1); return false;">
-                                            Actividades de proyecto
+                                            Actividades de Aprendizaje
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" id="tab-link-2" href="#"
-                                            onclick="setTab(2); return false;">
+                                        <a class="nav-link" id="tab-link-2" href="#" onclick="setTab(2); return false;">
                                             Ver evidencias por actividad de aprendizaje
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" id="tab-link-3" href="#"
-                                            onclick="setTab(3); return false;">
+                                        <a class="nav-link" id="tab-link-3" href="#" onclick="setTab(3); return false;">
                                             Total de Calificaciones
                                         </a>
                                     </li>
@@ -217,28 +215,31 @@
                                     <!-- Panel lateral (crear / evidencia) -->
                                     <div id="side-panel" style="display:none;">
 
-                                        <!-- Crear actividad -->
+
+                                        <!-- Crear / Editar actividad de aprendizaje o Guía -->
                                         <div id="side-crear">
                                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                                <span class="panel-title">Crear actividad de aprendizaje</span>
+                                                <span class="panel-title" id="side-crear-title">Crear actividad de
+                                                    aprendizaje</span>
                                                 <button class="close text-muted"
                                                     onclick="hideSidePanel()">&times;</button>
                                             </div>
                                             <div class="ev-group">
-                                                <label class="ev-label">Actividad - Sección <span
+                                                <label class="ev-label">Nombre de la Actividad / Guía <span
                                                         class="text-danger">*</span></label>
                                                 <input type="text" class="ev-input" id="form-nombre"
-                                                    placeholder="Actividad 1: Toma de requerimientos">
+                                                    placeholder="Ej: Actividad 1">
                                                 <div id="form-nombre-error" class="text-danger small mt-1"
                                                     style="display:none;"></div>
                                             </div>
+                                            <!-- Crear / Editar Guía de trabajo concertado Aquí debe poder subirse la guia que puede ser o bien un archivo pdf, excel, power point o word-->
                                             <div class="ev-group">
-                                                <label class="ev-label">Sub.Actividades - Sub.Sección</label>
-                                                <input type="text" class="ev-input" id="form-sub"
-                                                    placeholder="Actividad 1.1: Caso de uso">
+                                                <label class="ev-label">Agrega aquí la guía (Archivo)</label>
+                                                <input type="file" class="ev-input" id="form-guia-archivo"
+                                                       accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
                                             </div>
                                             <div class="ev-group">
-                                                <label class="ev-label">Agrega aquí las guías</label>
+                                                <label class="ev-label">O añade una URL a la guía (Drive, etc.)</label>
                                                 <input type="url" class="ev-input" id="form-guia"
                                                     placeholder="https://drive.google.com/...">
                                             </div>
@@ -261,11 +262,90 @@
                                                 </div>
                                             </div>
                                             <div style="display:flex; gap:8px; margin-top:4px;">
-                                                <button class="btn-aceptar"
+                                                <button class="btn-aceptar" id="side-crear-btn"
                                                     onclick="confirmarCrearActividad()">Aceptar y crear
                                                     actividad</button>
-                                                <button class="btn-cancelar"
-                                                    onclick="hideSidePanel()">Cancelar</button>
+                                                <button class="btn-cancelar" onclick="hideSidePanel()">Cancelar</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Sección -->
+                                        <div id="side-seccion" style="display:none;">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <span class="panel-title" id="side-sec-title">Nueva sección</span>
+                                                <button class="close text-muted"
+                                                    onclick="hideSidePanel()">&times;</button>
+                                            </div>
+                                            <div class="ev-group">
+                                                <label class="ev-label">Nombre <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="text" class="ev-input" id="sec-nombre"
+                                                    placeholder="Ej. Acta de reunión">
+                                            </div>
+                                            <div class="ev-group">
+                                                <label class="ev-label">Enlace o Archivo</label>
+                                                <input type="url" class="ev-input" id="sec-url"
+                                                    placeholder="https://...">
+                                            </div>
+                                            <div class="ev-group">
+                                                <label class="ev-label">Descripción</label>
+                                                <textarea class="ev-input" id="sec-desc" rows="2"
+                                                    placeholder="Describe aquí la información..."></textarea>
+                                            </div>
+                                            <div class="d-flex" style="gap:8px;">
+                                                <div class="ev-group flex-grow-1">
+                                                    <label class="ev-label">Fecha Inicio</label>
+                                                    <input type="date" class="ev-input" id="sec-inicio">
+                                                </div>
+                                                <div class="ev-group flex-grow-1">
+                                                    <label class="ev-label">Fecha Fin</label>
+                                                    <input type="date" class="ev-input" id="sec-fin">
+                                                </div>
+                                            </div>
+                                            <div style="display:flex; gap:8px; margin-top:4px;">
+                                                <button class="btn-aceptar" id="side-sec-btn"
+                                                    onclick="guardarSeccion()">Guardar</button>
+                                                <button class="btn-cancelar" onclick="hideSidePanel()">Cancelar</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Sub-sección -->
+                                        <div id="side-subseccion" style="display:none;">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <span class="panel-title" id="side-sub-title">Nueva sub-sección</span>
+                                                <button class="close text-muted"
+                                                    onclick="hideSidePanel()">&times;</button>
+                                            </div>
+                                            <div class="ev-group">
+                                                <label class="ev-label">Nombre <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="text" class="ev-input" id="sub-nombre"
+                                                    placeholder="Ej. 1. Grabación del cliente">
+                                            </div>
+                                            <div class="ev-group">
+                                                <label class="ev-label">Enlace o Archivo</label>
+                                                <input type="url" class="ev-input" id="sub-url"
+                                                    placeholder="https://...">
+                                            </div>
+                                            <div class="ev-group">
+                                                <label class="ev-label">Descripción</label>
+                                                <textarea class="ev-input" id="sub-desc" rows="2"
+                                                    placeholder="Describe aquí la información..."></textarea>
+                                            </div>
+                                            <div class="d-flex" style="gap:8px;">
+                                                <div class="ev-group flex-grow-1">
+                                                    <label class="ev-label">Fecha Inicio</label>
+                                                    <input type="date" class="ev-input" id="sub-inicio">
+                                                </div>
+                                                <div class="ev-group flex-grow-1">
+                                                    <label class="ev-label">Fecha Fin</label>
+                                                    <input type="date" class="ev-input" id="sub-fin">
+                                                </div>
+                                            </div>
+                                            <div style="display:flex; gap:8px; margin-top:4px;">
+                                                <button class="btn-aceptar" id="side-sub-btn"
+                                                    onclick="guardarSubSeccion()">Guardar</button>
+                                                <button class="btn-cancelar" onclick="hideSidePanel()">Cancelar</button>
                                             </div>
                                         </div>
 
@@ -279,12 +359,14 @@
                                             <div class="ev-group">
                                                 <label class="ev-label">Aprendiz</label>
                                                 <div class="ev-input" id="ev-aprendiz"
-                                                    style="background:#eaecf4; min-height:36px; line-height:20px;"></div>
+                                                    style="background:#eaecf4; min-height:36px; line-height:20px;">
+                                                </div>
                                             </div>
                                             <div class="ev-group">
                                                 <label class="ev-label">Actividad</label>
                                                 <div class="ev-input" id="ev-actividad"
-                                                    style="background:#eaecf4; min-height:36px; line-height:20px;"></div>
+                                                    style="background:#eaecf4; min-height:36px; line-height:20px;">
+                                                </div>
                                             </div>
                                             <div class="ev-group">
                                                 <label class="ev-label">Evidencia</label>
@@ -311,11 +393,10 @@
                                             </div>
                                             <div id="ev-estado-badge"></div>
                                             <div style="display:flex; gap:8px;">
-                                                <button class="btn-aceptar"
-                                                    onclick="guardarCalificacion()">Aceptar y subir
+                                                <button class="btn-aceptar" onclick="guardarCalificacion()">Aceptar y
+                                                    subir
                                                     calificación</button>
-                                                <button class="btn-cancelar"
-                                                    onclick="hideSidePanel()">Cancelar</button>
+                                                <button class="btn-cancelar" onclick="hideSidePanel()">Cancelar</button>
                                             </div>
                                         </div>
 
@@ -354,9 +435,13 @@
         let selectedFaseId = null;
         let selectedActProyId = null;
         let currentTab = 1;
-        let sidePanelMode = null;   // 'crear' | 'evidencia' | null
+        let sidePanelMode = null;   // 'crear' | 'editar' | 'evidencia' | null
         let matrizData = null;      // caché para tabs 2 y 3
         let currentEntregaId = null;
+        let editingActId = null;
+        let actividadesCache = [];
+        let currentSecId = null;
+        let currentSubId = null;
 
         // ═══════════════════════════════
         //  Árbol de fases
@@ -476,6 +561,7 @@
         }
 
         function renderActividades(actividades) {
+            actividadesCache = actividades || [];
             const container = document.getElementById('actividades-lista');
             if (!actividades || actividades.length === 0) {
                 container.innerHTML = `<div class="empty-state py-4">
@@ -486,56 +572,134 @@
                 return;
             }
 
-            let html = '';
+            let html = '<div class="accordion" id="accordionActividades">';
             actividades.forEach((act, i) => {
                 const inicioFmt = act.fecha_inicio ? formatFecha(act.fecha_inicio) : null;
                 const finFmt = act.fecha_fin ? formatFecha(act.fecha_fin) : null;
+                const colId = `collapseAct${act.id}`;
+                const headId = `headingAct${act.id}`;
 
                 html += `
-        <div class="actividad-card">
-            <div class="d-flex justify-content-between align-items-start flex-wrap" style="gap:8px;">
-                <div style="flex:1; min-width:0;">
-                    <div class="font-weight-bold text-sena" style="font-size:.9rem;">
-                        <i class="fas fa-book-open mr-1" style="font-size:.8em;"></i>
-                        ${escapar(act.nombre)}
+                <div class="card mb-2 shadow-sm border-0 actividad-card" style="padding:0;">
+                    <div class="card-header bg-white py-2" id="${headId}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <button class="btn btn-link text-left text-dark font-weight-bold text-decoration-none p-0 d-flex align-items-center" 
+                                    type="button" data-toggle="collapse" data-target="#${colId}" aria-expanded="false" aria-controls="${colId}" style="flex:1;">
+                                <i class="fas fa-chevron-down mr-2 text-sena" style="font-size:0.8rem;"></i>
+                                ${escapar(act.nombre)}
+                            </button>
+                        </div>
                     </div>
-                    ${act.sub_seccion ? `<div class="text-muted small mt-1">
-                        <i class="fas fa-level-down-alt mr-1" style="font-size:.75em;"></i>
-                        Sub-sección: ${escapar(act.sub_seccion)}</div>` : ''}
-                    ${act.descripcion ? `<div class="small text-gray-700 mt-1">${escapar(act.descripcion)}</div>` : ''}
-                    <div class="mt-2" style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
-                        ${inicioFmt ? `<span class="badge badge-light border">
-                            <i class="fas fa-calendar-alt mr-1 text-sena" style="font-size:.75em;"></i>Inicio: ${inicioFmt}</span>` : ''}
-                        ${finFmt ? `<span class="badge badge-light border" id="badge-fin-${act.id}">
-                            <i class="fas fa-calendar-times mr-1 text-warning" style="font-size:.75em;"></i>Fin: ${finFmt}
-                            <button class="btn btn-sm btn-link p-0 ml-1" style="font-size:.75em;line-height:1;"
-                                onclick="editarFechaFin(${act.id}, '${act.fecha_fin || ''}')">
-                                <i class="fas fa-edit text-warning"></i></button>
-                        </span>` : `<button class="btn btn-sm btn-outline-warning py-0 px-2" style="font-size:.75rem;"
-                            onclick="editarFechaFin(${act.id}, '')">
-                            <i class="fas fa-calendar-plus mr-1"></i>Agregar fecha fin</button>`}
-                        ${act.guia_url ? `<a href="${act.guia_url}" target="_blank" class="badge badge-success border text-white" style="font-size:.75rem;">
-                            <i class="fas fa-link mr-1"></i>Guía de aprendizaje</a>` : ''}
-                    </div>
-                </div>
-                <div style="flex-shrink:0;">
-                    ${act.evidencia_id
-                        ? `<span class="badge badge-success py-1 px-2" style="font-size:.78rem;">
-                            <i class="fas fa-check-circle mr-1"></i>Evidencia activa</span>`
-                        : `<button class="btn btn-outline-warning btn-sm" onclick="activarEvidencia(${act.id})">
-                            <i class="fas fa-plus-circle mr-1"></i>Activar evidencia</button>`
+                    <div id="${colId}" class="collapse" aria-labelledby="${headId}" data-parent="#accordionActividades">
+                        <div class="card-body bg-light p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap" style="gap:8px;">
+                                <div style="flex:1; min-width:0;">
+                                    ${act.descripcion ? `<div class="small text-gray-700 mb-2">${escapar(act.descripcion)}</div>` : ''}
+                                    <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size: .8em;">
+                                        ${inicioFmt ? `<span class="badge badge-light border"><i class="fas fa-calendar-alt mr-1 text-sena"></i>Inicio: ${inicioFmt}</span>` : ''}
+                                        ${finFmt ? `<span class="badge badge-light border" id="badge-fin-${act.id}">
+                                            <i class="fas fa-calendar-times mr-1 text-warning"></i>Fin: ${finFmt}
+                                            <button class="btn btn-sm btn-link p-0 ml-1" style="font-size:.9em;line-height:1;" onclick="editarFechaFin(${act.id}, '${act.fecha_fin || ''}')"><i class="fas fa-edit text-warning"></i></button>
+                                        </span>` : `<button class="btn btn-sm btn-outline-warning py-0 px-2" style="font-size:.75rem;" onclick="editarFechaFin(${act.id}, '')"><i class="fas fa-calendar-plus mr-1"></i>Agregar fecha fin</button>`}
+                                        ${act.guia_url ? `<a href="${act.guia_url}" target="_blank" class="badge badge-success border text-white"><i class="fas fa-link mr-1"></i>Guía / Recurso</a>` : ''}
+                                    </div>
+                                </div>
+                                <div style="flex-shrink:0; display:flex; gap:6px;">
+                                    ${act.evidencia_id
+                        ? `<span class="badge badge-success py-1 px-2" style="font-size:.78rem;"><i class="fas fa-check-circle mr-1"></i>Evidencia activa</span>`
+                        : `<button class="btn btn-outline-warning btn-sm border-0" style="font-size:.75rem;" onclick="activarEvidencia(${act.id})"><i class="fas fa-plus-circle mr-1"></i>Activar evidencia</button>`
                     }
-                </div>
-            </div>
-        </div>`;
+                                    <button class="btn btn-outline-secondary btn-sm border-0" style="font-size:.75rem;" onclick="editarActividad(${act.id})"><i class="fas fa-edit mr-1"></i>Editar Info</button>
+                                    <button class="btn btn-outline-primary btn-sm border-0" style="font-size:.75rem;" onclick="abrirCrearSeccion(${act.id})"><i class="fas fa-plus mr-1"></i>Nueva Sección</button>
+                                </div>
+                            </div>
+                            <!-- SECCIONES DE LA ACTIVIDAD -->
+                            <div id="secciones-act-${act.id}">
+                                ${renderSecciones(act.secciones, act.id)}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
             });
+            html += '</div>';
             container.innerHTML = html;
+        }
+
+        function renderSecciones(secciones, actId) {
+            if (!secciones || secciones.length === 0) return '';
+            let html = `<div class="accordion" id="accordionSec${actId}">`;
+            secciones.forEach(sec => {
+                const colId = `collapseSec${sec.id}`;
+                const headId = `headingSec${sec.id}`;
+                const inicio = sec.fecha_inicio ? formatFecha(sec.fecha_inicio) : '';
+                const fin = sec.fecha_fin ? formatFecha(sec.fecha_fin) : '';
+
+                html += `
+                <div class="card mb-1 shadow-sm" style="border: 1px solid #e3e6f0;">
+                    <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center" id="${headId}">
+                        <button class="btn btn-link text-left text-primary font-weight-bold text-decoration-none p-0 flex-grow-1 d-flex align-items-center"
+                                type="button" data-toggle="collapse" data-target="#${colId}" aria-expanded="false" aria-controls="${colId}">
+                            <i class="fas fa-layer-group mr-2" style="font-size:0.8rem;"></i> ${escapar(sec.nombre)}
+                        </button>
+                        <div style="flex-shrink:0;">
+                            <button class="btn btn-sm btn-link text-secondary p-0 mx-1" title="Editar" onclick='abrirEditarSeccion(${JSON.stringify(sec).replace(/'/g, "&apos;")})'><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-link text-danger p-0 mr-2" title="Eliminar" onclick="eliminarSeccion(${sec.id})"><i class="fas fa-trash"></i></button>
+                            <button class="btn btn-sm btn-outline-success border-0 py-0" style="font-size:0.75rem;" onclick="abrirCrearSubSeccion(${sec.id})"><i class="fas fa-plus"></i> Sub-sección</button>
+                        </div>
+                    </div>
+                    <div id="${colId}" class="collapse" aria-labelledby="${headId}" data-parent="#accordionSec${actId}">
+                        <div class="card-body p-2" style="background:#fdfdfd;">
+                            ${sec.descripcion ? `<div class="small text-muted mb-2 px-2">${escapar(sec.descripcion)}</div>` : ''}
+                            <div class="px-2 mb-2 d-flex flex-wrap gap-2 align-items-center" style="gap:6px; font-size:.75rem;">
+                                ${sec.archivo_url ? `<a href="${sec.archivo_url}" target="_blank" class="badge badge-info border text-white"><i class="fas fa-link mr-1"></i>URL / Documento</a>` : ''}
+                                ${inicio ? `<span class="badge badge-light border text-muted"><i class="fas fa-calendar mr-1"></i>Ini: ${inicio}</span>` : ''}
+                                ${fin ? `<span class="badge badge-light border text-muted"><i class="fas fa-calendar-times mr-1"></i>Fin: ${fin}</span>` : ''}
+                            </div>
+                            <hr class="mt-1 mb-2">
+                            ${renderSubSecciones(sec.sub_secciones, sec.id)}
+                        </div>
+                    </div>
+                </div>`;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        function renderSubSecciones(subsecciones, secId) {
+            if (!subsecciones || subsecciones.length === 0) return '<div class="text-muted small p-2">No hay sub-secciones en esta sección.</div>';
+            let html = '<ul class="list-group list-group-flush border rounded">';
+            subsecciones.forEach(sub => {
+                const inicio = sub.fecha_inicio ? formatFecha(sub.fecha_inicio) : '';
+                const fin = sub.fecha_fin ? formatFecha(sub.fecha_fin) : '';
+                html += `
+                <li class="list-group-item p-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="font-weight-bold" style="font-size:0.85rem; color:#4e73df;">
+                                ${escapar(sub.nombre)}
+                            </div>
+                            ${sub.descripcion ? `<div class="small text-muted mt-1">${escapar(sub.descripcion)}</div>` : ''}
+                            <div class="mt-1 d-flex flex-wrap gap-2 align-items-center" style="gap:6px; font-size:.75rem;">
+                                ${sub.archivo_url ? `<a href="${sub.archivo_url}" target="_blank" class="badge badge-info border text-white"><i class="fas fa-link mr-1"></i>URL / Documento</a>` : ''}
+                                ${inicio ? `<span class="badge badge-light border text-muted"><i class="fas fa-calendar mr-1"></i>Ini: ${inicio}</span>` : ''}
+                                ${fin ? `<span class="badge badge-light border text-muted"><i class="fas fa-calendar-times mr-1"></i>Fin: ${fin}</span>` : ''}
+                            </div>
+                        </div>
+                        <div style="flex-shrink:0;">
+                            <button class="btn btn-sm btn-link text-info p-0 mx-1" onclick='abrirEditarSubSeccion(${JSON.stringify(sub).replace(/'/g, "&apos;")})'><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-link text-danger p-0" onclick="eliminarSubSeccion(${sub.id})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                </li>`;
+            });
+            html += '</ul>';
+            return html;
         }
 
         function formatFecha(iso) {
             if (!iso) return '';
             const [y, m, d] = iso.split('-');
-            const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+            const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
             return `${parseInt(d)} ${meses[parseInt(m) - 1]} ${y}`;
         }
 
@@ -741,11 +905,11 @@
             if (sidePanelMode === 'crear') {
                 hideSidePanel();
             } else {
+                editingActId = null;
                 document.getElementById('form-nombre').value = '';
-                document.getElementById('form-sub').value = '';
                 document.getElementById('form-guia').value = '';
+                document.getElementById('form-guia-archivo').value = '';
                 document.getElementById('form-desc').value = '';
-                // Fecha inicio: hoy
                 const hoy = new Date().toISOString().split('T')[0];
                 document.getElementById('form-inicio').value = hoy;
                 document.getElementById('form-fin').value = '';
@@ -754,22 +918,80 @@
             }
         }
 
+        function editarActividad(actId) {
+            const act = actividadesCache.find(a => a.id === actId);
+            if (!act) return;
+            editingActId = actId;
+            document.getElementById('form-nombre').value = act.nombre || '';
+            document.getElementById('form-guia').value = act.guia_url || '';
+            document.getElementById('form-guia-archivo').value = '';
+            document.getElementById('form-desc').value = act.descripcion || '';
+            document.getElementById('form-inicio').value = act.fecha_inicio || '';
+            document.getElementById('form-fin').value = act.fecha_fin || '';
+            document.getElementById('form-nombre-error').style.display = 'none';
+            showSidePanel('editar');
+        }
+
         function showSidePanel(mode) {
             sidePanelMode = mode;
             document.getElementById('side-panel').style.display = 'block';
-            document.getElementById('side-crear').style.display = mode === 'crear' ? 'block' : 'none';
+            const isForm = mode === 'crear' || mode === 'editar';
+            document.getElementById('side-crear').style.display = isForm ? 'block' : 'none';
             document.getElementById('side-evidencia').style.display = mode === 'evidencia' ? 'block' : 'none';
+
+            const elSec = document.getElementById('side-seccion');
+            if (elSec) {
+                elSec.style.display = (mode === 'sec_crear' || mode === 'sec_editar') ? 'block' : 'none';
+            }
+
+            const elSub = document.getElementById('side-subseccion');
+            if (elSub) {
+                elSub.style.display = (mode === 'sub_crear' || mode === 'sub_editar') ? 'block' : 'none';
+            }
+
+            if (isForm) {
+                const isEdit = mode === 'editar';
+                document.getElementById('side-crear-title').textContent = isEdit
+                    ? 'Editar actividad de aprendizaje'
+                    : 'Crear actividad de aprendizaje';
+                document.getElementById('side-crear-btn').textContent = isEdit
+                    ? 'Guardar cambios'
+                    : 'Aceptar y crear actividad';
+            }
+            if (mode === 'sec_crear' || mode === 'sec_editar') {
+                const isEdit = mode === 'sec_editar';
+                document.getElementById('side-sec-title').textContent = isEdit
+                    ? 'Editar sección'
+                    : 'Nueva sección';
+                document.getElementById('side-sec-btn').textContent = isEdit
+                    ? 'Guardar cambios'
+                    : 'Aceptar y agregar';
+            }
+            if (mode === 'sub_crear' || mode === 'sub_editar') {
+                const isEdit = mode === 'sub_editar';
+                document.getElementById('side-sub-title').textContent = isEdit
+                    ? 'Editar sub-sección'
+                    : 'Nueva sub-sección';
+                document.getElementById('side-sub-btn').textContent = isEdit
+                    ? 'Guardar cambios'
+                    : 'Aceptar y agregar';
+            }
         }
 
         function hideSidePanel() {
             sidePanelMode = null;
+            editingActId = null;
+            currentSecId = null;
+            currentSubId = null;
             document.getElementById('side-panel').style.display = 'none';
         }
 
         // ═══════════════════════════════
-        //  Crear actividad de aprendizaje
+        //  Crear / Editar actividad de aprendizaje
         // ═══════════════════════════════
         async function confirmarCrearActividad() {
+            if (sidePanelMode === 'editar') { await confirmarEditarActividad(); return; }
+
             const nombre = document.getElementById('form-nombre').value.trim();
             const errorEl = document.getElementById('form-nombre-error');
 
@@ -781,19 +1003,21 @@
             }
             errorEl.style.display = 'none';
 
-            const payload = {
-                nombre,
-                sub_seccion: document.getElementById('form-sub').value.trim() || null,
-                guia_url: document.getElementById('form-guia').value.trim() || null,
-                descripcion: document.getElementById('form-desc').value.trim() || null,
-                fecha_inicio: document.getElementById('form-inicio').value || null,
-                fecha_fin: document.getElementById('form-fin').value || null,
-            };
+            const formData = new FormData();
+            formData.append('nombre', nombre);
+            formData.append('guia_url', document.getElementById('form-guia').value.trim());
+            formData.append('descripcion', document.getElementById('form-desc').value.trim());
+            formData.append('fecha_inicio', document.getElementById('form-inicio').value);
+            formData.append('fecha_fin', document.getElementById('form-fin').value);
+
+            const fileInput = document.getElementById('form-guia-archivo');
+            if (fileInput.files.length > 0) {
+                formData.append('guia_archivo', fileInput.files[0]);
+            }
 
             const res = await fetch(`/api/instructor/actividad-proyecto/${selectedActProyId}/aprendizaje/nueva`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
+                body: formData
             });
             const data = await res.json();
             if (data.ok) {
@@ -806,11 +1030,184 @@
             }
         }
 
+        async function confirmarEditarActividad() {
+            const nombre = document.getElementById('form-nombre').value.trim();
+            const errorEl = document.getElementById('form-nombre-error');
+
+            if (!nombre) {
+                errorEl.textContent = 'El nombre de la actividad es obligatorio.';
+                errorEl.style.display = 'block';
+                document.getElementById('form-nombre').focus();
+                return;
+            }
+            errorEl.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('nombre', nombre);
+            formData.append('guia_url', document.getElementById('form-guia').value.trim());
+            formData.append('descripcion', document.getElementById('form-desc').value.trim());
+            formData.append('fecha_inicio', document.getElementById('form-inicio').value);
+            formData.append('fecha_fin', document.getElementById('form-fin').value);
+
+            const fileInput = document.getElementById('form-guia-archivo');
+            if (fileInput.files.length > 0) {
+                formData.append('guia_archivo', fileInput.files[0]);
+            }
+
+            const res = await fetch(`/api/instructor/actividad-aprendizaje/${editingActId}/editar`, {
+                method: 'PATCH',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.ok) {
+                hideSidePanel();
+                await cargarActividades();
+                cargarArbol();
+            } else {
+                errorEl.textContent = data.error || 'No se pudo actualizar la actividad.';
+                errorEl.style.display = 'block';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('form-nombre').addEventListener('keydown', e => {
                 if (e.key === 'Enter') confirmarCrearActividad();
             });
         });
+
+        // ── Secciones y Sub-secciones ──
+        function abrirCrearSeccion(aa_id) {
+            editingActId = aa_id;
+            currentSecId = null;
+            document.getElementById('sec-nombre').value = '';
+            document.getElementById('sec-url').value = '';
+            document.getElementById('sec-desc').value = '';
+            document.getElementById('sec-inicio').value = '';
+            document.getElementById('sec-fin').value = '';
+            showSidePanel('sec_crear');
+        }
+
+        function abrirEditarSeccion(secObj) {
+            currentSecId = secObj.id;
+            document.getElementById('sec-nombre').value = secObj.nombre || '';
+            document.getElementById('sec-url').value = secObj.archivo_url || '';
+            document.getElementById('sec-desc').value = secObj.descripcion || '';
+            document.getElementById('sec-inicio').value = secObj.fecha_inicio || '';
+            document.getElementById('sec-fin').value = secObj.fecha_fin || '';
+            showSidePanel('sec_editar');
+        }
+
+        async function guardarSeccion() {
+            const nombre = document.getElementById('sec-nombre').value.trim();
+            if (!nombre) {
+                alert('El nombre es obligatorio');
+                return;
+            }
+            const payload = {
+                nombre,
+                archivo_url: document.getElementById('sec-url').value.trim() || null,
+                descripcion: document.getElementById('sec-desc').value.trim() || null,
+                fecha_inicio: document.getElementById('sec-inicio').value || null,
+                fecha_fin: document.getElementById('sec-fin').value || null,
+            };
+
+            let res;
+            if (sidePanelMode === 'sec_crear') {
+                res = await fetch(`/api/instructor/actividad-aprendizaje/${editingActId}/seccion/nueva`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                res = await fetch(`/api/instructor/seccion/${currentSecId}/editar`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            }
+            const data = await res.json();
+            if (data.ok) {
+                hideSidePanel();
+                await cargarActividades();
+            } else {
+                alert(data.error || 'Error al guardar la sección');
+            }
+        }
+
+        async function eliminarSeccion(sec_id) {
+            if (!confirm('¿Seguro que deseas eliminar esta sección y todo su contenido?')) return;
+            const res = await fetch(`/api/instructor/seccion/${sec_id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.ok) await cargarActividades();
+            else alert(data.error || 'Error al eliminar sección');
+        }
+
+        function abrirCrearSubSeccion(sec_id) {
+            currentSecId = sec_id;
+            currentSubId = null;
+            document.getElementById('sub-nombre').value = '';
+            document.getElementById('sub-url').value = '';
+            document.getElementById('sub-desc').value = '';
+            document.getElementById('sub-inicio').value = '';
+            document.getElementById('sub-fin').value = '';
+            showSidePanel('sub_crear');
+        }
+
+        function abrirEditarSubSeccion(subObj) {
+            currentSecId = subObj.id_seccion;
+            currentSubId = subObj.id;
+            document.getElementById('sub-nombre').value = subObj.nombre || '';
+            document.getElementById('sub-url').value = subObj.archivo_url || '';
+            document.getElementById('sub-desc').value = subObj.descripcion || '';
+            document.getElementById('sub-inicio').value = subObj.fecha_inicio || '';
+            document.getElementById('sub-fin').value = subObj.fecha_fin || '';
+            showSidePanel('sub_editar');
+        }
+
+        async function guardarSubSeccion() {
+            const nombre = document.getElementById('sub-nombre').value.trim();
+            if (!nombre) {
+                alert('El nombre es obligatorio');
+                return;
+            }
+            const payload = {
+                nombre,
+                archivo_url: document.getElementById('sub-url').value.trim() || null,
+                descripcion: document.getElementById('sub-desc').value.trim() || null,
+                fecha_inicio: document.getElementById('sub-inicio').value || null,
+                fecha_fin: document.getElementById('sub-fin').value || null,
+            };
+
+            let res;
+            if (sidePanelMode === 'sub_crear') {
+                res = await fetch(`/api/instructor/seccion/${currentSecId}/sub-seccion/nueva`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } else {
+                res = await fetch(`/api/instructor/sub-seccion/${currentSubId}/editar`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            }
+            const data = await res.json();
+            if (data.ok) {
+                hideSidePanel();
+                await cargarActividades();
+            } else {
+                alert(data.error || 'Error al guardar la sub-sección');
+            }
+        }
+
+        async function eliminarSubSeccion(sub_id) {
+            if (!confirm('¿Seguro que deseas eliminar esta sub-sección?')) return;
+            const res = await fetch(`/api/instructor/sub-seccion/${sub_id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.ok) await cargarActividades();
+            else alert(data.error || 'Error al eliminar sub-sección');
+        }
 
         // ═══════════════════════════════
         //  Calificar entrega

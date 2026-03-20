@@ -1,14 +1,18 @@
 import copy
 import os
 import sqlite3
+import uuid
 from functools import wraps
 
 from flask import Flask, flash, g, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "bari-lms-dev-key")
 app.config["DATABASE"] = os.path.join(app.root_path, "bari_lms.db")
+app.config["UPLOAD_FOLDER_GUIAS"] = os.path.join(app.root_path, "static", "uploads", "guias")
+os.makedirs(app.config["UPLOAD_FOLDER_GUIAS"], exist_ok=True)
 
 ROLE_TO_SLUG = {
     "Administrador": "administrador",
@@ -723,6 +727,29 @@ def initialize_database():
         )
         """
     )
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS seccion_actividad (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_actividad_aprendizaje INTEGER NOT NULL,
+            nombre TEXT NOT NULL,
+            orden INTEGER DEFAULT 0,
+            FOREIGN KEY (id_actividad_aprendizaje) REFERENCES actividad_aprendizaje(id) ON DELETE CASCADE
+        )
+    """)
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS sub_seccion_actividad (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_seccion INTEGER NOT NULL,
+            nombre TEXT NOT NULL,
+            descripcion TEXT,
+            archivo_url TEXT,
+            archivo_tipo TEXT,
+            fecha_inicio TEXT,
+            fecha_fin TEXT,
+            orden INTEGER DEFAULT 0,
+            FOREIGN KEY (id_seccion) REFERENCES seccion_actividad(id) ON DELETE CASCADE
+        )
+    """)
     db.commit()
 
     instructor_columns = {
@@ -2398,23 +2425,34 @@ def api_instructor_actividad_nueva(fase_id):
 @app.post("/api/instructor/actividad-proyecto/<int:act_proy_id>/aprendizaje/nueva")
 @role_required("Instructor")
 def api_instructor_act_aprendizaje_nueva(act_proy_id):
-    data = request.get_json() or {}
+    if request.is_json:
+        data = request.get_json() or {}
+    else:
+        data = request.form
+
     nombre = data.get("nombre", "").strip()
     if not nombre:
         return jsonify({"ok": False, "error": "Nombre requerido"}), 400
 
-    sub_seccion = data.get("sub_seccion", "").strip() or None
-    descripcion = data.get("descripcion", "").strip() or None
-    fecha_inicio = data.get("fecha_inicio", "").strip() or None
-    fecha_fin = data.get("fecha_fin", "").strip() or None
-    guia_url = data.get("guia_url", "").strip() or None
+    descripcion = (data.get("descripcion") or "").strip() or None
+    fecha_inicio = (data.get("fecha_inicio") or "").strip() or None
+    fecha_fin = (data.get("fecha_fin") or "").strip() or None
+    guia_url = (data.get("guia_url") or "").strip() or None
+
+    if "guia_archivo" in request.files and request.files["guia_archivo"].filename:
+        file = request.files["guia_archivo"]
+        filename = secure_filename(file.filename)
+        unique_name = f"{uuid.uuid4().hex}_{filename}"
+        filepath = os.path.join(app.config["UPLOAD_FOLDER_GUIAS"], unique_name)
+        file.save(filepath)
+        guia_url = url_for('static', filename=f'uploads/guias/{unique_name}')
 
     db = get_db()
     cursor = db.execute(
         """INSERT INTO actividad_aprendizaje
-           (id_actividad_proyecto, nombre, sub_seccion, descripcion, fecha_inicio, fecha_fin)
-           VALUES (?, ?, ?, ?, ?, ?)""",
-        (act_proy_id, nombre, sub_seccion, descripcion, fecha_inicio, fecha_fin),
+           (id_actividad_proyecto, nombre, descripcion, fecha_inicio, fecha_fin)
+           VALUES (?, ?, ?, ?, ?)""",
+        (act_proy_id, nombre, descripcion, fecha_inicio, fecha_fin),
     )
     aa_id = cursor.lastrowid
     if guia_url:
@@ -2432,7 +2470,7 @@ def api_instructor_actividades_aprendizaje(ap_id):
     db = get_db()
     rows = db.execute(
         """
-        SELECT aa.id, aa.nombre, aa.sub_seccion, aa.descripcion,
+        SELECT aa.id, aa.nombre, aa.descripcion,
                aa.fecha_inicio, aa.fecha_fin,
                ga.url AS guia_url,
                ea.id  AS evidencia_id
@@ -2444,7 +2482,25 @@ def api_instructor_actividades_aprendizaje(ap_id):
         """,
         (ap_id,),
     ).fetchall()
-    return jsonify({"actividades": [dict(r) for r in rows]})
+
+    result = []
+    for r in rows:
+        act = dict(r)
+        secciones = db.execute(
+            "SELECT id, nombre, descripcion, archivo_url, archivo_tipo, fecha_inicio, fecha_fin, orden FROM seccion_actividad WHERE id_actividad_aprendizaje=? ORDER BY orden, id",
+            (act["id"],),
+        ).fetchall()
+        sec_list = []
+        for sec in secciones:
+            sub_secs = db.execute(
+                "SELECT id, nombre, descripcion, archivo_url, archivo_tipo, fecha_inicio, fecha_fin, orden FROM sub_seccion_actividad WHERE id_seccion=? ORDER BY orden, id",
+                (sec["id"],),
+            ).fetchall()
+            sec_list.append({**dict(sec), "sub_secciones": [dict(ss) for ss in sub_secs]})
+        act["secciones"] = sec_list
+        result.append(act)
+
+    return jsonify({"actividades": result})
 
 
 @app.get("/api/instructor/actividad-proyecto/<int:ap_id>/evidencias-matriz")
@@ -2523,6 +2579,181 @@ def api_instructor_act_apr_update_fecha_fin(aa_id):
     fecha_fin = data.get("fecha_fin", "").strip() or None
     db = get_db()
     db.execute("UPDATE actividad_aprendizaje SET fecha_fin = ? WHERE id = ?", (fecha_fin, aa_id))
+    db.commit()
+    return jsonify({"ok": True})
+
+
+@app.patch("/api/instructor/actividad-aprendizaje/<int:aa_id>/editar")
+@role_required("Instructor")
+def api_instructor_act_aprendizaje_editar(aa_id):
+    if request.is_json:
+        data = request.get_json() or {}
+    else:
+        # Patch might send FormData? If we want FormData for files on PATCH, we read form
+        data = request.form
+
+    nombre = data.get("nombre", "").strip()
+    if not nombre:
+        return jsonify({"ok": False, "error": "Nombre requerido"}), 400
+
+    descripcion = (data.get("descripcion") or "").strip() or None
+    fecha_inicio = (data.get("fecha_inicio") or "").strip() or None
+    fecha_fin = (data.get("fecha_fin") or "").strip() or None
+    guia_url = (data.get("guia_url") or "").strip() or None
+
+    if "guia_archivo" in request.files and request.files["guia_archivo"].filename:
+        file = request.files["guia_archivo"]
+        filename = secure_filename(file.filename)
+        unique_name = f"{uuid.uuid4().hex}_{filename}"
+        filepath = os.path.join(app.config["UPLOAD_FOLDER_GUIAS"], unique_name)
+        file.save(filepath)
+        guia_url = url_for('static', filename=f'uploads/guias/{unique_name}')
+
+    db = get_db()
+    db.execute(
+        """UPDATE actividad_aprendizaje
+           SET nombre=?, descripcion=?, fecha_inicio=?, fecha_fin=?
+           WHERE id=?""",
+        (nombre, descripcion, fecha_inicio, fecha_fin, aa_id),
+    )
+    existing_guia = db.execute(
+        "SELECT id FROM guia_aprendizaje WHERE id_actividad_aprendizaje=?", (aa_id,)
+    ).fetchone()
+
+    # Note: if guia_url is None but there's an existing file, maybe we shouldn't delete,
+    # unless the UI sends an explicit empty 'guia_url' and no file.
+    # To keep code consistent, if guia_url is neither in payload nor a file, we delete it,
+    # assuming the UI sends the old URL if it was kept.
+    if guia_url:
+        if existing_guia:
+            db.execute(
+                "UPDATE guia_aprendizaje SET url=? WHERE id_actividad_aprendizaje=?",
+                (guia_url, aa_id),
+            )
+        else:
+            db.execute(
+                "INSERT INTO guia_aprendizaje (id_actividad_aprendizaje, url) VALUES (?, ?)",
+                (aa_id, guia_url),
+            )
+    else:
+        # Avoid deleting if the field was omitted in a FormData update but maybe we should rely on UI behaviour
+        # It's safer to only delete if we consider empty string vs omission, but we'll stick to original behavior.
+        if existing_guia:
+            db.execute(
+                "DELETE FROM guia_aprendizaje WHERE id_actividad_aprendizaje=?", (aa_id,)
+            )
+    db.commit()
+    return jsonify({"ok": True})
+
+
+# ── Secciones ──
+@app.post("/api/instructor/actividad-aprendizaje/<int:aa_id>/seccion/nueva")
+@role_required("Instructor")
+def api_instructor_seccion_nueva(aa_id):
+    data = request.get_json() or {}
+    nombre = data.get("nombre", "").strip()
+    if not nombre:
+        return jsonify({"ok": False, "error": "Nombre requerido"}), 400
+    descripcion = data.get("descripcion", "").strip() or None
+    archivo_url = data.get("archivo_url", "").strip() or None
+    archivo_tipo = data.get("archivo_tipo", "").strip() or None
+    fecha_inicio = data.get("fecha_inicio", "").strip() or None
+    fecha_fin = data.get("fecha_fin", "").strip() or None
+    db = get_db()
+    cursor = db.execute(
+        """INSERT INTO seccion_actividad
+           (id_actividad_aprendizaje, nombre, descripcion, archivo_url, archivo_tipo, fecha_inicio, fecha_fin)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (aa_id, nombre, descripcion, archivo_url, archivo_tipo, fecha_inicio, fecha_fin),
+    )
+    db.commit()
+    return jsonify({"ok": True, "id": cursor.lastrowid})
+
+
+@app.patch("/api/instructor/seccion/<int:sec_id>/editar")
+@role_required("Instructor")
+def api_instructor_seccion_editar(sec_id):
+    data = request.get_json() or {}
+    nombre = data.get("nombre", "").strip()
+    if not nombre:
+        return jsonify({"ok": False, "error": "Nombre requerido"}), 400
+    descripcion = data.get("descripcion", "").strip() or None
+    archivo_url = data.get("archivo_url", "").strip() or None
+    archivo_tipo = data.get("archivo_tipo", "").strip() or None
+    fecha_inicio = data.get("fecha_inicio", "").strip() or None
+    fecha_fin = data.get("fecha_fin", "").strip() or None
+    db = get_db()
+    db.execute(
+        """UPDATE seccion_actividad
+           SET nombre=?, descripcion=?, archivo_url=?, archivo_tipo=?, fecha_inicio=?, fecha_fin=?
+           WHERE id=?""",
+        (nombre, descripcion, archivo_url, archivo_tipo, fecha_inicio, fecha_fin, sec_id)
+    )
+    db.commit()
+    return jsonify({"ok": True})
+
+
+@app.delete("/api/instructor/seccion/<int:sec_id>")
+@role_required("Instructor")
+def api_instructor_seccion_eliminar(sec_id):
+    db = get_db()
+    db.execute("DELETE FROM seccion_actividad WHERE id=?", (sec_id,))
+    db.commit()
+    return jsonify({"ok": True})
+
+
+# ── Sub-secciones ──
+@app.post("/api/instructor/seccion/<int:sec_id>/sub-seccion/nueva")
+@role_required("Instructor")
+def api_instructor_sub_seccion_nueva(sec_id):
+    data = request.get_json() or {}
+    nombre = data.get("nombre", "").strip()
+    if not nombre:
+        return jsonify({"ok": False, "error": "Nombre requerido"}), 400
+    descripcion = data.get("descripcion", "").strip() or None
+    archivo_url = data.get("archivo_url", "").strip() or None
+    archivo_tipo = data.get("archivo_tipo", "").strip() or None
+    fecha_inicio = data.get("fecha_inicio", "").strip() or None
+    fecha_fin = data.get("fecha_fin", "").strip() or None
+    db = get_db()
+    cursor = db.execute(
+        """INSERT INTO sub_seccion_actividad
+           (id_seccion, nombre, descripcion, archivo_url, archivo_tipo, fecha_inicio, fecha_fin)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (sec_id, nombre, descripcion, archivo_url, archivo_tipo, fecha_inicio, fecha_fin),
+    )
+    db.commit()
+    return jsonify({"ok": True, "id": cursor.lastrowid})
+
+
+@app.patch("/api/instructor/sub-seccion/<int:sub_id>/editar")
+@role_required("Instructor")
+def api_instructor_sub_seccion_editar(sub_id):
+    data = request.get_json() or {}
+    nombre = data.get("nombre", "").strip()
+    if not nombre:
+        return jsonify({"ok": False, "error": "Nombre requerido"}), 400
+    descripcion = data.get("descripcion", "").strip() or None
+    archivo_url = data.get("archivo_url", "").strip() or None
+    archivo_tipo = data.get("archivo_tipo", "").strip() or None
+    fecha_inicio = data.get("fecha_inicio", "").strip() or None
+    fecha_fin = data.get("fecha_fin", "").strip() or None
+    db = get_db()
+    db.execute(
+        """UPDATE sub_seccion_actividad
+           SET nombre=?, descripcion=?, archivo_url=?, archivo_tipo=?, fecha_inicio=?, fecha_fin=?
+           WHERE id=?""",
+        (nombre, descripcion, archivo_url, archivo_tipo, fecha_inicio, fecha_fin, sub_id),
+    )
+    db.commit()
+    return jsonify({"ok": True})
+
+
+@app.delete("/api/instructor/sub-seccion/<int:sub_id>")
+@role_required("Instructor")
+def api_instructor_sub_seccion_eliminar(sub_id):
+    db = get_db()
+    db.execute("DELETE FROM sub_seccion_actividad WHERE id=?", (sub_id,))
     db.commit()
     return jsonify({"ok": True})
 
