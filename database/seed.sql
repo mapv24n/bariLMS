@@ -1,66 +1,86 @@
 -- ============================================================
--- Project    : bariLMS — Learning Management System (SENA)
--- File       : database/seed.sql
--- Description: Datos de referencia y catálogos base del sistema.
---              Aplicar DESPUÉS del schema principal.
+-- Proyecto    : bariLMS — Sistema de Gestión del Aprendizaje (SENA)
+-- Archivo     : database/seed.sql
+-- Descripción : Datos de referencia y catálogos base del sistema.
+--               Aplicar DESPUÉS del esquema principal.
 --
--- How to apply:
---   psql -U <user> -d <dbname> -f database/seed.sql
---   (safe to re-run; todos los INSERT usan ON CONFLICT DO NOTHING)
+-- Cómo aplicar:
+--   psql -U <usuario> -d <base> -f database/seed.sql
+--   (seguro re-ejecutar; todos los INSERT usan ON CONFLICT DO NOTHING)
 --
 -- Contenido:
---   1. tipo_documento           — tipos de documento colombianos
---   2. tipo_invalidacion_sesion — motivos de revocación de sesión
---   3. perfil                   — perfiles del sistema con rutas
---   4. nivel_formacion          — niveles de formación SENA
---   5. fase                     — fases del proceso formativo
+--   1. sexo                     — sexo biológico
+--   2. tipo_documento           — tipos de documento colombianos
+--   3. tipo_invalidacion_sesion — motivos de revocación de sesión
+--   4. perfil                   — perfiles del sistema con rutas
+--   5. rol                      — rol por defecto por perfil
+--   6. nivel_formacion          — niveles de formación SENA
+--   7. fase                     — fases del proceso formativo
 -- ============================================================
 
 BEGIN;
 
 -- ============================================================
--- 1. TIPOS DE DOCUMENTO (Colombia)
+-- 1. SEXO BIOLÓGICO
+-- ============================================================
+
+INSERT INTO sexo (id, codigo, nombre) VALUES
+    (gen_random_uuid(), 'M', 'Masculino'),
+    (gen_random_uuid(), 'F', 'Femenino')
+ON CONFLICT (codigo) DO NOTHING;
+
+
+-- ============================================================
+-- 2. TIPOS DE DOCUMENTO (Colombia)
 -- ============================================================
 -- Documentos de identidad vigentes reconocidos por la RNEC y la DIAN.
--- El campo codigo usa COLLATE "C" (definido en el schema).
 
 INSERT INTO tipo_documento (id, codigo, nombre, descripcion) VALUES
-    (gen_random_uuid(), 'CC',   'Cédula de Ciudadanía',
+    (gen_random_uuid(), 'CC',
+        'Cédula de Ciudadanía',
         'Documento de identidad para ciudadanos colombianos mayores de 18 años.'),
 
-    (gen_random_uuid(), 'TI',   'Tarjeta de Identidad',
+    (gen_random_uuid(), 'TI',
+        'Tarjeta de Identidad',
         'Documento de identidad para menores colombianos entre 7 y 17 años.'),
 
-    (gen_random_uuid(), 'RC',   'Registro Civil de Nacimiento',
+    (gen_random_uuid(), 'RC',
+        'Registro Civil de Nacimiento',
         'Documento de identidad para menores de 7 años o trámites civiles.'),
 
-    (gen_random_uuid(), 'CE',   'Cédula de Extranjería',
+    (gen_random_uuid(), 'CE',
+        'Cédula de Extranjería',
         'Documento para extranjeros con residencia en Colombia.'),
 
-    (gen_random_uuid(), 'PA',   'Pasaporte',
+    (gen_random_uuid(), 'PA',
+        'Pasaporte',
         'Documento de viaje internacional; aceptado como identificación.'),
 
-    (gen_random_uuid(), 'NIT',  'Número de Identificación Tributaria',
+    (gen_random_uuid(), 'NIT',
+        'Número de Identificación Tributaria',
         'Identificación fiscal de personas jurídicas y empresas ante la DIAN.'),
 
-    (gen_random_uuid(), 'PEP',  'Permiso Especial de Permanencia',
+    (gen_random_uuid(), 'PEP',
+        'Permiso Especial de Permanencia',
         'Documento para ciudadanos venezolanos en Colombia (Resolución 740/2018).'),
 
-    (gen_random_uuid(), 'PPT',  'Permiso por Protección Temporal',
+    (gen_random_uuid(), 'PPT',
+        'Permiso por Protección Temporal',
         'Documento para venezolanos bajo el Estatuto Temporal de Protección (Decreto 216/2021).'),
 
-    (gen_random_uuid(), 'NUIP', 'Número Único de Identificación Personal',
-        'Número asignado al nacer; migra a CC/TI al cumplir la mayoría de edad.')
+    (gen_random_uuid(), 'NUIP',
+        'Número Único de Identificación Personal',
+        'Número asignado al nacer; migra a CC o TI al cumplir la mayoría de edad.')
 
 ON CONFLICT (codigo) DO NOTHING;
 
 
 -- ============================================================
--- 2. TIPOS DE INVALIDACIÓN DE SESIÓN
+-- 3. TIPOS DE INVALIDACIÓN DE SESIÓN
 -- ============================================================
 -- Catálogo de motivos por los que una sesión puede ser revocada.
--- La app registra tipo_invalidacion_id en sesion al invalidarla
--- y escribe un evento 'revoked' en sesion_historial.
+-- La app asigna tipo_invalidacion_id en sesion al invalidarla
+-- y escribe un evento "revoked" en sesion_historial.
 
 INSERT INTO tipo_invalidacion_sesion (id, codigo, nombre, descripcion) VALUES
     (gen_random_uuid(), 'logout_manual',
@@ -74,7 +94,7 @@ INSERT INTO tipo_invalidacion_sesion (id, codigo, nombre, descripcion) VALUES
     (gen_random_uuid(), 'token_reutilizado',
         'Reutilización de refresh token',
         'Se detectó un intento de reuso del refresh token ya rotado. '
-        'Indica posible robo de sesión; todas las sesiones del usuario son revocadas.'),
+        'Indica posible robo de sesión; se revocan todas las sesiones del usuario.'),
 
     (gen_random_uuid(), 'logout_todos_dispositivos',
         'Cierre de sesión en todos los dispositivos',
@@ -82,7 +102,7 @@ INSERT INTO tipo_invalidacion_sesion (id, codigo, nombre, descripcion) VALUES
 
     (gen_random_uuid(), 'admin_revocado',
         'Revocación por administrador',
-        'Un administrador invalidó la sesión manualmente (ej.: actividad sospechosa).'),
+        'Un administrador invalidó la sesión manualmente.'),
 
     (gen_random_uuid(), 'cuenta_desactivada',
         'Cuenta de usuario desactivada',
@@ -103,12 +123,11 @@ ON CONFLICT (codigo) DO NOTHING;
 
 
 -- ============================================================
--- 3. PERFILES DEL SISTEMA
+-- 4. PERFILES DEL SISTEMA
 -- ============================================================
 -- Cada perfil tiene su ruta exclusiva de dashboard.
--- Solo usuarios con usuario_perfil apuntando a ese perfil pueden acceder.
--- Si el usuario tiene un único perfil → redirige directo a ruta_dashboard.
--- Si tiene varios → la app muestra un selector antes de redirigir.
+-- Un usuario con un único perfil es redirigido directamente.
+-- Un usuario con varios perfiles ve un selector antes de continuar.
 
 INSERT INTO perfil (id, nombre, descripcion, ruta_dashboard) VALUES
     (gen_random_uuid(), 'Administrador',
@@ -136,7 +155,24 @@ ON CONFLICT (nombre) DO NOTHING;
 
 
 -- ============================================================
--- 4. NIVELES DE FORMACIÓN
+-- 5. ROLES POR DEFECTO (uno por perfil, mismo nombre)
+-- ============================================================
+-- Cada perfil recibe automáticamente un rol base con su mismo nombre.
+-- Sirve como punto de partida para asignar permisos.
+
+INSERT INTO rol (id, perfil_id, nombre, descripcion)
+SELECT
+    gen_random_uuid(),
+    p.id,
+    p.nombre,
+    'Rol base del perfil ' || p.nombre || '. '
+    || 'Punto de partida para la asignación de permisos.'
+FROM perfil p
+ON CONFLICT (perfil_id, nombre) DO NOTHING;
+
+
+-- ============================================================
+-- 6. NIVELES DE FORMACIÓN
 -- ============================================================
 
 INSERT INTO nivel_formacion (id, nombre) VALUES
@@ -149,7 +185,7 @@ ON CONFLICT (nombre) DO NOTHING;
 
 
 -- ============================================================
--- 5. FASES DEL PROCESO FORMATIVO
+-- 7. FASES DEL PROCESO FORMATIVO
 -- ============================================================
 
 INSERT INTO fase (id, nombre, orden, descripcion) VALUES
