@@ -15,6 +15,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="Gestión académica de BARÍ LMS">
     <title>BARÍ LMS | Gestión académica</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo-sena-blanco.png') }}">
     <link href="{{ url_for('static', filename='vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
@@ -42,6 +43,12 @@
                 <a class="nav-link" href="{{ url_for('admin_users') }}">
                     <i class="fas fa-fw fa-users-cog"></i>
                     <span>Usuarios y roles</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin_people') }}">
+                    <i class="fas fa-fw fa-user-friends"></i>
+                    <span>Gestionar personas</span>
                 </a>
             </li>
             <li class="nav-item">
@@ -171,44 +178,39 @@
                         <div class="col-xl-6 mb-4">
                             <div class="card shadow border-0 structure-card h-100">
                                 <div class="card-header py-3 border-bottom-sena d-flex justify-content-between align-items-center">
-                                    <h6 class="m-0 font-weight-bold text-sena">Proyectos formativos</h6>
-                                    <span class="badge badge-primary badge-pill">{{ proyectos_formativos|length }}</span>
+                                    <h6 class="m-0 font-weight-bold text-sena">Redes de conocimiento</h6>
+                                    <span class="badge badge-primary badge-pill">{{ redes|length }}</span>
                                 </div>
                                 <div class="card-body">
-                                    <form method="post" action="{% if edit_entity == 'proyecto_formativo' %}{{ url_for('admin_academic_update', entity='proyecto_formativo', item_id=editing_item.id) }}{% else %}{{ url_for('admin_academic_create', entity='proyecto_formativo') }}{% endif %}" class="mb-4">
+                                    <form method="post" action="{% if edit_entity == 'red' %}{{ url_for('admin_academic_update', entity='red', item_id=editing_item.id) }}{% else %}{{ url_for('admin_academic_create', entity='red') }}{% endif %}" class="mb-4">
                                         {{ context_inputs() }}
                                         <div class="form-group">
-                                            <label>Código del proyecto formativo</label>
-                                            <input type="text" class="form-control" name="codigo" value="{{ editing_item.codigo if edit_entity == 'proyecto_formativo' else '' }}" required>
+                                            <label>Nombre de la red</label>
+                                            <input type="text" class="form-control" name="nombre" value="{{ editing_item.nombre if edit_entity == 'red' else '' }}" required>
                                         </div>
-                                        <div class="form-group">
-                                            <label>Nombre del proyecto formativo</label>
-                                            <input type="text" class="form-control" name="nombre" value="{{ editing_item.nombre if edit_entity == 'proyecto_formativo' else '' }}" required>
-                                        </div>
-                                        <button type="submit" class="btn btn-sena btn-block">{% if edit_entity == 'proyecto_formativo' %}Guardar proyecto{% else %}Crear proyecto{% endif %}</button>
-                                        {% if edit_entity == 'proyecto_formativo' %}
-                                            <a href="{{ url_for('admin_academic', proyecto_formativo_id=proyecto_formativo_id, fase_id=fase_id, actividad_proyecto_id=actividad_proyecto_id, red_id=red_id, area_id=area_id, programa_id=programa_id, nivel_id=nivel_id) }}" class="btn btn-light btn-block mt-2">Cancelar edición</a>
+                                        <button type="submit" class="btn btn-sena btn-block">{% if edit_entity == 'red' %}Guardar red{% else %}Crear red{% endif %}</button>
+                                        {% if edit_entity == 'red' %}
+                                            <a href="{{ url_for('admin_academic', red_id=red_id, area_id=area_id, programa_id=programa_id, nivel_id=nivel_id, proyecto_formativo_id=proyecto_formativo_id, fase_id=fase_id, actividad_proyecto_id=actividad_proyecto_id) }}" class="btn btn-light btn-block mt-2">Cancelar edición</a>
                                         {% endif %}
                                     </form>
                                     <div class="table-responsive">
                                         <table class="table table-bordered sena-table">
-                                            <thead><tr><th>Código</th><th>Proyecto formativo</th><th>Acciones</th></tr></thead>
+                                            <thead><tr><th>Red</th><th>Acciones</th></tr></thead>
                                             <tbody>
-                                                {% for item in proyectos_formativos %}
+                                                {% for item in redes %}
                                                     <tr>
-                                                        <td>{{ item.codigo }}</td>
                                                         <td>{{ item.nombre }}</td>
                                                         <td class="text-nowrap">
-                                                            <a href="{{ url_for('admin_academic', proyecto_formativo_id=item.id, red_id=red_id, area_id=area_id, programa_id=programa_id, nivel_id=nivel_id) }}" class="btn btn-sm btn-outline-primary">Abrir</a>
-                                                            <a href="{{ url_for('admin_academic_edit', entity='proyecto_formativo', item_id=item.id) }}" class="btn btn-sm btn-outline-success"><i class="fas fa-pen"></i></a>
-                                                            <form method="post" action="{{ url_for('admin_academic_delete', entity='proyecto_formativo', item_id=item.id) }}" class="d-inline">
+                                                            <a href="{{ url_for('admin_academic', red_id=item.id, proyecto_formativo_id=proyecto_formativo_id, fase_id=fase_id, actividad_proyecto_id=actividad_proyecto_id) }}" class="btn btn-sm btn-outline-primary">Abrir</a>
+                                                            <a href="{{ url_for('admin_academic_edit', entity='red', item_id=item.id) }}" class="btn btn-sm btn-outline-success"><i class="fas fa-pen"></i></a>
+                                                            <form method="post" action="{{ url_for('admin_academic_delete', entity='red', item_id=item.id) }}" class="d-inline">
                                                                 {{ context_inputs() }}
-                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Se eliminará el proyecto formativo con sus fases y actividades asociadas.');"><i class="fas fa-trash"></i></button>
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Se eliminará la red y sus áreas/programas asociados.');"><i class="fas fa-trash"></i></button>
                                                             </form>
                                                         </td>
                                                     </tr>
                                                 {% else %}
-                                                    <tr><td colspan="3" class="text-center text-muted">No hay proyectos formativos registrados.</td></tr>
+                                                    <tr><td colspan="2" class="text-center text-muted">No hay redes registradas.</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -359,7 +361,7 @@
                                                     <select class="form-control" name="coordinacion_id" id="ficha_coordinacion_id" required>
                                                         <option value="">Selecciona una coordinacion</option>
                                                         {% for coordinacion in coordinaciones_disponibles %}
-                                                            <option value="{{ coordinacion.id }}" {% if edit_entity == 'ficha' and editing_item.coordinacion_id == coordinacion.id %}selected{% endif %}>{{ coordinacion.nombre }}</option>
+                                                            <option value="{{ coordinacion.id }}" data-centro-id="{{ coordinacion.centro_id }}" {% if edit_entity == 'ficha' and editing_item.coordinacion_id == coordinacion.id %}selected{% endif %}>{{ coordinacion.nombre }}</option>
                                                         {% endfor %}
                                                     </select>
                                                 </div>
@@ -379,12 +381,12 @@
                                                         {% for instructor in instructores_area %}
                                                             <option
                                                                 value="{{ instructor.id }}"
-                                                                data-coordinacion-id="{{ instructor.coordinacion_id }}"
+                                                                data-centro-id="{{ instructor.centro_id }}"
                                                                 {% if edit_entity == 'ficha' and editing_item.instructor_id == instructor.id %}selected{% endif %}
                                                             >{{ 'Instructora' if instructor.genero == 'F' else 'Instructor' }}: {{ instructor.nombres }} {{ instructor.apellidos }}</option>
                                                         {% endfor %}
                                                     </select>
-                                                    <small class="form-text text-muted">Solo se muestran instructores del área del programa y de la coordinación seleccionada.</small>
+                                                    <small class="form-text text-muted">Solo se muestran instructores del área del programa y del centro de formación al que pertenece la coordinación seleccionada.</small>
                                                 </div>
                                                 <button type="submit" class="btn btn-sena btn-block">{% if edit_entity == 'ficha' %}Guardar ficha{% else %}Crear ficha{% endif %}</button>
                                                 {% if edit_entity == 'ficha' %}
@@ -477,48 +479,47 @@
                         <div class="col-12 mb-4">
                             <div class="card shadow border-0 structure-card">
                                 <div class="card-header py-3 border-bottom-sena d-flex justify-content-between align-items-center">
-                                    <h6 class="m-0 font-weight-bold text-sena">Redes de conocimiento</h6>
-                                    <span class="badge badge-primary badge-pill">{{ redes|length }}</span>
+                                    <h6 class="m-0 font-weight-bold text-sena">Proyectos formativos</h6>
+                                    <span class="badge badge-primary badge-pill">{{ proyectos_formativos|length }}</span>
                                 </div>
                                 <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-lg-4 mb-4 mb-lg-0">
-                                            <form method="post" action="{% if edit_entity == 'red' %}{{ url_for('admin_academic_update', entity='red', item_id=editing_item.id) }}{% else %}{{ url_for('admin_academic_create', entity='red') }}{% endif %}">
-                                                {{ context_inputs() }}
-                                                <div class="form-group">
-                                                    <label>Nombre de la red</label>
-                                                    <input type="text" class="form-control" name="nombre" value="{{ editing_item.nombre if edit_entity == 'red' else '' }}" required>
-                                                </div>
-                                                <button type="submit" class="btn btn-sena btn-block">{% if edit_entity == 'red' %}Guardar red{% else %}Crear red{% endif %}</button>
-                                                {% if edit_entity == 'red' %}
-                                                    <a href="{{ url_for('admin_academic', red_id=red_id, area_id=area_id, programa_id=programa_id, nivel_id=nivel_id, proyecto_formativo_id=proyecto_formativo_id, fase_id=fase_id, actividad_proyecto_id=actividad_proyecto_id) }}" class="btn btn-light btn-block mt-2">Cancelar edición</a>
-                                                {% endif %}
-                                            </form>
+                                    <form method="post" action="{% if edit_entity == 'proyecto_formativo' %}{{ url_for('admin_academic_update', entity='proyecto_formativo', item_id=editing_item.id) }}{% else %}{{ url_for('admin_academic_create', entity='proyecto_formativo') }}{% endif %}" class="mb-4">
+                                        {{ context_inputs() }}
+                                        <div class="form-group">
+                                            <label>Código del proyecto formativo</label>
+                                            <input type="text" class="form-control" name="codigo" value="{{ editing_item.codigo if edit_entity == 'proyecto_formativo' else '' }}" required>
                                         </div>
-                                        <div class="col-lg-8">
-                                            <div class="table-responsive">
-                                                <table class="table table-bordered sena-table">
-                                                    <thead><tr><th>Red</th><th>Acciones</th></tr></thead>
-                                                    <tbody>
-                                                        {% for item in redes %}
-                                                            <tr>
-                                                                <td>{{ item.nombre }}</td>
-                                                                <td class="text-nowrap">
-                                                                    <a href="{{ url_for('admin_academic', red_id=item.id, proyecto_formativo_id=proyecto_formativo_id, fase_id=fase_id, actividad_proyecto_id=actividad_proyecto_id) }}" class="btn btn-sm btn-outline-primary">Abrir</a>
-                                                                    <a href="{{ url_for('admin_academic_edit', entity='red', item_id=item.id) }}" class="btn btn-sm btn-outline-success"><i class="fas fa-pen"></i></a>
-                                                                    <form method="post" action="{{ url_for('admin_academic_delete', entity='red', item_id=item.id) }}" class="d-inline">
-                                                                        {{ context_inputs() }}
-                                                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Se eliminará la red y sus áreas/programas asociados.');"><i class="fas fa-trash"></i></button>
-                                                                    </form>
-                                                                </td>
-                                                            </tr>
-                                                        {% else %}
-                                                            <tr><td colspan="2" class="text-center text-muted">No hay redes registradas.</td></tr>
-                                                        {% endfor %}
-                                                    </tbody>
-                                                </table>
-                                            </div>
+                                        <div class="form-group">
+                                            <label>Nombre del proyecto formativo</label>
+                                            <input type="text" class="form-control" name="nombre" value="{{ editing_item.nombre if edit_entity == 'proyecto_formativo' else '' }}" required>
                                         </div>
+                                        <button type="submit" class="btn btn-sena btn-block">{% if edit_entity == 'proyecto_formativo' %}Guardar proyecto{% else %}Crear proyecto{% endif %}</button>
+                                        {% if edit_entity == 'proyecto_formativo' %}
+                                            <a href="{{ url_for('admin_academic', proyecto_formativo_id=proyecto_formativo_id, fase_id=fase_id, actividad_proyecto_id=actividad_proyecto_id, red_id=red_id, area_id=area_id, programa_id=programa_id, nivel_id=nivel_id) }}" class="btn btn-light btn-block mt-2">Cancelar edición</a>
+                                        {% endif %}
+                                    </form>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered sena-table">
+                                            <thead><tr><th>Código</th><th>Proyecto formativo</th><th>Acciones</th></tr></thead>
+                                            <tbody>
+                                                {% for item in proyectos_formativos %}
+                                                    <tr>
+                                                        <td>{{ item.codigo }}</td>
+                                                        <td>{{ item.nombre }}</td>
+                                                        <td class="text-nowrap">
+                                                            <a href="{{ url_for('admin_academic', proyecto_formativo_id=item.id, red_id=red_id, area_id=area_id, programa_id=programa_id, nivel_id=nivel_id) }}" class="btn btn-sm btn-outline-primary">Abrir</a>
+                                                            <a href="{{ url_for('admin_academic_edit', entity='proyecto_formativo', item_id=item.id) }}" class="btn btn-sm btn-outline-success"><i class="fas fa-pen"></i></a>
+                                                            <form method="post" action="{{ url_for('admin_academic_delete', entity='proyecto_formativo', item_id=item.id) }}" class="d-inline">
+                                                                {{ context_inputs() }}
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Se eliminará el proyecto formativo con sus fases y actividades asociadas.');"><i class="fas fa-trash"></i></button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                {% else %}
+                                                    <tr><td colspan="3" class="text-center text-muted">No hay proyectos formativos registrados.</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
@@ -698,22 +699,23 @@
                     value: option.value,
                     text: option.textContent,
                     selected: option.selected,
-                    coordinacionId: option.getAttribute("data-coordinacion-id") || "",
+                    centroId: option.getAttribute("data-centro-id") || "",
                 };
             });
 
             function renderInstructorOptions() {
-                var coordinacionId = coordinacionSelect.value;
+                var selectedCoordinacion = coordinacionSelect.options[coordinacionSelect.selectedIndex];
+                var centroId = selectedCoordinacion ? selectedCoordinacion.getAttribute("data-centro-id") || "" : "";
                 var selectedValue = instructorSelect.value;
                 instructorSelect.innerHTML = "";
 
                 instructorOptions.forEach(function (item) {
-                    if (!item.value || !coordinacionId || item.coordinacionId === coordinacionId) {
+                    if (!item.value || !centroId || item.centroId === centroId) {
                         var option = document.createElement("option");
                         option.value = item.value;
                         option.textContent = item.text;
-                        if (item.coordinacionId) {
-                            option.dataset.coordinacionId = item.coordinacionId;
+                        if (item.centroId) {
+                            option.dataset.centroId = item.centroId;
                         }
                         if (item.value === selectedValue) {
                             option.selected = true;
@@ -722,9 +724,9 @@
                     }
                 });
 
-                if (instructorSelect.value && coordinacionId) {
+                if (instructorSelect.value && centroId) {
                     var currentOption = instructorSelect.options[instructorSelect.selectedIndex];
-                    if (currentOption && currentOption.dataset.coordinacionId && currentOption.dataset.coordinacionId !== coordinacionId) {
+                    if (currentOption && currentOption.dataset.centroId && currentOption.dataset.centroId !== centroId) {
                         instructorSelect.value = "";
                     }
                 }

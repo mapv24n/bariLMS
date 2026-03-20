@@ -12,6 +12,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="Gestión de estructura institucional de BARÍ LMS">
     <title>BARÍ LMS | Estructura institucional</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo-sena-blanco.png') }}">
     <link href="{{ url_for('static', filename='vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
@@ -39,6 +40,12 @@
                 <a class="nav-link" href="{{ url_for('admin_users') }}">
                     <i class="fas fa-fw fa-users-cog"></i>
                     <span>Usuarios y roles</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin_people') }}">
+                    <i class="fas fa-fw fa-user-friends"></i>
+                    <span>Gestionar personas</span>
                 </a>
             </li>
             <li class="nav-item active">
@@ -244,7 +251,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
                         {% endif %}
 
                         {% if selected_centro %}
@@ -286,7 +292,7 @@
                                                             <a href="{{ url_for('admin_structure_edit', entity='coordinacion', item_id=item.id) }}" class="btn btn-sm btn-outline-success"><i class="fas fa-pen"></i></a>
                                                             <form method="post" action="{{ url_for('admin_structure_delete', entity='coordinacion', item_id=item.id) }}" class="d-inline">
                                                                 {{ context_inputs() }}
-                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Se eliminara la coordinacion con instructores y aprendices asociados.');">
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Se eliminara la coordinacion con sus fichas asociadas.');">
                                                                     <i class="fas fa-trash"></i>
                                                                 </button>
                                                             </form>
@@ -348,187 +354,6 @@
                                                     </tr>
                                                 {% else %}
                                                     <tr><td colspan="2" class="text-center text-muted">No hay sedes registradas.</td></tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-
-                        {% if selected_coordinacion %}
-                        <div class="col-xl-6 mb-4">
-                            <div class="card shadow border-0 structure-card h-100">
-                                <div class="card-header py-3 border-bottom-sena d-flex justify-content-between align-items-center">
-                                    <h6 class="m-0 font-weight-bold text-sena">Instructores de {{ selected_coordinacion.nombre }}</h6>
-                                    <span class="badge badge-primary badge-pill">{{ instructores|length }}</span>
-                                </div>
-                                <div class="card-body">
-                                    <form method="post" action="{% if edit_entity == 'instructor' %}{{ url_for('admin_structure_update', entity='instructor', item_id=editing_item.id) }}{% else %}{{ url_for('admin_structure_create', entity='instructor') }}{% endif %}" class="mb-4">
-                                        {{ context_inputs() }}
-                                        <input type="hidden" name="coordinacion_id" value="{{ selected_coordinacion.id }}">
-                                        <div class="form-row">
-                                            <div class="form-group col-md-6">
-                                                <label>Documento</label>
-                                                <input type="text" class="form-control" name="documento" value="{{ editing_item.documento if edit_entity == 'instructor' else '' }}" required>
-                                            </div>
-                                            <div class="form-group col-md-6">
-                                                <label>Correo</label>
-                                                <input type="email" class="form-control" name="email" value="{{ editing_item.email if edit_entity == 'instructor' else '' }}">
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Género</label>
-                                            <select class="form-control" name="genero">
-                                                <option value="M" {% if edit_entity == 'instructor' and editing_item.genero != 'F' %}selected{% endif %}>Masculino (Instructor)</option>
-                                                <option value="F" {% if edit_entity == 'instructor' and editing_item.genero == 'F' %}selected{% endif %}>Femenino (Instructora)</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Área académica</label>
-                                            <select class="form-control" name="area_id">
-                                                <option value="">Sin asignar</option>
-                                                {% for area in areas_academicas %}
-                                                    <option value="{{ area.id }}" {% if edit_entity == 'instructor' and editing_item.area_id == area.id %}selected{% endif %}>{{ area.nombre }}</option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-                                        <small class="form-text text-muted mb-3">
-                                            Al crear el instructor se genera automaticamente un usuario con rol Instructor.
-                                            La contraseña inicial será el número de documento. Si no registras correo, el sistema creará uno técnico.
-                                        </small>
-                                        <div class="form-row">
-                                            <div class="form-group col-md-6">
-                                                <label>Nombres</label>
-                                                <input type="text" class="form-control" name="nombres" value="{{ editing_item.nombres if edit_entity == 'instructor' else '' }}" required>
-                                            </div>
-                                            <div class="form-group col-md-6">
-                                                <label>Apellidos</label>
-                                                <input type="text" class="form-control" name="apellidos" value="{{ editing_item.apellidos if edit_entity == 'instructor' else '' }}" required>
-                                            </div>
-                                        </div>
-                                        <button type="submit" class="btn btn-sena btn-block">
-                                            {% if edit_entity == 'instructor' %}
-                                                Guardar {{ 'instructora' if editing_item.genero == 'F' else 'instructor' }}
-                                            {% else %}
-                                                Crear instructor/a
-                                            {% endif %}
-                                        </button>
-                                        {% if edit_entity == 'instructor' %}
-                                            <a href="{{ url_for('admin_structure', regional_id=regional_id, centro_id=centro_id, coordinacion_id=coordinacion_id, sede_id=sede_id) }}" class="btn btn-light btn-block mt-2">Cancelar edición</a>
-                                        {% endif %}
-                                    </form>
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered sena-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Nombre</th>
-                                                    <th>Rol</th>
-                                                    <th>Documento</th>
-                                                    <th>Área</th>
-                                                    <th>Correo</th>
-                                                    <th>Acciones</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for item in instructores %}
-                                                    <tr>
-                                                        <td>{{ item.nombres }} {{ item.apellidos }}</td>
-                                                        <td><span class="badge badge-success">{{ 'Instructora' if item.genero == 'F' else 'Instructor' }}</span></td>
-                                                        <td>{{ item.documento }}</td>
-                                                        <td>
-                                                            {% for area in areas_academicas %}
-                                                                {% if item.area_id == area.id %}{{ area.nombre }}{% endif %}
-                                                            {% endfor %}
-                                                            {% if not item.area_id %}-{% endif %}
-                                                        </td>
-                                                        <td>{{ item.email or '-' }}</td>
-                                                        <td class="text-nowrap">
-                                                            <a href="{{ url_for('admin_structure_edit', entity='instructor', item_id=item.id) }}" class="btn btn-sm btn-outline-success"><i class="fas fa-pen"></i></a>
-                                                            <form method="post" action="{{ url_for('admin_structure_delete', entity='instructor', item_id=item.id) }}" class="d-inline">
-                                                                {{ context_inputs() }}
-                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Se eliminará el/la instructor/a seleccionado/a.');">
-                                                                    <i class="fas fa-trash"></i>
-                                                                </button>
-                                                            </form>
-                                                        </td>
-                                                    </tr>
-                                                {% else %}
-                                                    <tr><td colspan="5" class="text-center text-muted">No hay instructores registrados.</td></tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-xl-6 mb-4">
-                            <div class="card shadow border-0 structure-card h-100">
-                                <div class="card-header py-3 border-bottom-sena d-flex justify-content-between align-items-center">
-                                    <h6 class="m-0 font-weight-bold text-sena">Aprendices de {{ selected_coordinacion.nombre }}</h6>
-                                    <span class="badge badge-primary badge-pill">{{ aprendices|length }}</span>
-                                </div>
-                                <div class="card-body">
-                                    <form method="post" action="{% if edit_entity == 'aprendiz' %}{{ url_for('admin_structure_update', entity='aprendiz', item_id=editing_item.id) }}{% else %}{{ url_for('admin_structure_create', entity='aprendiz') }}{% endif %}" class="mb-4">
-                                        {{ context_inputs() }}
-                                        <input type="hidden" name="coordinacion_id" value="{{ selected_coordinacion.id }}">
-                                        <div class="form-row">
-                                            <div class="form-group col-md-6">
-                                                <label>Documento</label>
-                                                <input type="text" class="form-control" name="documento" value="{{ editing_item.documento if edit_entity == 'aprendiz' else '' }}" required>
-                                            </div>
-                                            <div class="form-group col-md-6">
-                                                <label>Ficha</label>
-                                                <input type="text" class="form-control" name="ficha" value="{{ editing_item.ficha if edit_entity == 'aprendiz' else '' }}">
-                                            </div>
-                                        </div>
-                                        <div class="form-row">
-                                            <div class="form-group col-md-6">
-                                                <label>Nombres</label>
-                                                <input type="text" class="form-control" name="nombres" value="{{ editing_item.nombres if edit_entity == 'aprendiz' else '' }}" required>
-                                            </div>
-                                            <div class="form-group col-md-6">
-                                                <label>Apellidos</label>
-                                                <input type="text" class="form-control" name="apellidos" value="{{ editing_item.apellidos if edit_entity == 'aprendiz' else '' }}" required>
-                                            </div>
-                                        </div>
-                                        <button type="submit" class="btn btn-sena btn-block">
-                                            {% if edit_entity == 'aprendiz' %}Guardar aprendiz{% else %}Crear aprendiz{% endif %}
-                                        </button>
-                                        {% if edit_entity == 'aprendiz' %}
-                                            <a href="{{ url_for('admin_structure', regional_id=regional_id, centro_id=centro_id, coordinacion_id=coordinacion_id, sede_id=sede_id) }}" class="btn btn-light btn-block mt-2">Cancelar edición</a>
-                                        {% endif %}
-                                    </form>
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered sena-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Aprendiz</th>
-                                                    <th>Documento</th>
-                                                    <th>Ficha</th>
-                                                    <th>Acciones</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for item in aprendices %}
-                                                    <tr>
-                                                        <td>{{ item.nombres }} {{ item.apellidos }}</td>
-                                                        <td>{{ item.documento }}</td>
-                                                        <td>{{ item.ficha or '-' }}</td>
-                                                        <td class="text-nowrap">
-                                                            <a href="{{ url_for('admin_structure_edit', entity='aprendiz', item_id=item.id) }}" class="btn btn-sm btn-outline-success"><i class="fas fa-pen"></i></a>
-                                                            <form method="post" action="{{ url_for('admin_structure_delete', entity='aprendiz', item_id=item.id) }}" class="d-inline">
-                                                                {{ context_inputs() }}
-                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Se eliminara el aprendiz seleccionado.');">
-                                                                    <i class="fas fa-trash"></i>
-                                                                </button>
-                                                            </form>
-                                                        </td>
-                                                    </tr>
-                                                {% else %}
-                                                    <tr><td colspan="4" class="text-center text-muted">No hay aprendices registrados.</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>

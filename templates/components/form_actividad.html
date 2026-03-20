@@ -1,0 +1,46 @@
+{# ═══════════════════════════════════════════════════════
+   form_actividad.html — Formulario: Crear / Editar actividad de aprendizaje
+   Usado en: instructor/fases.html  (dentro de #side-panel)
+   JS requerido: confirmarCrearActividad(), hideSidePanel()
+   IDs dinámicos: side-crear-title, side-crear-btn
+   ═══════════════════════════════════════════════════════ #}
+<div id="side-crear">
+
+    <div id="form-actividad-alert" class="alert mb-2" role="alert" style="display:none; font-size:.82rem; padding:8px 12px;"></div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="panel-title" id="side-crear-title">Crear actividad de aprendizaje</span>
+        <button class="close text-muted" onclick="hideSidePanel()">&times;</button>
+    </div>
+
+    <div class="ev-group">
+        <label class="ev-label">Nombre de la Actividad <span class="text-danger">*</span></label>
+        <input type="text" class="ev-input" id="form-nombre" placeholder="Ej: Actividad 1">
+        <div id="form-nombre-error" class="form-error-msg" style="display:none;"></div>
+    </div>
+
+    <div class="ev-group">
+        <label class="ev-label">Descripción</label>
+        <textarea class="ev-input" id="form-desc" rows="2"
+                  placeholder="Observación de la actividad (Opcional)"></textarea>
+    </div>
+
+    <div class="d-flex" style="gap:8px;">
+        <div class="ev-group flex-grow-1" style="min-width:0;">
+            <label class="ev-label">Fecha Inicio</label>
+            <input type="date" class="ev-input" id="form-inicio" style="min-width:0;">
+        </div>
+        <div class="ev-group flex-grow-1" style="min-width:0;">
+            <label class="ev-label">Fecha Fin</label>
+            <input type="date" class="ev-input" id="form-fin" style="min-width:0;">
+        </div>
+    </div>
+
+    <div style="display:flex; gap:8px; margin-top:4px;">
+        <button class="btn-aceptar" id="side-crear-btn" onclick="confirmarCrearActividad()">
+            Aceptar y crear actividad
+        </button>
+        <button class="btn-cancelar" onclick="hideSidePanel()">Cancelar</button>
+    </div>
+
+</div>

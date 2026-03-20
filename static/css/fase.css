@@ -351,3 +351,110 @@ tr.selected-row {
     border-radius: 0 0 8px 8px;
     min-height: 420px;
 }
+/* ── Formulario inline edición de guías ── */
+.guia-edit-form {
+    display: none;
+    background: #f8f9fc;
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-top: 8px;
+}
+
+.guia-edit-group {
+    margin-bottom: 10px;
+}
+
+.guia-edit-label {
+    display: block;
+    font-size: .75rem;
+    font-weight: 700;
+    color: #1cc88a;
+    margin-bottom: 3px;
+}
+
+.guia-edit-input {
+    width: 100%;
+    background: #fff;
+    border: 1px solid #d1d3e2;
+    border-radius: 6px;
+    color: #5a5c69;
+    font-size: .85rem;
+    padding: 6px 10px;
+    box-sizing: border-box;
+    transition: border-color .15s;
+}
+
+.guia-edit-input:focus {
+    outline: none;
+    border-color: #1cc88a;
+    box-shadow: 0 0 0 2px rgba(28,200,138,.15);
+}
+
+textarea.guia-edit-input {
+    resize: none;
+}
+
+/* ── Formulario agregar guía (#form-guia-ap) ── */
+#form-guia-ap .ev-label {
+    font-size: .78rem;
+    font-weight: 700;
+    color: #1cc88a;
+    margin-bottom: 4px;
+    display: block;
+}
+
+#form-guia-ap .ev-input {
+    background: #f4f6f9;
+    border: 1px solid #e3e6f0;
+    border-radius: 6px;
+    color: #5a5c69;
+    font-size: .88rem;
+    padding: 8px 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#form-guia-ap .ev-input:focus {
+    outline: none;
+    border-color: #1cc88a;
+    box-shadow: 0 0 0 2px rgba(28,200,138,.15);
+}
+
+#form-guia-ap textarea.ev-input {
+    resize: none;
+}
+
+#form-guia-ap .ev-group {
+    margin-bottom: 12px;
+}
+
+#form-guia-ap .btn-aceptar {
+    background: #1cc88a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: 600;
+    font-size: .85rem;
+    cursor: pointer;
+}
+
+#form-guia-ap .btn-aceptar:hover {
+    background: #17a673;
+}
+
+#form-guia-ap .btn-cancelar {
+    background: #e74a3b;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: 600;
+    font-size: .85rem;
+    cursor: pointer;
+}
+
+#form-guia-ap .btn-cancelar:hover {
+    background: #c0392b;
+}
