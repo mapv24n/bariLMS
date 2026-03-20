@@ -87,7 +87,7 @@ PGUSER=postgres          # tu usuario de PostgreSQL
 PGPASSWORD=              # tu contraseña
 ```
 
-### 5. Crear la base de datos y el schema
+### 5. Crear la base de datos, el schema y los datos base
 
 Crea la base de datos vacía:
 
@@ -95,19 +95,24 @@ Crea la base de datos vacía:
 createdb -U postgres bari_lms
 ```
 
-Luego aplica el schema:
+Aplica el schema (tablas, índices, constraints):
 
 ```bash
-psql -U postgres -d bari_lms -f internal/database/bari_lms_postgresql.sql
+psql -U postgres -d bari_lms -f database/bari_lms_postgresql.sql
 ```
 
-### 6. (Opcional) Cargar datos de prueba
-
-El siguiente script crea fichas, aprendices, fases y actividades de ejemplo:
+Aplica los datos de catálogo (perfiles, tipos de documento, niveles, fases…):
 
 ```bash
-python internal/database/seed_pg.py
+psql -U postgres -d bari_lms -f database/seed.sql
 ```
+
+### 6. Ejecutar la aplicación — primer inicio
+
+Al arrancar sin usuarios administradores la app genera automáticamente
+un **admin provisional** con correo y contraseña aleatorios, imprimiéndolos
+una sola vez en la consola. Úsalos para el primer acceso y crea tu cuenta real
+desde el panel de administración.
 
 ### 7. Ejecutar la aplicación
 
@@ -163,29 +168,35 @@ bariLMS/
 
 ---
 
-## Usuarios de prueba
+## Admin provisional (primer inicio)
 
-La aplicación crea estos usuarios automáticamente al iniciar por primera vez:
+Al arrancar sin ningún usuario con perfil **Administrador**, la app genera
+automáticamente una cuenta provisional con credenciales aleatorias:
 
-| Correo | Contraseña | Rol |
-|---|---|---|
-| `admin@senalearn.edu.co` | `Admin123*` | Administrador |
-| `administrativo@senalearn.edu.co` | `Adminvo123*` | Administrativo |
-| `instructor@senalearn.edu.co` | `Instructor123*` | Instructor |
-| `aprendiz@senalearn.edu.co` | `Aprendiz123*` | Aprendiz |
+```
+[bariLMS] ⚠  No se encontró ningún administrador.
+[bariLMS]    Correo     : admin_x7k2p9@senalearn.edu.co
+[bariLMS]    Contraseña : Xq8#mL3vR2
+[bariLMS]    Úsalas para el primer acceso y crea tu cuenta real de inmediato.
+```
 
-> Cambia las contraseñas después del primer inicio de sesión.
+> Esta cuenta es de un solo uso. Crea un administrador real desde el panel
+> y desactiva la provisional.
 
 ---
 
 ## Roles y accesos
 
-| Rol | Slug | Descripción |
+| Perfil | Ruta dashboard | Descripción |
 |---|---|---|
-| **Administrador** | `administrador` | Usuarios, estructura institucional y académica |
-| **Administrativo** | `administrativo` | Fichas, programas, ambientes y soporte documental |
-| **Instructor** | `instructor` | Fichas, fases, actividades y calificación de aprendices |
-| **Aprendiz** | `aprendiz` | Dashboard, fichas, fases, evidencias y calificaciones |
+| **Administrador** | `/dashboard/administrador` | Usuarios, estructura institucional y académica |
+| **Administrativo** | `/dashboard/administrativo` | Fichas, programas, ambientes y soporte documental |
+| **Instructor** | `/dashboard/instructor` | Fichas, fases, actividades y calificación de aprendices |
+| **Aprendiz** | `/dashboard/aprendiz` | Dashboard, fichas, fases, evidencias y calificaciones |
+| **Empresa** | `/dashboard/empresa` | Seguimiento de aprendices en etapa productiva |
+
+> Si un usuario tiene **un único perfil** se redirige directamente a su dashboard.
+> Si tiene **varios perfiles** la app muestra un selector para elegir.
 
 ---
 
