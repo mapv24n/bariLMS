@@ -14,7 +14,7 @@ from bari_lms.repositories.entidad import (
     update_entity,
     validate_entity_payload,
 )
-from bari_lms.repositories.estructura import normalize_structure_context, structure_redirect_args
+from bari_lms.repositories.admin.estructura import normalize_structure_context, structure_redirect_args
 
 
 def register_routes(app):

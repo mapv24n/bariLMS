@@ -6,7 +6,7 @@ from psycopg.errors import UniqueViolation as IntegrityError
 from bari_lms.db import get_db
 from bari_lms.middleware.auth import current_user, role_required
 from bari_lms.repositories._config import ACADEMIC_ENTITIES, ENTITY_CONFIG
-from bari_lms.repositories.academico import academic_redirect_args, normalize_academic_context
+from bari_lms.repositories.admin.academico import academic_redirect_args, normalize_academic_context
 from bari_lms.repositories.entidad import (
     delete_entity,
     entity_form_data,

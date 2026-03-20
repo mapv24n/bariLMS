@@ -7,7 +7,7 @@ from bari_lms.repositories._config import (
     PERSON_USER_CONFIG,
     STRUCTURE_ENTITIES,
 )
-from bari_lms.repositories.academico import academic_redirect_args, normalize_academic_context
+from bari_lms.repositories.admin.academico import academic_redirect_args, normalize_academic_context
 from bari_lms.repositories.entidad import (
     delete_entity,
     entity_form_data,
@@ -18,8 +18,8 @@ from bari_lms.repositories.entidad import (
     validate_academic_payload,
     validate_entity_payload,
 )
-from bari_lms.repositories.estructura import normalize_structure_context, structure_redirect_args
-from bari_lms.repositories.personas import (
+from bari_lms.repositories.admin.estructura import normalize_structure_context, structure_redirect_args
+from bari_lms.repositories.admin.personas import (
     create_linked_person_user,
     delete_linked_person_user,
     get_people_redirect_args,

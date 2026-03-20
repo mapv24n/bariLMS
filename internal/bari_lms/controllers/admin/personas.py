@@ -15,7 +15,7 @@ from bari_lms.repositories.entidad import (
     insert_entity,
     validate_entity_payload,
 )
-from bari_lms.repositories.personas import (
+from bari_lms.repositories.admin.personas import (
     create_linked_person_user,
     delete_linked_person_user,
     get_people_redirect_args,
