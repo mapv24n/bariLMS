@@ -70,7 +70,58 @@ CREATE TABLE IF NOT EXISTS actividad_proyecto (
 CREATE TABLE IF NOT EXISTS actividad_aprendizaje (
     id SERIAL PRIMARY KEY,
     id_actividad_proyecto INTEGER NOT NULL REFERENCES actividad_proyecto(id) ON DELETE CASCADE,
-    nombre TEXT NOT NULL
+    nombre TEXT NOT NULL,
+    descripcion TEXT,
+    fecha_inicio DATE,
+    fecha_fin DATE
+);
+
+CREATE TABLE IF NOT EXISTS guia_aprendizaje (
+    id SERIAL PRIMARY KEY,
+    id_actividad_aprendizaje INTEGER NOT NULL UNIQUE REFERENCES actividad_aprendizaje(id) ON DELETE CASCADE,
+    url TEXT NOT NULL,
+    subido_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS evidencia_aprendizaje (
+    id SERIAL PRIMARY KEY,
+    id_actividad_aprendizaje INTEGER NOT NULL UNIQUE REFERENCES actividad_aprendizaje(id) ON DELETE CASCADE,
+    descripcion TEXT,
+    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS entrega_evidencia (
+    id SERIAL PRIMARY KEY,
+    id_evidencia_aprendizaje INTEGER NOT NULL REFERENCES evidencia_aprendizaje(id) ON DELETE CASCADE,
+    id_usuario INTEGER NOT NULL,
+    url TEXT,
+    calificacion NUMERIC(5,2),
+    observaciones TEXT,
+    entregado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS seccion_actividad (
+    id SERIAL PRIMARY KEY,
+    id_actividad_aprendizaje INTEGER NOT NULL REFERENCES actividad_aprendizaje(id) ON DELETE CASCADE,
+    nombre TEXT NOT NULL,
+    descripcion TEXT,
+    archivo_url TEXT,
+    archivo_tipo TEXT,
+    fecha_inicio DATE,
+    fecha_fin DATE,
+    orden INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS sub_seccion_actividad (
+    id SERIAL PRIMARY KEY,
+    id_seccion INTEGER NOT NULL REFERENCES seccion_actividad(id) ON DELETE CASCADE,
+    nombre TEXT NOT NULL,
+    descripcion TEXT,
+    archivo_url TEXT,
+    archivo_tipo TEXT,
+    fecha_inicio DATE,
+    fecha_fin DATE,
+    orden INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS programa_formacion (
