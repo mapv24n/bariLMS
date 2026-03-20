@@ -48,7 +48,25 @@ def register_routes(app):
         if role not in AVAILABLE_ROLES:
             flash("El rol seleccionado no es válido.", "danger")
             return redirect(url_for("admin_users"))
-        if get_user_by_email(email) is not None:
+
+        db = get_db()
+        user_id = str(uuid.uuid4())
+        try:
+            db.execute(
+                "INSERT INTO usuario (id, correo, contrasena_hash, nombre, activo) VALUES (?, ?, ?, ?, ?)",
+                (user_id, email, hash_password(password), name, active),
+            )
+            db.execute(
+                """
+                INSERT INTO usuario_perfil (id, usuario_id, perfil_id)
+                SELECT ?, ?, p.id FROM perfil p WHERE p.nombre = ?
+                ON CONFLICT (usuario_id, perfil_id) DO NOTHING
+                """,
+                (str(uuid.uuid4()), user_id, role),
+            )
+            db.commit()
+        except IntegrityError:
+            db.rollback()
             flash("Ya existe un usuario registrado con ese correo.", "danger")
             return render_template(
                 "admin/users.html",
@@ -58,22 +76,6 @@ def register_routes(app):
                 form_data=form_data,
                 editing_user=None,
             )
-
-        db = get_db()
-        user_id = str(uuid.uuid4())
-        db.execute(
-            "INSERT INTO usuario (id, correo, contrasena_hash, nombre, activo) VALUES (?, ?, ?, ?, ?)",
-            (user_id, email, hash_password(password), name, active),
-        )
-        db.execute(
-            """
-            INSERT INTO usuario_perfil (id, usuario_id, perfil_id)
-            SELECT ?, ?, p.id FROM perfil p WHERE p.nombre = ?
-            ON CONFLICT (usuario_id, perfil_id) DO NOTHING
-            """,
-            (str(uuid.uuid4()), user_id, role),
-        )
-        db.commit()
         flash("Usuario creado correctamente.", "success")
         return redirect(url_for("admin_users"))
 

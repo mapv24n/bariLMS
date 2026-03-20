@@ -127,7 +127,8 @@ def normalize_academic_context(args):  # noqa: C901
             get_entities("area", "red_conocimiento_id = ?", (red_id,), "nombre ASC")
             if red_id else []
         ),
-        "niveles": get_entities("nivel", order_by="nombre ASC"),
+        "niveles": (_niveles := get_entities("nivel", order_by="nombre ASC")),
+        "nivel_map": {n["id"]: n["nombre"] for n in _niveles},
         "programas": (
             get_entities("programa", "area_id = ?", (area_id,), "nombre ASC")
             if area_id else []

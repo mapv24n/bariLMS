@@ -34,18 +34,7 @@
         <span class="structure-chip {% if selected_actividad_proyecto %}active{% endif %}">Actividad de proyecto: {{ selected_actividad_proyecto.nombre if selected_actividad_proyecto else 'Sin seleccionar' }}</span>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+    {% include 'components/flash_messages.html' %}
 
     <div class="row">
         <div class="col-xl-6 mb-4">
@@ -228,11 +217,7 @@
                                         {% for item in programas %}
                                             <tr>
                                                 <td>{{ item.nombre }}</td>
-                                                <td>
-                                                    {% for nivel in niveles %}
-                                                        {% if item.nivel_id == nivel.id %}{{ nivel.nombre }}{% endif %}
-                                                    {% endfor %}
-                                                </td>
+                                                <td>{{ nivel_map.get(item.nivel_id, '-') }}</td>
                                                 <td class="text-nowrap">
                                                     <a href="{{ url_for('admin_academic', red_id=red_id, area_id=selected_area.id, programa_id=item.id) }}" class="btn btn-sm btn-outline-primary">Abrir</a>
                                                     <a href="{{ url_for('admin_academic_edit', entity='programa', item_id=item.id) }}" class="btn btn-sm btn-outline-success"><i class="fas fa-pen"></i></a>

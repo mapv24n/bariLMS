@@ -17,18 +17,7 @@
         </a>
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+    {% include 'components/flash_messages.html' %}
 
     <div class="row">
         <div class="col-xl-4 mb-4">
@@ -229,8 +218,8 @@
                                     <tr>
                                         <td>{{ item.nombres }} {{ item.apellidos }}</td>
                                         <td>{{ item.documento }}</td>
-                                        <td>{% for centro in centros %}{% if centro.id == item.centro_id %}{{ centro.nombre }}{% endif %}{% endfor %}</td>
-                                        <td>{% for area in areas_academicas %}{% if area.id == item.area_id %}{{ area.nombre }}{% endif %}{% endfor %}{% if not item.area_id %}-{% endif %}</td>
+                                        <td>{{ centro_map.get(item.centro_id, '-') }}</td>
+                                        <td>{{ area_map.get(item.area_id, '-') }}</td>
                                         <td>{{ item.email or '-' }}</td>
                                         <td class="text-nowrap">
                                             <a href="{{ url_for('admin_people_edit', entity='instructor', item_id=item.id) }}" class="btn btn-sm btn-outline-success"><i class="fas fa-pen"></i></a>
@@ -263,7 +252,7 @@
                                     <tr>
                                         <td>{{ item.nombres }} {{ item.apellidos }}</td>
                                         <td>{{ item.documento }}</td>
-                                        <td>{% for regional in regionales %}{% if regional.id == item.regional_id %}{{ regional.nombre }}{% endif %}{% endfor %}</td>
+                                        <td>{{ regional_map.get(item.regional_id, '-') }}</td>
                                         <td>{{ item.ficha or '-' }}</td>
                                         <td>{{ item.email or '-' }}</td>
                                         <td class="text-nowrap">
@@ -297,7 +286,7 @@
                                     <tr>
                                         <td>{{ item.nombres }} {{ item.apellidos }}</td>
                                         <td>{{ item.documento }}</td>
-                                        <td>{% for centro in centros %}{% if centro.id == item.centro_id %}{{ centro.nombre }}{% endif %}{% endfor %}</td>
+                                        <td>{{ centro_map.get(item.centro_id, '-') }}</td>
                                         <td>{{ item.cargo }}</td>
                                         <td>{{ item.email or '-' }}</td>
                                         <td class="text-nowrap">

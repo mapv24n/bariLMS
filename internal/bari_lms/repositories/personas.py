@@ -43,16 +43,22 @@ def normalize_people_context(args):
     if edit_entity and editing_item is None:
         edit_entity = None
         edit_id = None
+    regionales = get_entities("regional", order_by="nombre ASC")
+    centros = get_entities("centro", order_by="nombre ASC")
+    areas_academicas = get_entities("area", order_by="nombre ASC")
     return {
-        "regionales": get_entities("regional", order_by="nombre ASC"),
+        "regionales": regionales,
         "coordinaciones": get_entities("coordinacion", order_by="nombre ASC"),
-        "centros": get_entities("centro", order_by="nombre ASC"),
-        "areas_academicas": get_entities("area", order_by="nombre ASC"),
+        "centros": centros,
+        "areas_academicas": areas_academicas,
         "instructores": get_entities("instructor", order_by="nombres ASC, apellidos ASC"),
         "aprendices": get_entities("aprendiz", order_by="nombres ASC, apellidos ASC"),
         "administrativos": get_entities(
             "administrativo_persona", order_by="nombres ASC, apellidos ASC"
         ),
+        "regional_map": {r["id"]: r["nombre"] for r in regionales},
+        "centro_map": {c["id"]: c["nombre"] for c in centros},
+        "area_map": {a["id"]: a["nombre"] for a in areas_academicas},
         "edit_entity": edit_entity,
         "edit_id": edit_id,
         "editing_item": editing_item,
