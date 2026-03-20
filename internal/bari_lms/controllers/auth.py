@@ -34,6 +34,13 @@ def register_routes(app):
 
             user = get_user_by_email(email)
 
+            # ── DEBUG ─────────────────────────────
+            print("USER:", user)
+            if user:
+                print("HASH EN DB:", user.get("password_hash"))
+                print("PASSWORD INGRESADO:", password)
+            # ──────────────────────────────────────
+
             if user is None:
                 flash(_BAD_CREDS, "danger")
                 return render_template("login.html")
@@ -53,8 +60,10 @@ def register_routes(app):
             session.clear()
             session["user_email"] = user["email"]
             session["user_profile"] = role
+
             return redirect(url_for("dashboard", role_slug=ROLE_TO_SLUG[role]))
 
+        # ── GET request ─────────────────────────
         if current_user():
             return redirect(url_for("home"))
 

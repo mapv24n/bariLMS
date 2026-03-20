@@ -7,17 +7,17 @@ from bari_lms.db import get_db
 
 
 def get_user_by_email(email):
-    if not email:
-        return None
-    return get_db().execute(
-        """
-        SELECT u.id, u.correo AS email, u.nombre AS name, u.activo AS active,
-               u.creado_en AS created_at, u.contrasena_hash AS password_hash
-        FROM usuario u
-        WHERE lower(u.correo) = lower(?)
-        """,
-        (email,),
-    ).fetchone()
+    db = get_db()
+    return db.execute("""
+        SELECT
+            id,
+            correo_institucional AS email,
+            contrasena_hash AS password_hash,
+            nombre AS name,
+            activo AS active
+        FROM usuario
+        WHERE correo_institucional = ?
+    """, (email,)).fetchone()   
 
 
 def user_has_profile(user_id, profile_name):
