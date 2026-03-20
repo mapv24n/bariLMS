@@ -22,7 +22,7 @@ def register_routes(app):
     @role_required("Administrador")
     def admin_structure():
         return render_template(
-            "admin_structure.html",
+            "admin/structure.html",
             user=current_user(),
             **normalize_structure_context(request.args),
         )

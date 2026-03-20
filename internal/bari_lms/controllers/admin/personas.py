@@ -103,7 +103,7 @@ def register_routes(app):
     @role_required("Administrador")
     def admin_people():
         return render_template(
-            "admin_people.html",
+            "admin/people.html",
             user=current_user(),
             **normalize_people_context(request.args),
         )

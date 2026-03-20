@@ -17,7 +17,7 @@ def register_routes(app):
     @role_required("Administrador")
     def admin_users():
         return render_template(
-            "admin_users.html",
+            "admin/users.html",
             user=current_user(),
             users=get_all_users(),
             roles=AVAILABLE_ROLES,
@@ -38,7 +38,7 @@ def register_routes(app):
         if not name or not email or not role or not password:
             flash("Todos los campos son obligatorios para crear el usuario.", "danger")
             return render_template(
-                "admin_users.html",
+                "admin/users.html",
                 user=current_user(),
                 users=get_all_users(),
                 roles=AVAILABLE_ROLES,
@@ -51,7 +51,7 @@ def register_routes(app):
         if get_user_by_email(email) is not None:
             flash("Ya existe un usuario registrado con ese correo.", "danger")
             return render_template(
-                "admin_users.html",
+                "admin/users.html",
                 user=current_user(),
                 users=get_all_users(),
                 roles=AVAILABLE_ROLES,
@@ -85,7 +85,7 @@ def register_routes(app):
             flash("El usuario solicitado no existe.", "danger")
             return redirect(url_for("admin_users"))
         return render_template(
-            "admin_users.html",
+            "admin/users.html",
             user=current_user(),
             users=get_all_users(),
             roles=AVAILABLE_ROLES,

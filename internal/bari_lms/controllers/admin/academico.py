@@ -22,7 +22,7 @@ def register_routes(app):
     @role_required("Administrador")
     def admin_academic():
         return render_template(
-            "admin_academic.html",
+            "admin/academic.html",
             user=current_user(),
             **normalize_academic_context(request.args),
         )

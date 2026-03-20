@@ -1,0 +1,181 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Usuarios y roles{% endblock %}
+
+{% block extra_css %}
+    <link href="{{ url_for('static', filename='vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div>
+            <div class="text-uppercase small font-weight-bold text-sena mb-2">Módulo administrativo</div>
+            <h1 class="h3 mb-0 text-gray-800">Usuarios y roles</h1>
+        </div>
+        <a href="{{ url_for('dashboard', role_slug='administrador') }}" class="btn btn-outline-success btn-sm shadow-sm">
+            <i class="fas fa-arrow-left fa-sm mr-1"></i> Volver al dashboard
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-xl-4 col-lg-5 mb-4">
+            <div class="card shadow border-0">
+                <div class="card-header py-3 border-bottom-sena">
+                    <h6 class="m-0 font-weight-bold text-sena">
+                        {% if editing_user %}Editar usuario{% else %}Nuevo usuario{% endif %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form
+                        method="post"
+                        action="{% if editing_user %}{{ url_for('admin_users_update', user_id=editing_user.id) }}{% else %}{{ url_for('admin_users_create') }}{% endif %}"
+                    >
+                        <div class="form-group">
+                            <label for="name">Nombre completo</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ form_data.get('name', '') }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Correo institucional</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ form_data.get('email', '') }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="role">Rol</label>
+                            <select class="form-control" id="role" name="role" required>
+                                <option value="">Selecciona un rol</option>
+                                {% for role in roles %}
+                                    <option value="{{ role }}" {% if form_data.get('role') == role %}selected{% endif %}>{{ role }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">
+                                {% if editing_user %}Nueva contraseña{% else %}Contraseña{% endif %}
+                            </label>
+                            <input
+                                type="password"
+                                class="form-control"
+                                id="password"
+                                name="password"
+                                {% if not editing_user %}required{% endif %}
+                            >
+                            {% if editing_user %}
+                                <small class="form-text text-muted">Deja este campo vacío para conservar la contraseña actual.</small>
+                            {% endif %}
+                        </div>
+                        <div class="custom-control custom-switch mb-4">
+                            <input
+                                type="checkbox"
+                                class="custom-control-input"
+                                id="active"
+                                name="active"
+                                {% if form_data.get('active', 1) %}checked{% endif %}
+                            >
+                            <label class="custom-control-label" for="active">Usuario activo</label>
+                        </div>
+                        <button type="submit" class="btn btn-sena btn-block">
+                            {% if editing_user %}Guardar cambios{% else %}Crear usuario{% endif %}
+                        </button>
+                        {% if editing_user %}
+                            <a href="{{ url_for('admin_users') }}" class="btn btn-light btn-block mt-2">Cancelar edición</a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-8 col-lg-7 mb-4">
+            <div class="card shadow border-0">
+                <div class="card-header py-3 border-bottom-sena d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-sena">Usuarios registrados</h6>
+                    <span class="badge badge-primary badge-pill">{{ users|length }}</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered sena-table" id="usersTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Correo</th>
+                                    <th>Rol</th>
+                                    <th>Estado</th>
+                                    <th>Creado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for managed_user in users %}
+                                    <tr>
+                                        <td>{{ managed_user.name }}</td>
+                                        <td>{{ managed_user.email }}</td>
+                                        <td>{{ managed_user.role }}</td>
+                                        <td>
+                                            {% if managed_user.active %}
+                                                <span class="badge badge-success">Activo</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">Inactivo</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ managed_user.created_at }}</td>
+                                        <td class="text-nowrap">
+                                            <a href="{{ url_for('admin_users_edit', user_id=managed_user.id) }}" class="btn btn-sm btn-outline-success">
+                                                <i class="fas fa-pen"></i>
+                                            </a>
+                                            <form method="post" action="{{ url_for('admin_users_delete', user_id=managed_user.id) }}" class="d-inline">
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('Se eliminara este usuario. Deseas continuar?');"
+                                                    {% if managed_user.id == user.id %}disabled{% endif %}
+                                                >
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{{ url_for('static', filename='vendor/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
+    <script>
+        $(function () {
+            $('#usersTable').DataTable({
+                language: {
+                    search: "Buscar:",
+                    lengthMenu: "Mostrar _MENU_ registros",
+                    info: "Mostrando _START_ a _END_ de _TOTAL_ usuarios",
+                    infoEmpty: "Mostrando 0 a 0 de 0 usuarios",
+                    zeroRecords: "No se encontraron usuarios",
+                    paginate: {
+                        first: "Primero",
+                        last: "Ultimo",
+                        next: "Siguiente",
+                        previous: "Anterior"
+                    }
+                },
+                order: [[4, 'desc']]
+            });
+        });
+    </script>
+{% endblock %}
