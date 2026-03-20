@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>BARÍ LMS | {% block title %}{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo-sena-blanco.png') }}">
+    <link href="{{ url_for('static', filename='vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/sena-learn.css') }}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body id="page-top">
+    <div id="wrapper">
+        <ul class="navbar-nav bg-gradient-sena sidebar sidebar-dark accordion" id="accordionSidebar">
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ url_for('dashboard', role_slug='instructor') }}">
+                <div class="sidebar-brand-icon">
+                    <img src="{{ url_for('static', filename='img/logo-sena-blanco.png') }}" alt="Logo SENA" class="sena-brand-logo">
+                </div>
+                <div class="sidebar-brand-text mx-3">BARÍ LMS</div>
+            </a>
+            <hr class="sidebar-divider my-0">
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('dashboard', role_slug='instructor') }}">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    <span>Panel principal</span>
+                </a>
+            </li>
+            <hr class="sidebar-divider">
+            <div class="sidebar-heading">Formación</div>
+            <li class="nav-item {% if request.endpoint in ('instructor_fichas', 'instructor_fases') %}active{% endif %}">
+                <a class="nav-link" href="{{ url_for('instructor_fichas') }}">
+                    <i class="fas fa-fw fa-layer-group"></i>
+                    <span>Mis Fichas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('dashboard', role_slug='instructor') }}">
+                    <i class="fas fa-fw fa-clipboard-check"></i>
+                    <span>Evaluación</span>
+                </a>
+            </li>
+            <li class="nav-item {% if request.endpoint == 'instructor_change_password' %}active{% endif %}">
+                <a class="nav-link" href="{{ url_for('instructor_change_password') }}">
+                    <i class="fas fa-fw fa-key"></i>
+                    <span>Cambiar contraseña</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <form method="post" action="{{ url_for('logout') }}">
+                    <button type="submit" class="nav-link btn btn-link text-left w-100 logout-link">
+                        <i class="fas fa-fw fa-sign-out-alt"></i>
+                        <span>Cerrar sesión</span>
+                    </button>
+                </form>
+            </li>
+        </ul>
+
+        <div id="content-wrapper" class="d-flex flex-column">
+            <div id="content">
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                        <i class="fa fa-bars"></i>
+                    </button>
+                    <div class="mr-auto">
+                        <span class="sena-role-pill">Instructor</span>
+                    </div>
+                    <ul class="navbar-nav ml-auto">
+                        <li class="nav-item no-arrow">
+                            <span class="nav-link text-gray-700">
+                                <span class="mr-2 d-none d-lg-inline">{{ user.name }}</span>
+                                <i class="fas fa-user-circle fa-lg"></i>
+                            </span>
+                        </li>
+                    </ul>
+                </nav>
+                <div class="container-fluid">
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+            <footer class="sticky-footer bg-white">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span>BARÍ LMS SENA - Instructor</span>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/jquery-easing/jquery.easing.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

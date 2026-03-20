@@ -1,345 +1,242 @@
-<!DOCTYPE html>
-<html lang="es">
+{% extends "instructor/base.html" %}
 
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>BARÍ LMS | Fases - Ficha {{ ficha.numero }}</title>
-    <link href="{{ url_for('static', filename='vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/sena-learn.css') }}" rel="stylesheet">
+{% block title %}Fases - Ficha {{ ficha.numero }}{% endblock %}
+
+{% block extra_css %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/fase.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
-</head>
+{% endblock %}
 
-<body id="page-top">
-    <div id="wrapper">
+{% block content %}
+    <!-- ── Encabezado de ficha ── -->
+    <div class="d-flex align-items-start justify-content-between mb-3 flex-wrap" style="gap:10px;">
+        <div>
+            <div class="text-muted small mb-1">
+                {% if ficha.nivel_nombre %}{{ ficha.nivel_nombre }} &rsaquo; {% endif %}
+                {{ ficha.programa_nombre }}
+            </div>
+            <h4 class="mb-0 text-gray-800 font-weight-bold">
+                {{ ficha.programa_nombre }}
+                <span class="text-muted font-weight-normal" style="font-size:1rem;">
+                    &nbsp; Ficha: {{ ficha.numero }}
+                </span>
+            </h4>
+            <div class="text-muted small mt-1">
+                "{{ ficha.proyecto_nombre or 'Sin proyecto formativo' }}"
+                &nbsp;Este es el proyecto formativo que maneja esta ficha
+            </div>
+        </div>
+        <a href="{{ url_for('instructor_fichas') }}" class="btn btn-outline-success btn-sm shadow-sm">
+            <i class="fas fa-arrow-left mr-1"></i> Volver a la Ficha
+        </a>
+    </div>
 
-        <!-- ══ Sidebar ══ -->
-        <ul class="navbar-nav bg-gradient-sena sidebar sidebar-dark accordion" id="accordionSidebar">
-            <a class="sidebar-brand d-flex align-items-center justify-content-center"
-                href="{{ url_for('dashboard', role_slug='instructor') }}">
-                <div class="sidebar-brand-icon">
-                    <img src="{{ url_for('static', filename='img/logo-sena-blanco.png') }}" alt="Logo SENA"
-                        class="sena-brand-logo">
+    <!-- ── Layout principal ── -->
+    <div class="row" style="min-height:500px;">
+
+        <!-- ── Árbol de fases (izquierda) ── -->
+        <div class="col-lg-3 col-md-4 mb-4">
+            <div class="card shadow border-0" style="display:flex; flex-direction:column; min-height:400px;">
+                <div class="card-header py-2 border-bottom-sena">
+                    <span class="font-weight-bold text-sena small">
+                        <i class="fas fa-sitemap mr-1"></i> Estructura del Proyecto
+                    </span>
                 </div>
-                <div class="sidebar-brand-text mx-3">BARÍ LMS</div>
-            </a>
-            <hr class="sidebar-divider my-0">
-            <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('dashboard', role_slug='instructor') }}">
-                    <i class="fas fa-fw fa-tachometer-alt"></i><span>Panel principal</span>
-                </a>
-            </li>
-            <hr class="sidebar-divider">
-            <div class="sidebar-heading">Formación</div>
-            <li class="nav-item active">
-                <a class="nav-link" href="{{ url_for('instructor_fichas') }}">
-                    <i class="fas fa-fw fa-layer-group"></i><span>Mis Fichas</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('dashboard', role_slug='instructor') }}">
-                    <i class="fas fa-fw fa-clipboard-check"></i><span>Evaluación</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('instructor_change_password') }}">
-                    <i class="fas fa-fw fa-key"></i><span>Cambiar contraseña</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <form method="post" action="{{ url_for('logout') }}">
-                    <button type="submit" class="nav-link btn btn-link text-left w-100 logout-link">
-                        <i class="fas fa-fw fa-sign-out-alt"></i><span>Cerrar sesión</span>
-                    </button>
-                </form>
-            </li>
-        </ul>
-        <!-- ══ /Sidebar ══ -->
-
-        <div id="content-wrapper" class="d-flex flex-column">
-            <div id="content">
-
-                <!-- Topbar -->
-                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-3 static-top shadow">
-                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
-                        <i class="fa fa-bars"></i>
-                    </button>
-                    <div class="mr-auto">
-                        <span class="sena-role-pill">Instructor</span>
-                    </div>
-                    <ul class="navbar-nav ml-auto">
-                        <li class="nav-item no-arrow">
-                            <span class="nav-link text-gray-700">
-                                <span class="mr-2 d-none d-lg-inline">{{ user.name }}</span>
-                                <i class="fas fa-user-circle fa-lg"></i>
-                            </span>
-                        </li>
-                    </ul>
-                </nav>
-
-                <div class="container-fluid">
-
-                    <!-- ── Encabezado de ficha ── -->
-                    <div class="d-flex align-items-start justify-content-between mb-3 flex-wrap" style="gap:10px;">
-                        <div>
-                            <div class="text-muted small mb-1">
-                                {% if ficha.nivel_nombre %}{{ ficha.nivel_nombre }} &rsaquo; {% endif %}
-                                {{ ficha.programa_nombre }}
-                            </div>
-                            <h4 class="mb-0 text-gray-800 font-weight-bold">
-                                {{ ficha.programa_nombre }}
-                                <span class="text-muted font-weight-normal" style="font-size:1rem;">
-                                    &nbsp; Ficha: {{ ficha.numero }}
-                                </span>
-                            </h4>
-                            <div class="text-muted small mt-1">
-                                "{{ ficha.proyecto_nombre or 'Sin proyecto formativo' }}"
-                                &nbsp;Este es el proyecto formativo que maneja esta ficha
-                            </div>
+                <div class="card-body p-2" style="flex:1; overflow-y:auto;">
+                    <div id="fase-tree">
+                        <div class="empty-state">
+                            <i class="fas fa-spinner fa-spin"></i> Cargando...
                         </div>
-                        <a href="{{ url_for('instructor_fichas') }}" class="btn btn-outline-success btn-sm shadow-sm">
-                            <i class="fas fa-arrow-left mr-1"></i> Volver a la Ficha
+                    </div>
+                </div>
+                <div class="card-footer bg-white p-2">
+                    <button class="btn btn-success btn-sm btn-block mb-1" onclick="clickCalificaciones()">
+                        <i class="fas fa-chart-bar mr-1"></i> Calificaciones
+                    </button>
+                    <button class="btn btn-primary btn-sm btn-block" onclick="clickAsistencia()">
+                        <i class="fas fa-user-check mr-1"></i> Asistencia de Aprendices
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Panel derecho ── -->
+        <div class="col-lg-9 col-md-8">
+
+            <!-- Estado inicial -->
+            <div id="panel-vacio" class="card shadow border-0" style="min-height:300px;">
+                <div class="card-body d-flex align-items-center justify-content-center empty-state">
+                    <div>
+                        <i class="fas fa-hand-point-left fa-2x mb-2"></i>
+                        <p class="mb-1">Selecciona una <strong>Actividad de Proyecto</strong> del árbol para ver sus opciones.</p>
+                        <p class="small text-muted mb-0">O usa los botones <strong>Calificaciones</strong> y <strong>Asistencia</strong> del panel izquierdo.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ─── Panel: Actividad de Proyecto ─── -->
+            <div id="panel-actividad" style="display:none;">
+
+                <!-- Header actividad de proyecto -->
+                <div class="d-flex align-items-center mb-3 flex-wrap" style="gap:8px;">
+                    <span class="text-muted small">Actividad de Proyecto:</span>
+                    <span class="font-weight-bold" id="ap-titulo-nombre"></span>
+                </div>
+
+                <!-- Guías de trabajo concertado -->
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-header py-2 d-flex align-items-center justify-content-between">
+                        <span class="font-weight-bold text-sena small">
+                            <i class="fas fa-book-open mr-1"></i> Guías de trabajo concertado
+                        </span>
+                        <button class="btn btn-sm btn-outline-success border-0" onclick="toggleFormGuia()">
+                            <i class="fas fa-plus mr-1"></i> Agregar guía
+                        </button>
+                    </div>
+                    <div class="card-body p-3">
+
+                        <!-- Formulario subir guía -->
+                        {% include 'components/form_guia.html' %}
+
+                        <!-- Lista de guías -->
+                        <div id="guias-lista"></div>
+
+                        <!-- Estado sin guías -->
+                        <div id="guias-lock" class="empty-state py-3" style="display:none;">
+                            <i class="fas fa-lock fa-2x mb-2 text-warning"></i>
+                            <p class="mb-1 font-weight-bold">Sin guías subidas</p>
+                            <p class="small mb-0">Debes subir al menos una guía antes de poder crear actividades de aprendizaje.</p>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Sección de Actividades (se muestra solo cuando hay ≥1 guía) -->
+                <div id="actividades-section" style="display:none;">
+                    <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap" style="gap:8px;">
+                        <span class="font-weight-bold text-gray-700">
+                            <i class="fas fa-tasks mr-1 text-sena"></i> Actividades de Aprendizaje
+                        </span>
+                        <button class="btn btn-success btn-sm shadow-sm" onclick="toggleCrearPanel()">
+                            <i class="fas fa-plus mr-1"></i> Crear actividad de aprendizaje
+                        </button>
+                    </div>
+
+                    <!-- Flex: lista + panel lateral -->
+                    <div class="d-flex" id="panel-flex-row">
+
+                        <!-- Lista de actividades -->
+                        <div id="panel-tabs-content" class="flex-grow-1" style="min-width:0;">
+                            <div id="act-loading" class="text-center py-4">
+                                <i class="fas fa-spinner fa-spin text-sena"></i>
+                            </div>
+                            <div id="actividades-lista"></div>
+                        </div>
+
+                        <!-- Panel lateral -->
+                        <div id="side-panel" style="display:none;">
+
+                            {% include 'components/form_actividad.html' %}
+                            {% include 'components/form_seccion.html' %}
+                            {% include 'components/form_subseccion.html' %}
+
+                        </div><!-- /side-panel -->
+
+                    </div><!-- /panel-flex-row -->
+                </div><!-- /actividades-section -->
+
+            </div><!-- /panel-actividad -->
+
+            <!-- ─── Panel: Calificaciones ─── -->
+            <div id="panel-calificaciones" style="display:none;">
+
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fas fa-chart-bar text-success mr-2 fa-lg"></i>
+                    <h5 class="mb-0 font-weight-bold text-gray-800">Calificaciones</h5>
+                </div>
+
+                <!-- Selector de Actividad de Proyecto -->
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-body p-3">
+                        <label class="font-weight-bold small text-muted mb-1">Selecciona una Actividad de Proyecto:</label>
+                        <select id="cal-ap-selector" class="form-control form-control-sm" onchange="seleccionarCalAP()">
+                            <option value="">-- Seleccionar --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Sub-tabs -->
+                <ul class="nav nav-tabs" id="cal-tabs" style="display:none;">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="cal-tab-link-1" href="#" onclick="setCalTab(1); return false;">
+                            Evidencias por actividad
                         </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="cal-tab-link-2" href="#" onclick="setCalTab(2); return false;">
+                            Total de Calificaciones
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Flex: contenido tabs + panel evidencia -->
+                <div id="cal-flex-row" class="d-flex" style="display:none !important;">
+                    <div class="flex-grow-1" style="min-width:0;">
+                        <div id="cal-tab-1-content" class="p-3"></div>
+                        <div id="cal-tab-2-content" class="p-3" style="display:none;"></div>
                     </div>
+                    <!-- Panel lateral evidencia -->
+                    {% include 'components/form_evidencia.html' %}
+                </div>
 
-                    <!-- ── Layout principal ── -->
-                    <div class="row" style="min-height:500px;">
+            </div><!-- /panel-calificaciones -->
 
-                        <!-- ── Árbol de fases (izquierda) ── -->
-                        <div class="col-lg-3 col-md-4 mb-4">
-                            <div class="card shadow border-0" style="display:flex; flex-direction:column; min-height:400px;">
-                                <div class="card-header py-2 border-bottom-sena">
-                                    <span class="font-weight-bold text-sena small">
-                                        <i class="fas fa-sitemap mr-1"></i> Estructura del Proyecto
-                                    </span>
-                                </div>
-                                <div class="card-body p-2" style="flex:1; overflow-y:auto;">
-                                    <div id="fase-tree">
-                                        <div class="empty-state">
-                                            <i class="fas fa-spinner fa-spin"></i> Cargando...
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-footer bg-white p-2">
-                                    <button class="btn btn-success btn-sm btn-block mb-1" onclick="clickCalificaciones()">
-                                        <i class="fas fa-chart-bar mr-1"></i> Calificaciones
-                                    </button>
-                                    <button class="btn btn-primary btn-sm btn-block" onclick="clickAsistencia()">
-                                        <i class="fas fa-user-check mr-1"></i> Asistencia de Aprendices
-                                    </button>
-                                </div>
+            <!-- ─── Panel: Asistencia ─── -->
+            <div id="panel-asistencia" style="display:none;">
+
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fas fa-user-check text-primary mr-2 fa-lg"></i>
+                    <h5 class="mb-0 font-weight-bold text-gray-800">Asistencia de Aprendices</h5>
+                </div>
+
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-body p-3">
+                        <div class="row align-items-end">
+                            <div class="col-auto">
+                                <label class="font-weight-bold small text-muted mb-1">Fecha:</label>
+                                <input type="date" id="asistencia-fecha" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-primary btn-sm" onclick="cargarAsistencia()">
+                                    <i class="fas fa-search mr-1"></i> Cargar
+                                </button>
                             </div>
                         </div>
-
-                        <!-- ── Panel derecho ── -->
-                        <div class="col-lg-9 col-md-8">
-
-                            <!-- Estado inicial -->
-                            <div id="panel-vacio" class="card shadow border-0" style="min-height:300px;">
-                                <div class="card-body d-flex align-items-center justify-content-center empty-state">
-                                    <div>
-                                        <i class="fas fa-hand-point-left fa-2x mb-2"></i>
-                                        <p class="mb-1">Selecciona una <strong>Actividad de Proyecto</strong> del árbol para ver sus opciones.</p>
-                                        <p class="small text-muted mb-0">O usa los botones <strong>Calificaciones</strong> y <strong>Asistencia</strong> del panel izquierdo.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- ─── Panel: Actividad de Proyecto ─── -->
-                            <div id="panel-actividad" style="display:none;">
-
-                                <!-- Header actividad de proyecto -->
-                                <div class="d-flex align-items-center mb-3 flex-wrap" style="gap:8px;">
-                                    <span class="text-muted small">Actividad de Proyecto:</span>
-                                    <span class="font-weight-bold" id="ap-titulo-nombre"></span>
-                                </div>
-
-                                <!-- Guías de trabajo concertado -->
-                                <div class="card shadow-sm border-0 mb-3">
-                                    <div class="card-header py-2 d-flex align-items-center justify-content-between">
-                                        <span class="font-weight-bold text-sena small">
-                                            <i class="fas fa-book-open mr-1"></i> Guías de trabajo concertado
-                                        </span>
-                                        <button class="btn btn-sm btn-outline-success border-0"
-                                            onclick="toggleFormGuia()">
-                                            <i class="fas fa-plus mr-1"></i> Agregar guía
-                                        </button>
-                                    </div>
-                                    <div class="card-body p-3">
-
-                                        <!-- Formulario subir guía -->
-                                        {% include 'components/form_guia.html' %}
-
-                                        <!-- Lista de guías -->
-                                        <div id="guias-lista"></div>
-
-                                        <!-- Estado sin guías -->
-                                        <div id="guias-lock" class="empty-state py-3" style="display:none;">
-                                            <i class="fas fa-lock fa-2x mb-2 text-warning"></i>
-                                            <p class="mb-1 font-weight-bold">Sin guías subidas</p>
-                                            <p class="small mb-0">Debes subir al menos una guía antes de poder
-                                                crear actividades de aprendizaje.</p>
-                                        </div>
-
-                                    </div>
-                                </div>
-
-                                <!-- Sección de Actividades (se muestra solo cuando hay ≥1 guía) -->
-                                <div id="actividades-section" style="display:none;">
-                                    <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap"
-                                        style="gap:8px;">
-                                        <span class="font-weight-bold text-gray-700">
-                                            <i class="fas fa-tasks mr-1 text-sena"></i> Actividades de Aprendizaje
-                                        </span>
-                                        <button class="btn btn-success btn-sm shadow-sm"
-                                            onclick="toggleCrearPanel()">
-                                            <i class="fas fa-plus mr-1"></i> Crear actividad de aprendizaje
-                                        </button>
-                                    </div>
-
-                                    <!-- Flex: lista + panel lateral -->
-                                    <div class="d-flex" id="panel-flex-row">
-
-                                        <!-- Lista de actividades -->
-                                        <div id="panel-tabs-content" class="flex-grow-1" style="min-width:0;">
-                                            <div id="act-loading" class="text-center py-4">
-                                                <i class="fas fa-spinner fa-spin text-sena"></i>
-                                            </div>
-                                            <div id="actividades-lista"></div>
-                                        </div>
-
-                                        <!-- Panel lateral -->
-                                        <div id="side-panel" style="display:none;">
-
-                                            {% include 'components/form_actividad.html' %}
-                                            {% include 'components/form_seccion.html' %}
-                                            {% include 'components/form_subseccion.html' %}
-
-                                        </div><!-- /side-panel -->
-
-                                    </div><!-- /panel-flex-row -->
-                                </div><!-- /actividades-section -->
-
-                            </div><!-- /panel-actividad -->
-
-                            <!-- ─── Panel: Calificaciones ─── -->
-                            <div id="panel-calificaciones" style="display:none;">
-
-                                <div class="d-flex align-items-center mb-3">
-                                    <i class="fas fa-chart-bar text-success mr-2 fa-lg"></i>
-                                    <h5 class="mb-0 font-weight-bold text-gray-800">Calificaciones</h5>
-                                </div>
-
-                                <!-- Selector de Actividad de Proyecto -->
-                                <div class="card shadow-sm border-0 mb-3">
-                                    <div class="card-body p-3">
-                                        <label class="font-weight-bold small text-muted mb-1">Selecciona una
-                                            Actividad de Proyecto:</label>
-                                        <select id="cal-ap-selector" class="form-control form-control-sm"
-                                            onchange="seleccionarCalAP()">
-                                            <option value="">-- Seleccionar --</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <!-- Sub-tabs -->
-                                <ul class="nav nav-tabs" id="cal-tabs" style="display:none;">
-                                    <li class="nav-item">
-                                        <a class="nav-link active" id="cal-tab-link-1" href="#"
-                                            onclick="setCalTab(1); return false;">
-                                            Evidencias por actividad
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" id="cal-tab-link-2" href="#"
-                                            onclick="setCalTab(2); return false;">
-                                            Total de Calificaciones
-                                        </a>
-                                    </li>
-                                </ul>
-
-                                <!-- Flex: contenido tabs + panel evidencia -->
-                                <div id="cal-flex-row" class="d-flex" style="display:none !important;">
-                                    <div class="flex-grow-1" style="min-width:0;">
-                                        <div id="cal-tab-1-content" class="p-3"></div>
-                                        <div id="cal-tab-2-content" class="p-3" style="display:none;"></div>
-                                    </div>
-                                    <!-- Panel lateral evidencia -->
-                                    {% include 'components/form_evidencia.html' %}
-                                </div>
-
-                            </div><!-- /panel-calificaciones -->
-
-                            <!-- ─── Panel: Asistencia ─── -->
-                            <div id="panel-asistencia" style="display:none;">
-
-                                <div class="d-flex align-items-center mb-3">
-                                    <i class="fas fa-user-check text-primary mr-2 fa-lg"></i>
-                                    <h5 class="mb-0 font-weight-bold text-gray-800">Asistencia de Aprendices</h5>
-                                </div>
-
-                                <div class="card shadow-sm border-0 mb-3">
-                                    <div class="card-body p-3">
-                                        <div class="row align-items-end">
-                                            <div class="col-auto">
-                                                <label class="font-weight-bold small text-muted mb-1">Fecha:</label>
-                                                <input type="date" id="asistencia-fecha"
-                                                    class="form-control form-control-sm">
-                                            </div>
-                                            <div class="col-auto">
-                                                <button class="btn btn-primary btn-sm"
-                                                    onclick="cargarAsistencia()">
-                                                    <i class="fas fa-search mr-1"></i> Cargar
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div id="asistencia-loading" class="text-center py-3" style="display:none;">
-                                    <i class="fas fa-spinner fa-spin text-primary"></i>
-                                </div>
-
-                                <div id="asistencia-content" style="display:none;">
-                                    <div id="asistencia-tabla"></div>
-                                    <button class="btn btn-primary btn-sm mt-3" onclick="guardarAsistencia()">
-                                        <i class="fas fa-save mr-1"></i> Guardar asistencia
-                                    </button>
-                                    <div id="asistencia-ok" class="text-success small mt-2"
-                                        style="display:none;">
-                                        <i class="fas fa-check mr-1"></i> Asistencia guardada correctamente.
-                                    </div>
-                                </div>
-
-                            </div><!-- /panel-asistencia -->
-
-                        </div><!-- /col-lg-9 -->
-                    </div><!-- /row -->
-
-                </div><!-- /container-fluid -->
-            </div><!-- /content -->
-
-            <footer class="sticky-footer bg-white mt-4">
-                <div class="container my-auto">
-                    <div class="copyright text-center my-auto">
-                        <span>BARÍ LMS SENA - Instructor</span>
                     </div>
                 </div>
-            </footer>
-        </div><!-- /content-wrapper -->
-    </div><!-- /wrapper -->
 
-    <!-- ══ Scripts ══ -->
-    <script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='vendor/jquery-easing/jquery.easing.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
+                <div id="asistencia-loading" class="text-center py-3" style="display:none;">
+                    <i class="fas fa-spinner fa-spin text-primary"></i>
+                </div>
+
+                <div id="asistencia-content" style="display:none;">
+                    <div id="asistencia-tabla"></div>
+                    <button class="btn btn-primary btn-sm mt-3" onclick="guardarAsistencia()">
+                        <i class="fas fa-save mr-1"></i> Guardar asistencia
+                    </button>
+                    <div id="asistencia-ok" class="text-success small mt-2" style="display:none;">
+                        <i class="fas fa-check mr-1"></i> Asistencia guardada correctamente.
+                    </div>
+                </div>
+
+            </div><!-- /panel-asistencia -->
+
+        </div><!-- /col-lg-9 -->
+    </div><!-- /row -->
+{% endblock %}
+
+{% block extra_js %}
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
-
     <script>
         const FICHA_ID = {{ ficha.id }};
 
@@ -585,7 +482,6 @@
         }
 
         function abrirEditarGuia(guiaId) {
-            // Cerrar otros formularios abiertos
             document.querySelectorAll('[id^="guia-edit-form-"]').forEach(el => {
                 if (el.id !== `guia-edit-form-${guiaId}`) el.style.display = 'none';
             });
@@ -767,7 +663,6 @@
             html += '</div>';
             container.innerHTML = html;
 
-            // SortableJS en actividades
             const acordeon = document.getElementById('accordionActividades');
             if (acordeon) {
                 const s = new Sortable(acordeon, {
@@ -787,7 +682,6 @@
                 sortableInstances.set('actividades', s);
             }
 
-            // SortableJS en secciones y sub-secciones de cada actividad
             actividades.forEach(act => {
                 initSortableSecciones(act.id);
                 if (act.secciones) act.secciones.forEach(sec => initSortableSubSecciones(sec.id));
@@ -947,7 +841,7 @@
         }
 
         // ═══════════════════════════════
-        //  Panel lateral (crear/editar actividades, secciones)
+        //  Panel lateral
         // ═══════════════════════════════
         function toggleCrearPanel() {
             if (sidePanelMode === 'crear') {
@@ -1015,7 +909,7 @@
         }
 
         // ═══════════════════════════════
-        //  Crear / Editar actividad de aprendizaje
+        //  Crear / Editar actividad
         // ═══════════════════════════════
         async function confirmarCrearActividad() {
             if (sidePanelMode === 'editar') { await confirmarEditarActividad(); return; }
@@ -1462,7 +1356,6 @@
             setMode('asistencia');
             asistenciaAprendices = [];
             document.getElementById('asistencia-content').style.display = 'none';
-            // Prellenar con fecha de hoy
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('asistencia-fecha').value = hoy;
         }
@@ -1562,6 +1455,4 @@
         // ── Init ──
         cargarArbol();
     </script>
-</body>
-
-</html>
+{% endblock %}
