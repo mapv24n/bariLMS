@@ -1,0 +1,62 @@
+{# ═══════════════════════════════════════════════════════
+   form_evidencia.html — Panel: Evidencia recibida (calificar)
+   Usado en: instructor/fases.html  (panel calificaciones)
+             aprendiz/actividades.html  (futuro — vista de entrega)
+   JS requerido: guardarCalificacion(), hideSidePanelCal()
+   ═══════════════════════════════════════════════════════ #}
+<div id="side-panel-cal" style="display:none;">
+
+    <div id="form-evidencia-alert" class="alert mb-2" role="alert" style="display:none; font-size:.82rem; padding:8px 12px;"></div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="panel-title">Evidencia recibida</span>
+        <button class="close text-muted" onclick="hideSidePanelCal()">&times;</button>
+    </div>
+
+    <div class="ev-group">
+        <label class="ev-label">Aprendiz</label>
+        <div class="ev-input ev-readonly" id="ev-aprendiz"
+             style="min-height:36px; line-height:20px;"></div>
+    </div>
+
+    <div class="ev-group">
+        <label class="ev-label">Actividad</label>
+        <div class="ev-input ev-readonly" id="ev-actividad"
+             style="min-height:36px; line-height:20px;"></div>
+    </div>
+
+    <div class="ev-group">
+        <label class="ev-label">Evidencia</label>
+        <div style="display:flex; gap:6px; align-items:center;">
+            <input type="text" class="ev-input" id="ev-url" readonly style="flex:1;">
+            <a id="ev-url-link" href="#" target="_blank"
+               style="color:#1cc88a; font-size:1.1rem; flex-shrink:0;">
+                <i class="fas fa-external-link-alt"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="ev-group">
+        <label class="ev-label">Observaciones</label>
+        <textarea class="ev-input" id="ev-observaciones" rows="2"
+                  placeholder="Observación al estudiante (Opcional)"></textarea>
+    </div>
+
+    <div class="ev-group">
+        <label class="ev-label">
+            Calificar <span style="color:#858796; font-weight:400;">0 a 100</span>
+        </label>
+        <input type="number" class="ev-input" id="ev-calificacion"
+               min="0" max="100" step="0.5" placeholder="0 a 100">
+    </div>
+
+    <div id="ev-estado-badge"></div>
+
+    <div style="display:flex; gap:8px;">
+        <button class="btn-aceptar" onclick="guardarCalificacion()">
+            Aceptar y subir calificación
+        </button>
+        <button class="btn-cancelar" onclick="hideSidePanelCal()">Cancelar</button>
+    </div>
+
+</div>

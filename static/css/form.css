@@ -1,0 +1,122 @@
+/* ═══════════════════════════════════════════════════════
+   form.css — Estilos compartidos de formularios BARÍ LMS
+   Usado en: vista instructor (fases), vista aprendiz
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Grupo de campo ── */
+.ev-group {
+    margin-bottom: 12px;
+}
+
+/* ── Label ── */
+.ev-label {
+    display: block;
+    font-size: .78rem;
+    font-weight: 700;
+    color: #1cc88a;
+    margin-bottom: 4px;
+}
+
+/* ── Input / Textarea / Select ── */
+.ev-input {
+    width: 100%;
+    background: #f4f6f9;
+    border: 1px solid #e3e6f0;
+    border-radius: 6px;
+    color: #5a5c69;
+    font-size: .88rem;
+    padding: 8px 12px;
+    box-sizing: border-box;
+    transition: border-color .15s, box-shadow .15s;
+}
+
+.ev-input:focus {
+    outline: none;
+    border-color: #1cc88a;
+    box-shadow: 0 0 0 2px rgba(28, 200, 138, .15);
+}
+
+textarea.ev-input {
+    resize: none;
+}
+
+/* Campo de solo lectura (ej: mostrar nombre de aprendiz) */
+.ev-input[readonly],
+.ev-input.ev-readonly {
+    background: #eaecf4;
+    cursor: default;
+}
+
+/* ── Título del panel lateral ── */
+.panel-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #1cc88a;
+}
+
+/* ── Botones de formulario ── */
+.btn-form-ok {
+    background: #1cc88a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: 600;
+    font-size: .85rem;
+    cursor: pointer;
+    transition: background .15s;
+}
+
+.btn-form-ok:hover {
+    background: #17a673;
+}
+
+.btn-form-cancel {
+    background: #e74a3b;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: 600;
+    font-size: .85rem;
+    cursor: pointer;
+    transition: background .15s;
+}
+
+.btn-form-cancel:hover {
+    background: #c0392b;
+}
+
+/* Alias para compatibilidad con código existente */
+.btn-aceptar  { background:#1cc88a; color:#fff; border:none; border-radius:6px; padding:8px 14px; font-weight:600; font-size:.85rem; cursor:pointer; }
+.btn-aceptar:hover  { background:#17a673; }
+.btn-cancelar { background:#e74a3b; color:#fff; border:none; border-radius:6px; padding:8px 14px; font-weight:600; font-size:.85rem; cursor:pointer; }
+.btn-cancelar:hover { background:#c0392b; }
+
+/* ── Badge de calificación ── */
+.badge-aprobado {
+    background: #1cc88a;
+    color: #fff;
+    border-radius: 4px;
+    font-size: .78rem;
+}
+
+.badge-reprobado {
+    background: #e74a3b;
+    color: #fff;
+    border-radius: 4px;
+    font-size: .78rem;
+}
+
+/* ── Estado badge contenedor ── */
+#ev-estado-badge {
+    min-height: 22px;
+    margin-bottom: 6px;
+}
+
+/* ── Mensaje de error inline ── */
+.form-error-msg {
+    color: #e74a3b;
+    font-size: .78rem;
+    margin-top: 3px;
+}

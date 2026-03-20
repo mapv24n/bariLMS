@@ -1,0 +1,41 @@
+{# ═══════════════════════════════════════════════════════
+   form_guia.html — Formulario: Subir guía de trabajo concertado
+   Usado en: instructor/fases.html
+   JS requerido: toggleFormGuia(), subirGuia()
+   ═══════════════════════════════════════════════════════ #}
+<div id="form-guia-ap" class="bg-light rounded p-3 mb-3" style="display:none;">
+
+    <div id="form-guia-alert" class="alert mb-2" role="alert" style="display:none; font-size:.82rem; padding:8px 12px;"></div>
+
+    <div class="ev-group">
+        <label class="ev-label">
+            Nombre de la guía
+            <span class="text-muted font-weight-normal" style="font-size:.75rem;">(opcional)</span>
+        </label>
+        <input type="text" class="ev-input" id="guia-ap-nombre"
+               placeholder="Ej: Guía de Aprendizaje Fase 1">
+    </div>
+
+    <div class="ev-group">
+        <label class="ev-label">
+            Archivo
+            <span class="text-muted font-weight-normal" style="font-size:.75rem;">(PDF, Word, Excel, PowerPoint)</span>
+        </label>
+        <input type="file" class="ev-input" id="guia-ap-archivo"
+               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+    </div>
+
+    <div class="ev-group">
+        <label class="ev-label">O enlace externo</label>
+        <input type="url" class="ev-input" id="guia-ap-url"
+               placeholder="https://drive.google.com/...">
+    </div>
+
+    <div style="display:flex; gap:8px;">
+        <button class="btn-aceptar" onclick="subirGuia()">
+            <i class="fas fa-upload mr-1"></i> Subir guía
+        </button>
+        <button class="btn-cancelar" onclick="toggleFormGuia()">Cancelar</button>
+    </div>
+
+</div>

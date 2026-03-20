@@ -1,0 +1,50 @@
+{# ═══════════════════════════════════════════════════════
+   form_subseccion.html — Formulario: Crear / Editar sub-sección
+   Usado en: instructor/fases.html  (dentro de #side-panel)
+             aprendiz/actividades.html  (futuro)
+   JS requerido: guardarSubSeccion(), hideSidePanel()
+   IDs dinámicos: side-sub-title, side-sub-btn
+   ═══════════════════════════════════════════════════════ #}
+<div id="side-subseccion" style="display:none;">
+
+    <div id="form-subseccion-alert" class="alert mb-2" role="alert" style="display:none; font-size:.82rem; padding:8px 12px;"></div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="panel-title" id="side-sub-title">Nueva sub-sección</span>
+        <button class="close text-muted" onclick="hideSidePanel()">&times;</button>
+    </div>
+
+    <div class="ev-group">
+        <label class="ev-label">Nombre <span class="text-danger">*</span></label>
+        <input type="text" class="ev-input" id="sub-nombre"
+               placeholder="Ej. 1. Grabación del cliente">
+    </div>
+
+    <div class="ev-group">
+        <label class="ev-label">Enlace o Archivo</label>
+        <input type="url" class="ev-input" id="sub-url" placeholder="https://...">
+    </div>
+
+    <div class="ev-group">
+        <label class="ev-label">Descripción</label>
+        <textarea class="ev-input" id="sub-desc" rows="2"
+                  placeholder="Describe aquí la información..."></textarea>
+    </div>
+
+    <div class="d-flex" style="gap:8px;">
+        <div class="ev-group flex-grow-1" style="min-width:0;">
+            <label class="ev-label">Fecha Inicio</label>
+            <input type="date" class="ev-input" id="sub-inicio" style="min-width:0;">
+        </div>
+        <div class="ev-group flex-grow-1" style="min-width:0;">
+            <label class="ev-label">Fecha Fin</label>
+            <input type="date" class="ev-input" id="sub-fin" style="min-width:0;">
+        </div>
+    </div>
+
+    <div style="display:flex; gap:8px; margin-top:4px;">
+        <button class="btn-aceptar" id="side-sub-btn" onclick="guardarSubSeccion()">Guardar</button>
+        <button class="btn-cancelar" onclick="hideSidePanel()">Cancelar</button>
+    </div>
+
+</div>

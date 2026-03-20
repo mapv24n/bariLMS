@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Gestión de personas de BARÍ LMS">
+    <title>BARÍ LMS | Gestionar personas</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo-sena-blanco.png') }}">
+    <link href="{{ url_for('static', filename='vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/sena-learn.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='vendor/datatables/dataTables.bootstrap4.min.css') }}" rel="stylesheet">
+</head>
+<body id="page-top">
+    <div id="wrapper">
+        <ul class="navbar-nav bg-gradient-sena sidebar sidebar-dark accordion" id="accordionSidebar">
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ url_for('dashboard', role_slug='administrador') }}">
+                <div class="sidebar-brand-icon">
+                    <img src="{{ url_for('static', filename='img/logo-sena-blanco.png') }}" alt="Logo SENA" class="sena-brand-logo">
+                </div>
+                <div class="sidebar-brand-text mx-3">BARÍ LMS</div>
+            </a>
+            <hr class="sidebar-divider my-0">
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('dashboard', role_slug='administrador') }}">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    <span>Panel principal</span>
+                </a>
+            </li>
+            <hr class="sidebar-divider">
+            <div class="sidebar-heading">Administración</div>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin_users') }}">
+                    <i class="fas fa-fw fa-users-cog"></i>
+                    <span>Usuarios y roles</span>
+                </a>
+            </li>
+            <li class="nav-item active">
+                <a class="nav-link" href="{{ url_for('admin_people') }}">
+                    <i class="fas fa-fw fa-user-friends"></i>
+                    <span>Gestionar personas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin_structure') }}">
+                    <i class="fas fa-fw fa-sitemap"></i>
+                    <span>Estructura institucional</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('admin_academic') }}">
+                    <i class="fas fa-fw fa-graduation-cap"></i>
+                    <span>Gestión académica</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <form method="post" action="{{ url_for('logout') }}">
+                    <button type="submit" class="nav-link btn btn-link text-left w-100 logout-link">
+                        <i class="fas fa-fw fa-sign-out-alt"></i>
+                        <span>Cerrar sesión</span>
+                    </button>
+                </form>
+            </li>
+        </ul>
+        <div id="content-wrapper" class="d-flex flex-column">
+            <div id="content">
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                        <i class="fa fa-bars"></i>
+                    </button>
+                    <div class="mr-auto">
+                        <span class="sena-role-pill">Administrador</span>
+                    </div>
+                    <ul class="navbar-nav ml-auto">
+                        <li class="nav-item no-arrow">
+                            <span class="nav-link text-gray-700">
+                                <span class="mr-2 d-none d-lg-inline">{{ user.name }}</span>
+                                <i class="fas fa-user-circle fa-lg"></i>
+                            </span>
+                        </li>
+                    </ul>
+                </nav>
+                <div class="container-fluid">
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                        <div>
+                            <div class="text-uppercase small font-weight-bold text-sena mb-2">Módulo administrativo</div>
+                            <h1 class="h3 mb-0 text-gray-800">Gestionar personas</h1>
+                        </div>
+                        <a href="{{ url_for('dashboard', role_slug='administrador') }}" class="btn btn-outline-success btn-sm shadow-sm">
+                            <i class="fas fa-arrow-left fa-sm mr-1"></i> Volver al dashboard
+                        </a>
+                    </div>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <div class="row">
+                        <div class="col-xl-4 mb-4">
+                            <div class="card shadow border-0 h-100">
+                                <div class="card-header py-3 border-bottom-sena">
+                                    <h6 class="m-0 font-weight-bold text-sena">{% if edit_entity == 'instructor' %}Editar instructor{% else %}Nuevo instructor{% endif %}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <form method="post" action="{% if edit_entity == 'instructor' %}{{ url_for('admin_people_update', entity='instructor', item_id=editing_item.id) }}{% else %}{{ url_for('admin_people_create', entity='instructor') }}{% endif %}">
+                                        <div class="form-group">
+                                            <label>Centro de formación</label>
+                                            <select class="form-control" name="centro_id" required>
+                                                <option value="">Selecciona un centro</option>
+                                                {% for centro in centros %}
+                                                    <option value="{{ centro.id }}" {% if edit_entity == 'instructor' and editing_item.centro_id == centro.id %}selected{% endif %}>{{ centro.nombre }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Área académica</label>
+                                            <select class="form-control" name="area_id">
+                                                <option value="">Sin asignar</option>
+                                                {% for area in areas_academicas %}
+                                                    <option value="{{ area.id }}" {% if edit_entity == 'instructor' and editing_item.area_id == area.id %}selected{% endif %}>{{ area.nombre }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <label>Documento</label>
+                                                <input type="text" class="form-control" name="documento" value="{{ editing_item.documento if edit_entity == 'instructor' else '' }}" required>
+                                            </div>
+                                            <div class="form-group col-md-6">
+                                                <label>Correo</label>
+                                                <input type="email" class="form-control" name="email" value="{{ editing_item.email if edit_entity == 'instructor' else '' }}">
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <label>Nombres</label>
+                                                <input type="text" class="form-control" name="nombres" value="{{ editing_item.nombres if edit_entity == 'instructor' else '' }}" required>
+                                            </div>
+                                            <div class="form-group col-md-6">
+                                                <label>Apellidos</label>
+                                                <input type="text" class="form-control" name="apellidos" value="{{ editing_item.apellidos if edit_entity == 'instructor' else '' }}" required>
+                                            </div>
+                                        </div>
+                                        <small class="form-text text-muted mb-3">Se crea automáticamente el usuario con rol Instructor y contraseña igual al número de identificación.</small>
+                                        <button type="submit" class="btn btn-sena btn-block">{% if edit_entity == 'instructor' %}Guardar instructor{% else %}Crear instructor{% endif %}</button>
+                                        {% if edit_entity == 'instructor' %}
+                                            <a href="{{ url_for('admin_people') }}" class="btn btn-light btn-block mt-2">Cancelar edición</a>
+                                        {% endif %}
+                                    </form>
+                                    <hr>
+                                    <form method="post" action="{{ url_for('admin_people_import', entity='instructor') }}" enctype="multipart/form-data">
+                                        <div class="form-group mb-2">
+                                            <label>Cargue masivo CSV</label>
+                                            <input type="file" class="form-control-file" name="csv_file" accept=".csv" required>
+                                        </div>
+                                        <small class="form-text text-muted mb-3">Columnas: <code>centro_id,area_id,documento,nombres,apellidos,correo</code>. <code>area_id</code> y <code>correo</code> son opcionales.</small>
+                                        <button type="submit" class="btn btn-outline-success btn-block">Importar instructores</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-4 mb-4">
+                            <div class="card shadow border-0 h-100">
+                                <div class="card-header py-3 border-bottom-sena">
+                                    <h6 class="m-0 font-weight-bold text-sena">{% if edit_entity == 'aprendiz' %}Editar aprendiz{% else %}Nuevo aprendiz{% endif %}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <form method="post" action="{% if edit_entity == 'aprendiz' %}{{ url_for('admin_people_update', entity='aprendiz', item_id=editing_item.id) }}{% else %}{{ url_for('admin_people_create', entity='aprendiz') }}{% endif %}">
+                                        <div class="form-group">
+                                            <label>Regional</label>
+                                            <select class="form-control" name="regional_id" required>
+                                                <option value="">Selecciona una regional</option>
+                                                {% for regional in regionales %}
+                                                    <option value="{{ regional.id }}" {% if edit_entity == 'aprendiz' and editing_item.regional_id == regional.id %}selected{% endif %}>{{ regional.nombre }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <label>Documento</label>
+                                                <input type="text" class="form-control" name="documento" value="{{ editing_item.documento if edit_entity == 'aprendiz' else '' }}" required>
+                                            </div>
+                                            <div class="form-group col-md-6">
+                                                <label>Ficha</label>
+                                                <input type="text" class="form-control" name="ficha" value="{{ editing_item.ficha if edit_entity == 'aprendiz' else '' }}">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Correo</label>
+                                            <input type="email" class="form-control" name="correo" value="{{ editing_item.email if edit_entity == 'aprendiz' else '' }}">
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <label>Nombres</label>
+                                                <input type="text" class="form-control" name="nombres" value="{{ editing_item.nombres if edit_entity == 'aprendiz' else '' }}" required>
+                                            </div>
+                                            <div class="form-group col-md-6">
+                                                <label>Apellidos</label>
+                                                <input type="text" class="form-control" name="apellidos" value="{{ editing_item.apellidos if edit_entity == 'aprendiz' else '' }}" required>
+                                            </div>
+                                        </div>
+                                        <small class="form-text text-muted mb-3">Se crea automáticamente el usuario con rol Aprendiz y contraseña igual al número de identificación.</small>
+                                        <button type="submit" class="btn btn-sena btn-block">{% if edit_entity == 'aprendiz' %}Guardar aprendiz{% else %}Crear aprendiz{% endif %}</button>
+                                        {% if edit_entity == 'aprendiz' %}
+                                            <a href="{{ url_for('admin_people') }}" class="btn btn-light btn-block mt-2">Cancelar edición</a>
+                                        {% endif %}
+                                    </form>
+                                    <hr>
+                                    <form method="post" action="{{ url_for('admin_people_import', entity='aprendiz') }}" enctype="multipart/form-data">
+                                        <div class="form-group mb-2">
+                                            <label>Cargue masivo CSV</label>
+                                            <input type="file" class="form-control-file" name="csv_file" accept=".csv" required>
+                                        </div>
+                                        <small class="form-text text-muted mb-3">Columnas: <code>regional_id,documento,nombres,apellidos,correo,ficha</code>. <code>correo</code> y <code>ficha</code> son opcionales.</small>
+                                        <button type="submit" class="btn btn-outline-success btn-block">Importar aprendices</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-4 mb-4">
+                            <div class="card shadow border-0 h-100">
+                                <div class="card-header py-3 border-bottom-sena">
+                                    <h6 class="m-0 font-weight-bold text-sena">{% if edit_entity == 'administrativo_persona' %}Editar personal administrativo{% else %}Nuevo personal administrativo{% endif %}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <form method="post" action="{% if edit_entity == 'administrativo_persona' %}{{ url_for('admin_people_update', entity='administrativo_persona', item_id=editing_item.id) }}{% else %}{{ url_for('admin_people_create', entity='administrativo_persona') }}{% endif %}">
+                                        <div class="form-group">
+                                            <label>Centro de formación</label>
+                                            <select class="form-control" name="centro_id" required>
+                                                <option value="">Selecciona un centro</option>
+                                                {% for centro in centros %}
+                                                    <option value="{{ centro.id }}" {% if edit_entity == 'administrativo_persona' and editing_item.centro_id == centro.id %}selected{% endif %}>{{ centro.nombre }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Cargo</label>
+                                            <input type="text" class="form-control" name="cargo" value="{{ editing_item.cargo if edit_entity == 'administrativo_persona' else '' }}" required>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <label>Documento</label>
+                                                <input type="text" class="form-control" name="documento" value="{{ editing_item.documento if edit_entity == 'administrativo_persona' else '' }}" required>
+                                            </div>
+                                            <div class="form-group col-md-6">
+                                                <label>Correo</label>
+                                                <input type="email" class="form-control" name="correo" value="{{ editing_item.email if edit_entity == 'administrativo_persona' else '' }}">
+                                            </div>
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <label>Nombres</label>
+                                                <input type="text" class="form-control" name="nombres" value="{{ editing_item.nombres if edit_entity == 'administrativo_persona' else '' }}" required>
+                                            </div>
+                                            <div class="form-group col-md-6">
+                                                <label>Apellidos</label>
+                                                <input type="text" class="form-control" name="apellidos" value="{{ editing_item.apellidos if edit_entity == 'administrativo_persona' else '' }}" required>
+                                            </div>
+                                        </div>
+                                        <small class="form-text text-muted mb-3">Se crea automáticamente el usuario con rol Administrativo y contraseña igual al número de identificación.</small>
+                                        <button type="submit" class="btn btn-sena btn-block">{% if edit_entity == 'administrativo_persona' %}Guardar personal{% else %}Crear personal{% endif %}</button>
+                                        {% if edit_entity == 'administrativo_persona' %}
+                                            <a href="{{ url_for('admin_people') }}" class="btn btn-light btn-block mt-2">Cancelar edición</a>
+                                        {% endif %}
+                                    </form>
+                                    <hr>
+                                    <form method="post" action="{{ url_for('admin_people_import', entity='administrativo_persona') }}" enctype="multipart/form-data">
+                                        <div class="form-group mb-2">
+                                            <label>Cargue masivo CSV</label>
+                                            <input type="file" class="form-control-file" name="csv_file" accept=".csv" required>
+                                        </div>
+                                        <small class="form-text text-muted mb-3">Columnas: <code>centro_id,documento,nombres,apellidos,cargo,correo</code>. <code>correo</code> es opcional.</small>
+                                        <button type="submit" class="btn btn-outline-success btn-block">Importar personal</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 mb-4">
+                            <div class="card shadow border-0">
+                                <div class="card-header py-3 border-bottom-sena">
+                                    <h6 class="m-0 font-weight-bold text-sena">Instructores</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered sena-table people-table">
+                                            <thead><tr><th>Instructor</th><th>Documento</th><th>Centro</th><th>Área</th><th>Correo</th><th>Acciones</th></tr></thead>
+                                            <tbody>
+                                                {% for item in instructores %}
+                                                    <tr>
+                                                        <td>{{ item.nombres }} {{ item.apellidos }}</td>
+                                                        <td>{{ item.documento }}</td>
+                                                        <td>{% for centro in centros %}{% if centro.id == item.centro_id %}{{ centro.nombre }}{% endif %}{% endfor %}</td>
+                                                        <td>{% for area in areas_academicas %}{% if area.id == item.area_id %}{{ area.nombre }}{% endif %}{% endfor %}{% if not item.area_id %}-{% endif %}</td>
+                                                        <td>{{ item.email or '-' }}</td>
+                                                        <td class="text-nowrap">
+                                                            <a href="{{ url_for('admin_people_edit', entity='instructor', item_id=item.id) }}" class="btn btn-sm btn-outline-success"><i class="fas fa-pen"></i></a>
+                                                            <form method="post" action="{{ url_for('admin_people_delete', entity='instructor', item_id=item.id) }}" class="d-inline">
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Se eliminará el instructor seleccionado.');"><i class="fas fa-trash"></i></button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                {% else %}
+                                                    <tr><td colspan="6" class="text-center text-muted">No hay instructores registrados.</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mb-4">
+                            <div class="card shadow border-0">
+                                <div class="card-header py-3 border-bottom-sena">
+                                    <h6 class="m-0 font-weight-bold text-sena">Aprendices</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered sena-table people-table">
+                                            <thead><tr><th>Aprendiz</th><th>Documento</th><th>Regional</th><th>Ficha</th><th>Correo</th><th>Acciones</th></tr></thead>
+                                            <tbody>
+                                                {% for item in aprendices %}
+                                                    <tr>
+                                                        <td>{{ item.nombres }} {{ item.apellidos }}</td>
+                                                        <td>{{ item.documento }}</td>
+                                                        <td>{% for regional in regionales %}{% if regional.id == item.regional_id %}{{ regional.nombre }}{% endif %}{% endfor %}</td>
+                                                        <td>{{ item.ficha or '-' }}</td>
+                                                        <td>{{ item.email or '-' }}</td>
+                                                        <td class="text-nowrap">
+                                                            <a href="{{ url_for('admin_people_edit', entity='aprendiz', item_id=item.id) }}" class="btn btn-sm btn-outline-success"><i class="fas fa-pen"></i></a>
+                                                            <form method="post" action="{{ url_for('admin_people_delete', entity='aprendiz', item_id=item.id) }}" class="d-inline">
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Se eliminará el aprendiz seleccionado.');"><i class="fas fa-trash"></i></button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                {% else %}
+                                                    <tr><td colspan="6" class="text-center text-muted">No hay aprendices registrados.</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mb-4">
+                            <div class="card shadow border-0">
+                                <div class="card-header py-3 border-bottom-sena">
+                                    <h6 class="m-0 font-weight-bold text-sena">Personal administrativo</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered sena-table people-table">
+                                            <thead><tr><th>Persona</th><th>Documento</th><th>Centro</th><th>Cargo</th><th>Correo</th><th>Acciones</th></tr></thead>
+                                            <tbody>
+                                                {% for item in administrativos %}
+                                                    <tr>
+                                                        <td>{{ item.nombres }} {{ item.apellidos }}</td>
+                                                        <td>{{ item.documento }}</td>
+                                                        <td>{% for centro in centros %}{% if centro.id == item.centro_id %}{{ centro.nombre }}{% endif %}{% endfor %}</td>
+                                                        <td>{{ item.cargo }}</td>
+                                                        <td>{{ item.email or '-' }}</td>
+                                                        <td class="text-nowrap">
+                                                            <a href="{{ url_for('admin_people_edit', entity='administrativo_persona', item_id=item.id) }}" class="btn btn-sm btn-outline-success"><i class="fas fa-pen"></i></a>
+                                                            <form method="post" action="{{ url_for('admin_people_delete', entity='administrativo_persona', item_id=item.id) }}" class="d-inline">
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Se eliminará el personal administrativo seleccionado.');"><i class="fas fa-trash"></i></button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                {% else %}
+                                                    <tr><td colspan="6" class="text-center text-muted">No hay personal administrativo registrado.</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <footer class="sticky-footer bg-white">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span>BARÍ LMS SENA - Administrador</span>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/jquery-easing/jquery.easing.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/datatables/dataTables.bootstrap4.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
+    <script>
+        $(function () {
+            $('.people-table').DataTable({
+                language: {
+                    search: "Buscar:",
+                    lengthMenu: "Mostrar _MENU_ registros",
+                    info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+                    infoEmpty: "Mostrando 0 a 0 de 0 registros",
+                    zeroRecords: "No se encontraron registros",
+                    paginate: {
+                        first: "Primero",
+                        last: "Último",
+                        next: "Siguiente",
+                        previous: "Anterior"
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

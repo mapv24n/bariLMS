@@ -1,0 +1,460 @@
+/* ── Árbol de fases ── */
+.fase-tree {
+    font-size: 0.875rem;
+}
+
+.fase-btn {
+    background: #1cc88a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    width: 100%;
+    text-align: left;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background .15s;
+}
+
+.fase-btn:hover {
+    background: #17a673;
+}
+
+.fase-btn .chevron {
+    transition: transform .2s;
+}
+
+.fase-btn.collapsed .chevron {
+    transform: rotate(-90deg);
+}
+
+.act-proy-btn {
+    background: #f6c23e;
+    color: #333;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    width: 100%;
+    text-align: left;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background .15s;
+}
+
+.act-proy-btn:hover {
+    background: #e0ad28;
+}
+
+.act-proy-btn .chevron {
+    transition: transform .2s;
+}
+
+.act-proy-btn.collapsed .chevron {
+    transform: rotate(-90deg);
+}
+
+.act-apr-btn {
+    background: #4e73df;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background .15s;
+}
+
+.act-apr-btn:hover,
+.act-apr-btn.active {
+    background: #2e59d9;
+}
+
+.tree-indent-1 {
+    padding-left: 12px;
+}
+
+.tree-indent-2 {
+    padding-left: 22px;
+}
+
+/* ── Panel derecho (acciones + tabla) ── */
+#panel-actividad {
+    display: none;
+}
+
+/* ── Badges de calificación ── */
+.badge-aprobado {
+    background: #1cc88a;
+    color: #fff;
+}
+
+.badge-reprobado {
+    background: #e74a3b;
+    color: #fff;
+}
+
+.badge-pendiente {
+    background: #858796;
+    color: #fff;
+}
+
+/* ── Botones de acción superiores ── */
+.btn-action-row {
+    gap: 8px;
+}
+
+/* ── Estado vacío ── */
+.empty-state {
+    color: #858796;
+    text-align: center;
+    padding: 30px 10px;
+}
+
+/* ── Highlight fila aprendiz seleccionado ── */
+tr.selected-row {
+    background: #f0f7ff;
+}
+
+/* ── Modal Evidencia recibida ── */
+#modalCalificar .modal-content {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .18);
+}
+
+#modalCalificar .modal-header {
+    background: #fff;
+    border-bottom: 1px solid #e3e6f0;
+    border-radius: 12px 12px 0 0;
+    padding: 16px 20px 12px;
+}
+
+#modalCalificar .modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1cc88a;
+}
+
+#modalCalificar .modal-body {
+    padding: 20px 20px 8px;
+}
+
+#modalCalificar .ev-label {
+    font-size: .78rem;
+    font-weight: 700;
+    color: #1cc88a;
+    margin-bottom: 4px;
+    display: block;
+}
+
+#modalCalificar .ev-input {
+    background: #f4f6f9;
+    border: 1px solid #e3e6f0;
+    border-radius: 6px;
+    color: #5a5c69;
+    font-size: .88rem;
+    padding: 8px 12px;
+    width: 100%;
+}
+
+#modalCalificar .ev-input[readonly] {
+    cursor: default;
+}
+
+#modalCalificar textarea.ev-input {
+    resize: none;
+}
+
+#modalCalificar .ev-group {
+    margin-bottom: 14px;
+}
+
+#modalCalificar .btn-aceptar {
+    background: #1cc88a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 16px;
+    font-weight: 600;
+    font-size: .88rem;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+#modalCalificar .btn-aceptar:hover {
+    background: #17a673;
+}
+
+#modalCalificar .btn-cancelar {
+    background: #e74a3b;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 16px;
+    font-weight: 600;
+    font-size: .88rem;
+    width: 100%;
+}
+
+#modalCalificar .btn-cancelar:hover {
+    background: #c0392b;
+}
+
+#modalCalificar .modal-footer {
+    border: none;
+    padding: 0 20px 20px;
+    display: block;
+}
+
+#modal-estado-badge {
+    min-height: 24px;
+    margin-bottom: 6px;
+}
+
+/* ── Actividad de Proyecto activa en el árbol ── */
+.act-proy-btn.active {
+    background: #e0ad28;
+    outline: 2px solid #c49a0a;
+}
+
+/* ── Panel lateral (Crear actividad / Evidencia recibida) ── */
+#side-panel {
+    width: 310px;
+    min-width: 280px;
+    border-left: 1px solid #dee2e6;
+    padding: 16px;
+    background: #f8f9fc;
+    flex-shrink: 0;
+}
+
+#side-panel .ev-label {
+    font-size: .78rem;
+    font-weight: 700;
+    color: #1cc88a;
+    margin-bottom: 4px;
+    display: block;
+}
+
+#side-panel .ev-input {
+    background: #f4f6f9;
+    border: 1px solid #e3e6f0;
+    border-radius: 6px;
+    color: #5a5c69;
+    font-size: .88rem;
+    padding: 8px 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#side-panel textarea.ev-input {
+    resize: none;
+}
+
+#side-panel .ev-group {
+    margin-bottom: 12px;
+}
+
+#side-panel .btn-aceptar {
+    background: #1cc88a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: 600;
+    font-size: .85rem;
+    cursor: pointer;
+}
+
+#side-panel .btn-aceptar:hover {
+    background: #17a673;
+}
+
+#side-panel .btn-cancelar {
+    background: #e74a3b;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: 600;
+    font-size: .85rem;
+    cursor: pointer;
+}
+
+#side-panel .btn-cancelar:hover {
+    background: #c0392b;
+}
+
+#side-panel .panel-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: #1cc88a;
+}
+
+/* ── Tarjetas de actividad de aprendizaje (Tab 1) ── */
+.actividad-card {
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: #fff;
+    margin-bottom: 10px;
+}
+
+.actividad-card:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+
+/* ── Badge de estado en side panel ── */
+#ev-estado-badge {
+    min-height: 22px;
+    margin-bottom: 6px;
+}
+
+/* ── Tabla de evidencias ── */
+#evidencias-tabla .table th {
+    font-size: .78rem;
+    white-space: nowrap;
+}
+
+#evidencias-tabla .table td {
+    vertical-align: middle;
+}
+
+/* ── Tabs personalizados ── */
+#fases-tabs .nav-link {
+    font-size: .82rem;
+    padding: 6px 12px;
+    color: #5a5c69;
+}
+
+#fases-tabs .nav-link.active {
+    font-weight: 600;
+    color: #1cc88a;
+    border-bottom-color: #fff;
+}
+
+#panel-flex-row {
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    min-height: 420px;
+}
+/* ── Formulario inline edición de guías ── */
+.guia-edit-form {
+    display: none;
+    background: #f8f9fc;
+    border: 1px solid #e3e6f0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-top: 8px;
+}
+
+.guia-edit-group {
+    margin-bottom: 10px;
+}
+
+.guia-edit-label {
+    display: block;
+    font-size: .75rem;
+    font-weight: 700;
+    color: #1cc88a;
+    margin-bottom: 3px;
+}
+
+.guia-edit-input {
+    width: 100%;
+    background: #fff;
+    border: 1px solid #d1d3e2;
+    border-radius: 6px;
+    color: #5a5c69;
+    font-size: .85rem;
+    padding: 6px 10px;
+    box-sizing: border-box;
+    transition: border-color .15s;
+}
+
+.guia-edit-input:focus {
+    outline: none;
+    border-color: #1cc88a;
+    box-shadow: 0 0 0 2px rgba(28,200,138,.15);
+}
+
+textarea.guia-edit-input {
+    resize: none;
+}
+
+/* ── Formulario agregar guía (#form-guia-ap) ── */
+#form-guia-ap .ev-label {
+    font-size: .78rem;
+    font-weight: 700;
+    color: #1cc88a;
+    margin-bottom: 4px;
+    display: block;
+}
+
+#form-guia-ap .ev-input {
+    background: #f4f6f9;
+    border: 1px solid #e3e6f0;
+    border-radius: 6px;
+    color: #5a5c69;
+    font-size: .88rem;
+    padding: 8px 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#form-guia-ap .ev-input:focus {
+    outline: none;
+    border-color: #1cc88a;
+    box-shadow: 0 0 0 2px rgba(28,200,138,.15);
+}
+
+#form-guia-ap textarea.ev-input {
+    resize: none;
+}
+
+#form-guia-ap .ev-group {
+    margin-bottom: 12px;
+}
+
+#form-guia-ap .btn-aceptar {
+    background: #1cc88a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: 600;
+    font-size: .85rem;
+    cursor: pointer;
+}
+
+#form-guia-ap .btn-aceptar:hover {
+    background: #17a673;
+}
+
+#form-guia-ap .btn-cancelar {
+    background: #e74a3b;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-weight: 600;
+    font-size: .85rem;
+    cursor: pointer;
+}
+
+#form-guia-ap .btn-cancelar:hover {
+    background: #c0392b;
+}
