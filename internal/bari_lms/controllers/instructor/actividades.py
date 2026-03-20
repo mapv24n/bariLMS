@@ -277,7 +277,7 @@ def register_routes(app):
         if "guia_archivo" in request.files and request.files["guia_archivo"].filename:
             file = request.files["guia_archivo"]
             filename = secure_filename(file.filename)
-            unique_name = f"{uuid.uuid4().hex}_{filename}"
+            unique_name = f"{uuid.uuid7().hex}_{filename}"
             upload_folder = current_app.config["UPLOAD_FOLDER_GUIAS"]
             file.save(os.path.join(upload_folder, unique_name))
             guia_url = url_for("static", filename=f"uploads/guias/{unique_name}")
@@ -481,7 +481,7 @@ def register_routes(app):
         if "guia_archivo" in request.files and request.files["guia_archivo"].filename:
             file = request.files["guia_archivo"]
             filename = secure_filename(file.filename)
-            unique_name = f"{uuid.uuid4().hex}_{filename}"
+            unique_name = f"{uuid.uuid7().hex}_{filename}"
             upload_folder = current_app.config["UPLOAD_FOLDER_GUIAS"]
             file.save(os.path.join(upload_folder, unique_name))
             guia_url = url_for("static", filename=f"uploads/guias/{unique_name}")
@@ -638,7 +638,7 @@ def register_routes(app):
         if "guia_archivo" in request.files and request.files["guia_archivo"].filename:
             file = request.files["guia_archivo"]
             filename = secure_filename(file.filename)
-            unique_name = f"{uuid.uuid4().hex}_{filename}"
+            unique_name = f"{uuid.uuid7().hex}_{filename}"
             upload_folder = current_app.config["UPLOAD_FOLDER_GUIAS"]
             file.save(os.path.join(upload_folder, unique_name))
             guia_url = url_for("static", filename=f"uploads/guias/{unique_name}")

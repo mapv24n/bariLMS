@@ -78,7 +78,7 @@ def create_linked_person_user(entity, item_id, data):
         )
 
     db = get_db()
-    new_user_id = str(uuid.uuid4())
+    new_user_id = str(uuid.uuid7())
     db.execute(
         "INSERT INTO usuario (id, correo, contrasena_hash, nombre, activo) "
         "VALUES (?, ?, ?, ?, TRUE)",
@@ -95,7 +95,7 @@ def create_linked_person_user(entity, item_id, data):
         SELECT ?, ?, p.id FROM perfil p WHERE p.nombre = ?
         ON CONFLICT (usuario_id, perfil_id) DO NOTHING
         """,
-        (str(uuid.uuid4()), new_user_id, config["role"]),
+        (str(uuid.uuid7()), new_user_id, config["role"]),
     )
     db.execute(
         f"UPDATE {config['table']} SET {config['email_column']} = ?, {config['user_column']} = ? WHERE id = ?",
@@ -137,7 +137,7 @@ def sync_linked_person_user(entity, item_id, data):
             SELECT ?, ?, p.id FROM perfil p WHERE p.nombre = ?
             ON CONFLICT (usuario_id, perfil_id) DO NOTHING
             """,
-            (str(uuid.uuid4()), item["user_id"], config["role"]),
+            (str(uuid.uuid7()), item["user_id"], config["role"]),
         )
         db.execute(
             f"UPDATE {config['table']} SET {config['email_column']} = ? WHERE id = ?",

@@ -141,7 +141,7 @@ def _provision_admin(db):
 
     temp_email = f"admin_{secrets.token_hex(4)}@senalearn.edu.co"
     temp_password = _generate_password()
-    user_id = str(uuid.uuid4())
+    user_id = str(uuid.uuid7())
 
     db.execute(
         "INSERT INTO usuario (id, correo, contrasena_hash, nombre, activo) "
@@ -153,7 +153,7 @@ def _provision_admin(db):
         INSERT INTO usuario_perfil (id, usuario_id, perfil_id)
         SELECT ?, ?, p.id FROM perfil p WHERE p.nombre = 'Administrador'
         """,
-        (str(uuid.uuid4()), user_id),
+        (str(uuid.uuid7()), user_id),
     )
     db.commit()
 

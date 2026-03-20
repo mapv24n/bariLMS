@@ -50,7 +50,7 @@ def register_routes(app):
             return redirect(url_for("admin_users"))
 
         db = get_db()
-        user_id = str(uuid.uuid4())
+        user_id = str(uuid.uuid7())
         try:
             db.execute(
                 "INSERT INTO usuario (id, correo, contrasena_hash, nombre, activo) VALUES (?, ?, ?, ?, ?)",
@@ -62,7 +62,7 @@ def register_routes(app):
                 SELECT ?, ?, p.id FROM perfil p WHERE p.nombre = ?
                 ON CONFLICT (usuario_id, perfil_id) DO NOTHING
                 """,
-                (str(uuid.uuid4()), user_id, role),
+                (str(uuid.uuid7()), user_id, role),
             )
             db.commit()
         except IntegrityError:
@@ -146,7 +146,7 @@ def register_routes(app):
             SELECT ?, ?, p.id FROM perfil p WHERE p.nombre = ?
             ON CONFLICT (usuario_id, perfil_id) DO NOTHING
             """,
-            (str(uuid.uuid4()), user_id, role),
+            (str(uuid.uuid7()), user_id, role),
         )
         db.commit()
         if current_user()["id"] == user_id:
