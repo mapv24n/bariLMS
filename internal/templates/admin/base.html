@@ -1,18 +1,6 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>BARÍ LMS | {% block title %}{% endblock %}</title>
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo-sena-blanco.png') }}">
-    <link href="{{ url_for('static', filename='vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
-    <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/sena-learn.css') }}" rel="stylesheet">
-    {% block extra_css %}{% endblock %}
-</head>
-<body id="page-top">
+{% extends "base.html" %}
+
+{% block body %}
     <div id="wrapper">
         <ul class="navbar-nav bg-gradient-sena sidebar sidebar-dark accordion" id="accordionSidebar">
             <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ url_for('dashboard', role_slug='administrador') }}">
@@ -60,14 +48,11 @@
                     <span>Indicadores</span>
                 </a>
             </li>
-            <li class="nav-item">
-                <form method="post" action="{{ url_for('logout') }}">
-                    <button type="submit" class="nav-link btn btn-link text-left w-100 logout-link">
-                        <i class="fas fa-fw fa-sign-out-alt"></i>
-                        <span>Cerrar sesión</span>
-                    </button>
-                </form>
-            </li>
+
+            {% set ep_active = request.endpoint and request.endpoint.startswith('ep_') %}
+            {% include 'components/sidebar_ep.html' %}
+
+            {% include 'components/sidebar_logout.html' %}
         </ul>
 
         <div id="content-wrapper" class="d-flex flex-column">
@@ -101,10 +86,4 @@
             </footer>
         </div>
     </div>
-    <script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='vendor/jquery-easing/jquery.easing.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
-    {% block extra_js %}{% endblock %}
-</body>
-</html>
+{% endblock %}

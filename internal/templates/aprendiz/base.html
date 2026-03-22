@@ -1,42 +1,34 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>BARÍ LMS | {% block title %}Aprendiz{% endblock %}</title>
-    <link href="{{ url_for('static', filename='vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Nunito:300,400,600,700,800,900" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/sena-learn.css') }}" rel="stylesheet">
-    {% block extra_css %}{% endblock %}
-    <style>
-        .sidebar { background: linear-gradient(180deg, #1a7a3c 0%, #157a34 100%) !important; }
-        .sidebar-brand { background: rgba(0,0,0,0.15) !important; }
-        .sidebar .nav-item .nav-link { color: rgba(255,255,255,0.85) !important; }
-        .sidebar .nav-item .nav-link:hover,
-        .sidebar .nav-item.active .nav-link,
-        .sidebar .nav-item.nav-active .nav-link { color: #fff !important; background: rgba(255,255,255,0.15); border-radius: 6px; }
-        .sidebar-divider { border-top: 1px solid rgba(255,255,255,0.2) !important; }
-        .sidebar-heading { color: rgba(255,255,255,0.5) !important; }
-        .logout-link { color: rgba(255,255,255,0.85) !important; background: none; border: none; text-align: left; padding: .75rem 1rem; width: 100%; }
-        .logout-link:hover { color: white !important; background: rgba(255,255,255,0.15); border-radius: 6px; }
-        /* Campana notificaciones */
-        .notif-bell { position: relative; cursor: pointer; }
-        .notif-badge {
-            position: absolute; top: 0; right: 0;
-            background: #e74a3b; color: white;
-            border-radius: 50%; width: 18px; height: 18px;
-            font-size: 0.65rem; font-weight: 700;
-            display: flex; align-items: center; justify-content: center;
-            transform: translate(30%, -30%);
-        }
-        .notif-dropdown { min-width: 320px; max-height: 380px; overflow-y: auto; }
-        .notif-item { border-left: 3px solid #1a7a3c; margin: 4px 8px; border-radius: 6px; }
-        .notif-item:hover { background: #f8f9fc; }
-    </style>
-</head>
-<body id="page-top">
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    .sidebar { background: linear-gradient(180deg, #1a7a3c 0%, #157a34 100%) !important; }
+    .sidebar-brand { background: rgba(0,0,0,0.15) !important; }
+    .sidebar .nav-item .nav-link { color: rgba(255,255,255,0.85) !important; }
+    .sidebar .nav-item .nav-link:hover,
+    .sidebar .nav-item.active .nav-link,
+    .sidebar .nav-item.nav-active .nav-link { color: #fff !important; background: rgba(255,255,255,0.15); border-radius: 6px; }
+    .sidebar-divider { border-top: 1px solid rgba(255,255,255,0.2) !important; }
+    .sidebar-heading { color: rgba(255,255,255,0.5) !important; }
+    .logout-link { color: rgba(255,255,255,0.85) !important; background: none; border: none; text-align: left; padding: .75rem 1rem; width: 100%; }
+    .logout-link:hover { color: white !important; background: rgba(255,255,255,0.15); border-radius: 6px; }
+    /* Campana notificaciones */
+    .notif-bell { position: relative; cursor: pointer; }
+    .notif-badge {
+        position: absolute; top: 0; right: 0;
+        background: #e74a3b; color: white;
+        border-radius: 50%; width: 18px; height: 18px;
+        font-size: 0.65rem; font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+        transform: translate(30%, -30%);
+    }
+    .notif-dropdown { min-width: 320px; max-height: 380px; overflow-y: auto; }
+    .notif-item { border-left: 3px solid #1a7a3c; margin: 4px 8px; border-radius: 6px; }
+    .notif-item:hover { background: #f8f9fc; }
+</style>
+{% endblock %}
+
+{% block body %}
 <div id="wrapper">
 
     <!-- Sidebar -->
@@ -172,10 +164,6 @@
     </div>
 </div>
 
-<script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
-<script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-<script src="{{ url_for('static', filename='vendor/jquery-easing/jquery.easing.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
 <script>
 function marcarLeida(id, el) {
     fetch('/aprendiz/notificaciones/marcar-leida/' + id, { method: 'POST' })
@@ -184,6 +172,4 @@ function marcarLeida(id, el) {
         });
 }
 </script>
-{% block extra_js %}{% endblock %}
-</body>
-</html>
+{% endblock %}

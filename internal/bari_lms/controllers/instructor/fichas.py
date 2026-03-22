@@ -13,7 +13,7 @@ def register_routes(app):
         user = current_user()
         db = get_db()
         instructor = db.execute(
-            "SELECT id FROM instructor WHERE usuario_id = ?", (user["id"],)
+            "SELECT id FROM instructor WHERE persona_id = ?", (user["id"],)
         ).fetchone()
 
         fichas = []
@@ -43,7 +43,7 @@ def register_routes(app):
         user = current_user()
         db = get_db()
         instructor = db.execute(
-            "SELECT id FROM instructor WHERE usuario_id = ?", (user["id"],)
+            "SELECT id FROM instructor WHERE persona_id = ?", (user["id"],)
         ).fetchone()
 
         ficha = db.execute(

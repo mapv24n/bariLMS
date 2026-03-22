@@ -121,6 +121,32 @@ def _run_legacy_migrations(db):
     db.commit()
 
 
+def _seed_system_data(db):
+    """Inserta los perfiles del sistema si no existen. Son constantes del sistema."""
+    db.execute(
+        """
+        INSERT INTO perfil (id, nombre, descripcion, ruta_dashboard) VALUES
+            (gen_random_uuid(), 'Administrador',
+                'Gestión completa: usuarios, estructura institucional y académica.',
+                '/dashboard/administrador'),
+            (gen_random_uuid(), 'Administrativo',
+                'Apoyo académico y operativo: fichas, programas, ambientes y sedes.',
+                '/dashboard/administrativo'),
+            (gen_random_uuid(), 'Instructor',
+                'Ejecución formativa: fichas asignadas, fases, actividades y calificaciones.',
+                '/dashboard/instructor'),
+            (gen_random_uuid(), 'Aprendiz',
+                'Ruta de aprendizaje: fichas, entrega de evidencias y seguimiento de notas.',
+                '/dashboard/aprendiz'),
+            (gen_random_uuid(), 'Empresa',
+                'Acceso empresarial: seguimiento de aprendices en etapa productiva y gestión de contratos.',
+                '/dashboard/empresa')
+        ON CONFLICT (nombre) DO NOTHING
+        """
+    )
+    db.commit()
+
+
 def _generate_password(length=12):
     alphabet = string.ascii_letters + string.digits + "!@#$%"
     return "".join(secrets.choice(alphabet) for _ in range(length))
@@ -173,7 +199,8 @@ def _provision_admin(db):
 
 
 def initialize_database():
-    """Aplica migraciones legacy y provisiona el admin si no existe."""
+    """Aplica migraciones legacy, semilla de sistema y provisiona el admin si no existe."""
     db = get_db()
     _run_legacy_migrations(db)
+    _seed_system_data(db)
     _provision_admin(db)

@@ -28,6 +28,7 @@ DASHBOARDS = {
                 "endpoint": "dashboard",
                 "endpoint_kwargs": {"role_slug": "administrador"},
             },
+            {"icon": "fa-briefcase", "label": "Etapa Productiva", "endpoint": "ep_index"},
         ],
         "metrics": [
             {"label": "Usuarios activos",  "value": "0", "icon": "fa-users"},
@@ -107,6 +108,7 @@ DASHBOARDS = {
                 "endpoint": "dashboard",
                 "endpoint_kwargs": {"role_slug": "instructor"},
             },
+            {"icon": "fa-briefcase",       "label": "Etapa Productiva", "endpoint": "ep_index"},
             {"icon": "fa-key", "label": "Cambiar contraseña", "endpoint": "instructor_change_password"},
         ],
         "metrics": [

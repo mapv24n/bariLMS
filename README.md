@@ -99,7 +99,10 @@ Aplica el schema (tablas, índices, constraints):
 
 ```bash
 psql -U postgres -d bari_lms -f database/bari_lms_postgresql.sql
+psql -U postgres -d bari_lms -f database/bari_EtapaProductiva_postgresql.sql
 ```
+
+> El segundo archivo depende del primero; ejecútalos en ese orden.
 
 Aplica los datos de catálogo (perfiles, tipos de documento, niveles, fases…):
 
@@ -107,7 +110,16 @@ Aplica los datos de catálogo (perfiles, tipos de documento, niveles, fases…):
 python database/seed.py
 ```
 
-### 6. Primer inicio — admin provisional
+### 6. Cargar datos de prueba (opcional)
+
+Para desarrollo y QA existe un conjunto de seeds que crean instructores, aprendices, fichas
+y empresas EP listos para usar. Ver [`database/seeds/README.md`](database/seeds/README.md).
+
+```bash
+python database/seeds/run_all.py
+```
+
+### 7. Primer inicio — admin provisional
 
 Al arrancar sin usuarios administradores la app genera automáticamente
 un **admin provisional** con correo y contraseña aleatorios, imprimiéndolos
@@ -123,7 +135,7 @@ desde el panel de administración.
 
 > Esta cuenta es de un solo uso. Crea un administrador real desde el panel y desactívala.
 
-### 7. Ejecutar la aplicación
+### 8. Ejecutar la aplicación
 
 ```bash
 python run.py
