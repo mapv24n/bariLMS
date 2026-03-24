@@ -109,6 +109,21 @@ def normalize_academic_context(args):  # noqa: C901
             (programa_id,),
         ).fetchall()
 
+    # Instructores a competencias de la ficha en edición
+    instructores_competencia_ficha = []
+    if edit_entity == "ficha" and edit_id:
+        instructores_competencia_ficha = get_db().execute(
+            """
+            SELECT i.id, pe.nombres, pe.apellidos
+            FROM ficha_instructor_competencia fic
+            JOIN instructor i ON i.id = fic.instructor_id
+            JOIN persona pe ON pe.id = i.persona_id
+            WHERE fic.ficha_id = ?
+            ORDER BY pe.nombres ASC, pe.apellidos ASC
+            """,
+            (edit_id,),
+        ).fetchall()
+
     # Instructores del área del programa
     instructores_area = []
     if programa:
@@ -137,6 +152,7 @@ def normalize_academic_context(args):  # noqa: C901
             if area_id else []
         ),
         "fichas": fichas,
+        "instructores_competencia_ficha": instructores_competencia_ficha,
         "coordinaciones_disponibles": get_entities("coordinacion", order_by="nombre ASC"),
         "instructores_area": instructores_area,
         "proyectos_formativos": get_entities(

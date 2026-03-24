@@ -137,6 +137,45 @@ def register_routes(app):
         flash(f"{ENTITY_CONFIG[entity]['label']} actualizada correctamente.", "success")
         return redirect(url_for("admin_academic", **academic_redirect_args(request.form)))
 
+    @app.post("/admin/academic/ficha/<ficha_id>/competencia/add")
+    @role_required("Administrador")
+    def admin_ficha_competencia_add(ficha_id):
+        ficha = get_entity("ficha", ficha_id)
+        if ficha is None:
+            flash("La ficha solicitada no existe.", "danger")
+            return redirect(url_for("admin_academic"))
+        instructor_id = request.form.get("instructor_id", "").strip()
+        if not instructor_id:
+            flash("Debes seleccionar un instructor.", "danger")
+            return redirect(url_for("admin_academic", **academic_redirect_args(request.form)))
+        db = get_db()
+        try:
+            import uuid as _uuid
+            db.execute(
+                "INSERT INTO ficha_instructor_competencia (id, ficha_id, instructor_id) "
+                "VALUES (?, ?, ?) ON CONFLICT (ficha_id, instructor_id) DO NOTHING",
+                (str(_uuid.uuid7()), ficha_id, instructor_id),
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+            flash("No fue posible agregar el instructor a competencias.", "danger")
+            return redirect(url_for("admin_academic", **academic_redirect_args(request.form)))
+        flash("Instructor agregado a competencias correctamente.", "success")
+        return redirect(url_for("admin_academic", **academic_redirect_args(request.form)))
+
+    @app.post("/admin/academic/ficha/<ficha_id>/competencia/<instructor_id>/remove")
+    @role_required("Administrador")
+    def admin_ficha_competencia_remove(ficha_id, instructor_id):
+        db = get_db()
+        db.execute(
+            "DELETE FROM ficha_instructor_competencia WHERE ficha_id = ? AND instructor_id = ?",
+            (ficha_id, instructor_id),
+        )
+        db.commit()
+        flash("Instructor removido de competencias.", "success")
+        return redirect(url_for("admin_academic", **academic_redirect_args(request.form)))
+
     @app.post("/admin/academic/<entity>/<item_id>/delete")
     @role_required("Administrador")
     def admin_academic_delete(entity, item_id):
