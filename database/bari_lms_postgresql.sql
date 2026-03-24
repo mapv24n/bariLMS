@@ -156,9 +156,7 @@ CREATE INDEX IF NOT EXISTS idx_sexo_codigo ON sexo (codigo);
 -- ============================================================
 
 -- Entidad de autenticación. Todos los perfiles tienen una fila aquí.
--- Sin columna nombre: el nombre se deriva de persona.nombres/apellidos.
--- El admin provisional vive aquí sin fila en persona; la app usa
--- correo_institucional como identificador de visualización.
+-- El admin provisional vive aquí sin fila en persona.
 CREATE TABLE IF NOT EXISTS usuario (
     -- identidad
     id                   UUID        PRIMARY KEY,
@@ -166,9 +164,12 @@ CREATE TABLE IF NOT EXISTS usuario (
     -- auditoría
     creado_por           UUID        REFERENCES usuario(id) ON DELETE SET NULL,
 
-    -- credenciales (correo_personal vive en persona, no aquí)
-    correo_institucional TEXT        COLLATE "C" UNIQUE NOT NULL,
+    -- credenciales
+    correo               TEXT        COLLATE "C" UNIQUE NOT NULL,
     contrasena_hash      TEXT        NOT NULL,
+
+    -- datos básicos (nombre completo para el admin provisional y visualización)
+    nombre               TEXT,
 
     -- estado
     activo               BOOLEAN     NOT NULL DEFAULT TRUE,
@@ -178,11 +179,11 @@ CREATE TABLE IF NOT EXISTS usuario (
     actualizado_en       TIMESTAMPTZ DEFAULT NULL,
 
     -- restricciones
-    CHECK (correo_institucional = lower(correo_institucional))
+    CHECK (correo = lower(correo))
 );
 
-CREATE INDEX IF NOT EXISTS idx_usuario_correo_institucional ON usuario (correo_institucional);
-CREATE INDEX IF NOT EXISTS idx_usuario_creado_por           ON usuario (creado_por);
+CREATE INDEX IF NOT EXISTS idx_usuario_correo    ON usuario (correo);
+CREATE INDEX IF NOT EXISTS idx_usuario_creado_por ON usuario (creado_por);
 
 
 -- Datos personales e identidad del usuario real.

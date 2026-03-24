@@ -1,0 +1,95 @@
+{% extends "instructor/base.html" %}
+
+{% block title %}Ficha {{ ficha.numero }} — Etapa Productiva{% endblock %}
+
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div>
+            <div class="text-uppercase small font-weight-bold text-sena mb-1">Etapa Productiva</div>
+            <h1 class="h3 mb-0 text-gray-800">Ficha {{ ficha.numero }}</h1>
+            <small class="text-muted">{{ ficha.programa_nombre }}</small>
+        </div>
+        <a href="{{ url_for('ep_instructor_fichas') }}" class="btn btn-outline-success btn-sm shadow-sm">
+            <i class="fas fa-arrow-left fa-sm mr-1"></i> Volver a fichas
+        </a>
+    </div>
+
+    {% include 'components/flash_messages.html' %}
+
+    <!-- Resumen de la ficha -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card border-left-sena shadow-sm h-100 py-2">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-sena text-uppercase mb-1">Programa</div>
+                    <div class="font-weight-bold text-gray-800">{{ ficha.programa_nombre }}</div>
+                </div>
+            </div>
+        </div>
+        {% if ficha.proyecto_nombre %}
+        <div class="col-md-4 mb-3">
+            <div class="card border-left-sena shadow-sm h-100 py-2">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-sena text-uppercase mb-1">Proyecto formativo</div>
+                    <div class="font-weight-bold text-gray-800">{{ ficha.proyecto_nombre }}</div>
+                    {% if ficha.proyecto_codigo %}
+                    <div class="text-muted small">{{ ficha.proyecto_codigo }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <div class="col-md-2 mb-3">
+            <div class="card border-left-sena shadow-sm h-100 py-2">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-sena text-uppercase mb-1">Aprendices en EP</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ aprendices | length }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card border-left-sena shadow-sm h-100 py-2">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-sena text-uppercase mb-1">Empresas vinculadas</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ empresas | length }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pestañas: Aprendices / Empresas -->
+    <ul class="nav nav-tabs mb-0 border-bottom-0" id="fichaTab" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active font-weight-bold" id="aprendices-tab"
+               data-toggle="tab" href="#aprendices" role="tab"
+               aria-controls="aprendices" aria-selected="true">
+                <i class="fas fa-users mr-1"></i> Aprendices
+                <span class="badge badge-sena ml-1">{{ aprendices | length }}</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link font-weight-bold" id="empresas-tab"
+               data-toggle="tab" href="#empresas" role="tab"
+               aria-controls="empresas" aria-selected="false">
+                <i class="fas fa-building mr-1"></i> Empresas
+                {% if empresas %}
+                <span class="badge badge-sena ml-1">{{ empresas | length }}</span>
+                {% endif %}
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="fichaTabContent">
+
+        <!-- ── Tab: Aprendices ── -->
+        <div class="tab-pane fade show active" id="aprendices" role="tabpanel" aria-labelledby="aprendices-tab">
+            {% include 'etapa_productiva/aprendices/aprendices_tab.html' %}
+        </div>
+
+        <!-- ── Tab: Empresas ── -->
+        <div class="tab-pane fade" id="empresas" role="tabpanel" aria-labelledby="empresas-tab">
+            {% include 'etapa_productiva/empresa/empresa_tab.html' %}
+        </div>
+
+    </div>
+{% endblock %}

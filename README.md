@@ -99,7 +99,10 @@ Aplica el schema (tablas, índices, constraints):
 
 ```bash
 psql -U postgres -d bari_lms -f database/bari_lms_postgresql.sql
+psql -U postgres -d bari_lms -f database/bari_EtapaProductiva_postgresql.sql
 ```
+
+> El segundo archivo depende del primero; ejecútalos en ese orden.
 
 Aplica los datos de catálogo (perfiles, tipos de documento, niveles, fases…):
 
@@ -107,7 +110,16 @@ Aplica los datos de catálogo (perfiles, tipos de documento, niveles, fases…):
 python database/seed.py
 ```
 
-### 6. Primer inicio — admin provisional
+### 6. Cargar datos de prueba (opcional)
+
+Para desarrollo y QA existe un conjunto de seeds que crean instructores, aprendices, fichas
+y empresas EP listos para usar. Ver [`database/seeds/README.md`](database/seeds/README.md).
+
+```bash
+python database/seeds/run_all.py
+```
+
+### 7. Primer inicio — admin provisional
 
 Al arrancar sin usuarios administradores la app genera automáticamente
 un **admin provisional** con correo y contraseña aleatorios, imprimiéndolos
@@ -123,7 +135,7 @@ desde el panel de administración.
 
 > Esta cuenta es de un solo uso. Crea un administrador real desde el panel y desactívala.
 
-### 7. Ejecutar la aplicación
+### 8. Ejecutar la aplicación
 
 ```bash
 python run.py
@@ -343,6 +355,55 @@ bariLMS/
 | POST | `/api/instructor/entrega/<id>/calificar` | Calificar entrega de evidencia |
 | GET | `/api/instructor/ficha/<id>/asistencia` | Obtener asistencia de una ficha |
 | POST | `/api/instructor/ficha/<id>/asistencia` | Guardar registro de asistencia |
+
+---
+
+## Herramientas de base de datos
+
+### Query runner (`database/query.py`)
+
+Script para inspeccionar la base de datos directamente desde la terminal.
+Util para desarrollo, debugging, y para que herramientas de IA puedan
+verificar el estado real del schema sin necesidad de un cliente externo.
+
+```bash
+# Consulta directa (recomendado)
+python database/query.py "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'ficha_aprendiz' ORDER BY ordinal_position"
+
+# Modo interactivo
+python database/query.py
+```
+
+> **Nota para IAs (Claude y similares):** puedes ejecutar `database/query.py`
+> directamente con la herramienta Bash para inspeccionar tablas y verificar
+> migraciones. Usa siempre `LIMIT`, `WHERE` especificos y columnas puntuales
+> (`SELECT col1, col2`) — nunca `SELECT *` sobre tablas grandes sin `LIMIT`.
+> Cada fila adicional en el output consume tokens del contexto.
+
+### Migraciones (`database/migrations/`)
+
+Herramienta: **Dbmate**. Gestiona cambios incrementales al schema de la BD.
+
+```bash
+# Aplicar migraciones pendientes
+dbmate --migrations-dir database/migrations up
+
+# Revertir la ultima
+dbmate --migrations-dir database/migrations down
+
+# Ver estado
+dbmate --migrations-dir database/migrations status
+
+# Crear nueva migracion
+dbmate --migrations-dir database/migrations new descripcion_del_cambio
+```
+
+Requiere `DATABASE_URL` en `.env`:
+```env
+DATABASE_URL=postgres://user:password@127.0.0.1:5432/bari_lms?sslmode=disable&client_encoding=utf8
+```
+
+Ver [`database/migrations/README.md`](database/migrations/README.md) para detalles completos.
 
 ---
 

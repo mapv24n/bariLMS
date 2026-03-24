@@ -1,0 +1,55 @@
+<div class="card shadow border-0 rounded-top-0">
+    <div class="card-body">
+        {% if not empresas %}
+        <div class="text-center py-4">
+            <i class="fas fa-building fa-2x text-gray-300 mb-3 d-block"></i>
+            <p class="text-muted mb-0">No hay empresas asignadas a aprendices en esta ficha.</p>
+        </div>
+        {% else %}
+        <div class="row">
+            {% for empresa in empresas %}
+            <div class="col-xl-4 col-lg-6 mb-4">
+                <div class="card border-left-sena shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start justify-content-between mb-2">
+                            <h6 class="font-weight-bold text-gray-800 mb-0">
+                                {{ empresa.razon_social }}
+                            </h6>
+                            <span class="badge badge-sena ml-2 flex-shrink-0">
+                                {{ empresa.total_aprendices }}
+                                {% if empresa.total_aprendices == 1 %}aprendiz{% else %}aprendices{% endif %}
+                            </span>
+                        </div>
+                        <div class="text-muted small mb-2">NIT {{ empresa.nit }}</div>
+                        {% if empresa.sector %}
+                        <div class="mb-1">
+                            <i class="fas fa-industry fa-xs text-sena mr-1"></i>
+                            <span class="small text-gray-700">{{ empresa.sector }}</span>
+                        </div>
+                        {% endif %}
+                        {% if empresa.correo %}
+                        <div class="mb-1">
+                            <i class="fas fa-envelope fa-xs text-sena mr-1"></i>
+                            <span class="small text-gray-700">{{ empresa.correo }}</span>
+                        </div>
+                        {% endif %}
+                        {% if empresa.telefono %}
+                        <div class="mb-1">
+                            <i class="fas fa-phone fa-xs text-sena mr-1"></i>
+                            <span class="small text-gray-700">{{ empresa.telefono }}</span>
+                        </div>
+                        {% endif %}
+                        {% if empresa.direccion %}
+                        <div>
+                            <i class="fas fa-map-marker-alt fa-xs text-sena mr-1"></i>
+                            <span class="small text-gray-700">{{ empresa.direccion }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>

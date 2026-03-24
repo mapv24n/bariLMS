@@ -1,0 +1,32 @@
+{% extends base_template %}
+
+{% block title %}Etapa Productiva{% endblock %}
+
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div>
+            <div class="text-uppercase small font-weight-bold text-sena mb-1">Etapa Productiva</div>
+            <h1 class="h3 mb-0 text-gray-800">Módulo en desarrollo</h1>
+        </div>
+    </div>
+
+    <div class="row justify-content-center mt-4">
+        <div class="col-lg-7 col-md-9">
+            <div class="card shadow border-0">
+                <div class="card-body text-center py-5 px-4">
+                    <div class="mb-4">
+                        <i class="fas fa-hard-hat fa-4x text-sena"></i>
+                    </div>
+                    <h4 class="font-weight-bold text-gray-800 mb-2">Próximamente disponible</h4>
+                    <p class="text-muted mb-4">
+                        El módulo de Etapa Productiva para tu perfil está en construcción.<br>
+                        Pronto podrás acceder a todas las funcionalidades desde aquí.
+                    </p>
+                    <a href="{{ url_for('dashboard', role_slug=user.dashboard_slug) }}" class="btn btn-sena">
+                        <i class="fas fa-arrow-left mr-1"></i> Volver al dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

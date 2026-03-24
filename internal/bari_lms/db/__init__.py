@@ -1,4 +1,13 @@
-"""Gestión del pool de conexiones y acceso a la base de datos PostgreSQL."""
+"""Gestión del pool de conexiones y acceso a la base de datos PostgreSQL.
+
+NOTE FOR AI ASSISTANTS (Claude and similar):
+  - To inspect the real database state, run: database/query.py via Bash.
+    Example: python database/query.py "SELECT column_name FROM information_schema.columns WHERE table_name = 'your_table'"
+  - Schema changes must go through Dbmate migrations in database/migrations/.
+    Run: dbmate --migrations-dir database/migrations status
+  - TOKEN WARNING: always use specific columns and LIMIT clauses in queries.
+    Never run SELECT * on large tables — every output row costs context tokens.
+"""
 
 import psycopg
 import psycopg.conninfo

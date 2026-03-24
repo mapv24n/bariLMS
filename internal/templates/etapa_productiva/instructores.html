@@ -1,0 +1,73 @@
+{% extends "instructor/base.html" %}
+
+{% block title %}Etapa Productiva{% endblock %}
+
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div>
+            <div class="text-uppercase small font-weight-bold text-sena mb-1">Etapa Productiva</div>
+            <h1 class="h3 mb-0 text-gray-800">Fichas a cargo</h1>
+        </div>
+        <a href="{{ url_for('dashboard', role_slug='instructor') }}" class="btn btn-outline-success btn-sm shadow-sm">
+            <i class="fas fa-arrow-left fa-sm mr-1"></i> Volver al dashboard
+        </a>
+    </div>
+
+    {% include 'components/flash_messages.html' %}
+
+    {% if not fichas %}
+    <div class="card shadow border-0">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-briefcase fa-3x text-sena mb-3"></i>
+            <h5 class="text-gray-700">No tienes fichas asignadas en etapa productiva</h5>
+            <p class="text-muted mb-0">Contacta al administrador para que te asigne fichas en este módulo.</p>
+        </div>
+    </div>
+    {% else %}
+    <div class="row">
+        {% for ficha in fichas %}
+        <div class="col-xl-4 col-lg-6 mb-4">
+            <div class="card shadow border-0 h-100">
+                <div class="card-header py-3 border-bottom-sena d-flex align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-sena">
+                        <i class="fas fa-id-badge mr-1"></i> Ficha {{ ficha.numero }}
+                    </h6>
+                    {% if ficha.nivel_nombre %}
+                    <span class="badge badge-success">{{ ficha.nivel_nombre }}</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <span class="text-xs font-weight-bold text-uppercase text-muted">Programa de Formación</span>
+                        <p class="mb-1 font-weight-bold text-gray-800">{{ ficha.programa_nombre }}</p>
+                    </div>
+                    {% if ficha.proyecto_nombre %}
+                    <div class="mb-3">
+                        <span class="text-xs font-weight-bold text-uppercase text-muted">Proyecto Formativo</span>
+                        <p class="mb-1 text-gray-700">
+                            {% if ficha.proyecto_codigo %}
+                            <span class="text-muted small">[{{ ficha.proyecto_codigo }}]</span>
+                            {% endif %}
+                            {{ ficha.proyecto_nombre }}
+                        </p>
+                    </div>
+                    {% else %}
+                    <div class="mb-3">
+                        <p class="text-muted small mb-0">
+                            <i class="fas fa-exclamation-circle mr-1"></i>
+                            Sin proyecto formativo asignado
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <a href="{{ url_for('ep_instructor_ficha', ficha_id=ficha.id) }}" class="btn btn-sena btn-block">
+                        <i class="fas fa-users mr-1"></i> Ver aprendices
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+{% endblock %}
