@@ -141,6 +141,68 @@ class InstructorEtapaProductivaService:
         ).fetchone()
 
     @staticmethod
+    def get_aprendiz_completo(db, ficha_id, aprendiz_id):
+        """Datos completos del aprendiz para formularios EP (CU007+).
+
+        Incluye correo_personal, regional y detalles de empresa del contrato activo.
+        Retorna None si el aprendiz no pertenece a la ficha.
+        """
+        return db.execute(
+            """
+            SELECT
+                fa.id                           AS inscripcion_id,
+                fa.en_etapa_productiva,
+                fa.etapa_productiva_concluida,
+                a.id                            AS aprendiz_id,
+                per.nombres,
+                per.apellidos,
+                per.numero_documento,
+                per.correo_personal,
+                td.nombre                       AS tipo_documento,
+                r.nombre                        AS regional,
+                ca.id                           AS contrato_id,
+                ca.estado                       AS contrato_estado,
+                ca.fecha_inicio,
+                ca.fecha_fin,
+                e.razon_social                  AS empresa_nombre,
+                e.nit                           AS empresa_nit,
+                e.correo                        AS empresa_correo,
+                e.telefono                      AS empresa_telefono,
+                e.direccion                     AS empresa_direccion
+            FROM   ficha_aprendiz fa
+            JOIN   aprendiz  a   ON a.id   = fa.aprendiz_id
+            JOIN   persona   per ON per.id = a.persona_id
+            LEFT JOIN tipo_documento       td ON td.id  = per.tipo_documento_id
+            LEFT JOIN regional             r  ON r.id   = a.regional_id
+            LEFT JOIN contrato_aprendizaje ca ON ca.ficha_aprendiz_id = fa.id
+                                             AND ca.estado = 'activo'
+            LEFT JOIN empresa              e  ON e.id   = ca.empresa_id
+            WHERE  fa.ficha_id   = ?
+              AND  fa.aprendiz_id = ?
+            """,
+            (ficha_id, aprendiz_id),
+        ).fetchone()
+
+    @staticmethod
+    def get_instructor_info(db, instructor_id):
+        """Nombre completo, centro y regional del instructor (para formularios EP)."""
+        return db.execute(
+            """
+            SELECT
+                per.nombres                     AS nombres,
+                per.apellidos                   AS apellidos,
+                c.nombre                        AS centro_nombre,
+                r.nombre                        AS regional_nombre
+            FROM   instructor  i
+            JOIN   persona     per ON per.id = i.persona_id
+            LEFT JOIN centro    c  ON c.id  = i.centro_id
+            LEFT JOIN regional  r  ON r.id  = c.regional_id
+            WHERE  i.id = ?
+            """,
+            (instructor_id,),
+        ).fetchone()
+
+    @staticmethod
     def get_empresas_ep(db, ficha_id):
         """Empresas con al menos un contrato activo en EP para la ficha dada (CU006).
 
