@@ -94,8 +94,8 @@ def register_routes(app):
             )
         else:
             db.execute(
-                "INSERT INTO guia_aprendizaje (actividad_aprendizaje_id, url) VALUES (?, ?)",
-                (act_id, url),
+                "INSERT INTO guia_aprendizaje (id, actividad_aprendizaje_id, url) VALUES (?, ?, ?)",
+                (str(uuid.uuid7()), act_id, url),
             )
         db.commit()
         return jsonify({"ok": True})
@@ -116,8 +116,8 @@ def register_routes(app):
             return jsonify({"ok": True, "id": existing["id"], "already_exists": True})
 
         row = db.execute(
-            "INSERT INTO evidencia_aprendizaje (actividad_aprendizaje_id, descripcion) VALUES (?, ?) RETURNING id",
-            (act_id, descripcion),
+            "INSERT INTO evidencia_aprendizaje (id, actividad_aprendizaje_id, descripcion) VALUES (?, ?, ?) RETURNING id",
+            (str(uuid.uuid7()), act_id, descripcion),
         ).fetchone()
         db.commit()
         return jsonify({"ok": True, "id": row["id"]})
@@ -150,17 +150,18 @@ def register_routes(app):
 
         aprendices_raw = db.execute(
             """
-            SELECT a.id, a.nombres, a.apellidos, a.documento,
-                   u.id AS usuario_id, u.correo
+            SELECT a.id, pe.nombres, pe.apellidos, pe.numero_documento AS documento,
+                   u.id AS usuario_id, u.correo_institucional AS correo
             FROM aprendiz a
-            LEFT JOIN usuario u ON lower(u.nombre) = lower(a.nombres || ' ' || a.apellidos)
+            JOIN persona pe ON pe.id = a.persona_id
+            LEFT JOIN usuario u ON u.id = a.persona_id
                                AND EXISTS (
                                    SELECT 1 FROM usuario_perfil up
                                    JOIN perfil p ON p.id = up.perfil_id
                                    WHERE up.usuario_id = u.id AND p.nombre = 'Aprendiz'
                                )
             WHERE a.ficha = ?
-            ORDER BY a.nombres ASC, a.apellidos ASC
+            ORDER BY pe.nombres ASC, pe.apellidos ASC
             """,
             (row["ficha_numero"],),
         ).fetchall()
@@ -236,8 +237,8 @@ def register_routes(app):
         if ficha is None or ficha["proyecto_formativo_id"] is None:
             return jsonify({"ok": False, "error": "Ficha no tiene proyecto formativo"}), 400
         row = db.execute(
-            "INSERT INTO fase_proyecto (proyecto_formativo_id, nombre) VALUES (?, ?) RETURNING id",
-            (ficha["proyecto_formativo_id"], nombre),
+            "INSERT INTO fase_proyecto (id, proyecto_formativo_id, nombre) VALUES (?, ?, ?) RETURNING id",
+            (str(uuid.uuid7()), ficha["proyecto_formativo_id"], nombre),
         ).fetchone()
         db.commit()
         return jsonify({"ok": True, "id": row["id"], "nombre": nombre})
@@ -251,8 +252,8 @@ def register_routes(app):
             return jsonify({"ok": False, "error": "Nombre requerido"}), 400
         db = get_db()
         row = db.execute(
-            "INSERT INTO actividad_proyecto (fase_proyecto_id, nombre) VALUES (?, ?) RETURNING id",
-            (fase_id, nombre),
+            "INSERT INTO actividad_proyecto (id, fase_proyecto_id, nombre) VALUES (?, ?, ?) RETURNING id",
+            (str(uuid.uuid7()), fase_id, nombre),
         ).fetchone()
         db.commit()
         return jsonify({"ok": True, "id": row["id"], "nombre": nombre})
@@ -284,15 +285,15 @@ def register_routes(app):
 
         db = get_db()
         row = db.execute(
-            "INSERT INTO actividad_aprendizaje (actividad_proyecto_id, nombre, descripcion, fecha_inicio, fecha_fin) "
-            "VALUES (?, ?, ?, ?, ?) RETURNING id",
-            (act_proy_id, nombre, descripcion, fecha_inicio, fecha_fin),
+            "INSERT INTO actividad_aprendizaje (id, actividad_proyecto_id, nombre, descripcion, fecha_inicio, fecha_fin) "
+            "VALUES (?, ?, ?, ?, ?, ?) RETURNING id",
+            (str(uuid.uuid7()), act_proy_id, nombre, descripcion, fecha_inicio, fecha_fin),
         ).fetchone()
         aa_id = row["id"]
         if guia_url:
             db.execute(
-                "INSERT INTO guia_aprendizaje (actividad_aprendizaje_id, url) VALUES (?, ?)",
-                (aa_id, guia_url),
+                "INSERT INTO guia_aprendizaje (id, actividad_aprendizaje_id, url) VALUES (?, ?, ?)",
+                (str(uuid.uuid7()), aa_id, guia_url),
             )
         db.commit()
         return jsonify({"ok": True, "id": aa_id, "nombre": nombre})
@@ -367,16 +368,18 @@ def register_routes(app):
 
         aprendices = db.execute(
             """
-            SELECT a.id, a.nombres, a.apellidos, a.documento, u.id AS usuario_id
+            SELECT a.id, pe.nombres, pe.apellidos, pe.numero_documento AS documento,
+                   u.id AS usuario_id
             FROM aprendiz a
-            LEFT JOIN usuario u ON lower(u.nombre) = lower(a.nombres || ' ' || a.apellidos)
+            JOIN persona pe ON pe.id = a.persona_id
+            LEFT JOIN usuario u ON u.id = a.persona_id
                                AND EXISTS (
                                    SELECT 1 FROM usuario_perfil up
                                    JOIN perfil p ON p.id = up.perfil_id
                                    WHERE up.usuario_id = u.id AND p.nombre = 'Aprendiz'
                                )
             WHERE a.ficha = ?
-            ORDER BY a.nombres ASC, a.apellidos ASC
+            ORDER BY pe.nombres ASC, pe.apellidos ASC
             """,
             (ap_row["ficha_numero"],),
         ).fetchall()
@@ -502,8 +505,8 @@ def register_routes(app):
                 )
             else:
                 db.execute(
-                    "INSERT INTO guia_aprendizaje (actividad_aprendizaje_id, url) VALUES (?, ?)",
-                    (aa_id, guia_url),
+                    "INSERT INTO guia_aprendizaje (id, actividad_aprendizaje_id, url) VALUES (?, ?, ?)",
+                    (str(uuid.uuid7()), aa_id, guia_url),
                 )
         elif existing_guia:
             db.execute("DELETE FROM guia_aprendizaje WHERE actividad_aprendizaje_id = ?", (aa_id,))
@@ -527,9 +530,9 @@ def register_routes(app):
         db = get_db()
         row = db.execute(
             "INSERT INTO seccion_actividad "
-            "(actividad_aprendizaje_id, nombre, descripcion, archivo_url, archivo_tipo, fecha_inicio, fecha_fin) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id",
-            (aa_id, nombre, descripcion, archivo_url, archivo_tipo, fecha_inicio, fecha_fin),
+            "(id, actividad_aprendizaje_id, nombre, descripcion, archivo_url, archivo_tipo, fecha_inicio, fecha_fin) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
+            (str(uuid.uuid7()), aa_id, nombre, descripcion, archivo_url, archivo_tipo, fecha_inicio, fecha_fin),
         ).fetchone()
         db.commit()
         return jsonify({"ok": True, "id": row["id"]})
@@ -580,9 +583,9 @@ def register_routes(app):
         db = get_db()
         row = db.execute(
             "INSERT INTO sub_seccion_actividad "
-            "(seccion_id, nombre, descripcion, archivo_url, archivo_tipo, fecha_inicio, fecha_fin) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id",
-            (sec_id, nombre, descripcion, archivo_url, archivo_tipo, fecha_inicio, fecha_fin),
+            "(id, seccion_id, nombre, descripcion, archivo_url, archivo_tipo, fecha_inicio, fecha_fin) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
+            (str(uuid.uuid7()), sec_id, nombre, descripcion, archivo_url, archivo_tipo, fecha_inicio, fecha_fin),
         ).fetchone()
         db.commit()
         return jsonify({"ok": True, "id": row["id"]})
@@ -652,8 +655,8 @@ def register_routes(app):
 
         db = get_db()
         row = db.execute(
-            "INSERT INTO guia_actividad_proyecto (actividad_proyecto_id, nombre, url) VALUES (?, ?, ?) RETURNING id",
-            (ap_id, nombre, guia_url),
+            "INSERT INTO guia_actividad_proyecto (id, actividad_proyecto_id, nombre, url) VALUES (?, ?, ?, ?) RETURNING id",
+            (str(uuid.uuid7()), ap_id, nombre, guia_url),
         ).fetchone()
         db.commit()
         return jsonify({"ok": True, "id": row["id"], "nombre": nombre, "url": guia_url})
@@ -706,8 +709,9 @@ def register_routes(app):
             return jsonify({"aprendices": [], "fecha": fecha})
 
         aprendices = db.execute(
-            "SELECT a.id, a.nombres, a.apellidos, a.documento FROM aprendiz a "
-            "WHERE a.ficha = ? ORDER BY a.nombres ASC, a.apellidos ASC",
+            "SELECT a.id, pe.nombres, pe.apellidos, pe.numero_documento AS documento "
+            "FROM aprendiz a JOIN persona pe ON pe.id = a.persona_id "
+            "WHERE a.ficha = ? ORDER BY pe.nombres ASC, pe.apellidos ASC",
             (ficha["numero"],),
         ).fetchall()
 
