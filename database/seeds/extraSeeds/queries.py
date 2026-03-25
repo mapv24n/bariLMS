@@ -110,21 +110,7 @@ class SeedQueries(Enum):
         VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING
     """
     
-    # (razon_social, nit, sector, correo, telefono)
-    DATA_EMPRESAS = [
-        ("TechSoft SAS", "9005123456", "Tecnología", "contacto@techsoft.com.co", "6075551234"),
-        ("Innovatech Ltda", "8002345678", "Consultoría TIC", "info@innovatech.com.co", "6075559876"),
-    ]
-
-    # (correo, nombre_full, doc, tipo_doc, nombres, apellidos, sexo, ficha_num, lectiva, concluida, productiva)
-    DATA_APRENDICES = [
-        ("ana.gomez@aprendiz.sena.edu.co", "Ana Sofía Gómez Herrera", "1090123456", "cc", "ANA SOFÍA", "GÓMEZ HERRERA", "f", "2900001", True, False, False),
-        ("luis.torres@aprendiz.sena.edu.co", "Luis Eduardo Torres Prado", "1090234567", "cc", "LUIS EDUARDO", "TORRES PRADO", "m", "2900001", False, True, True),
-        ("sofia.mendez@aprendiz.sena.edu.co", "Sofía Alejandra Méndez Ríos", "1025345678", "ti", "SOFÍA ALEJANDRA", "MÉNDEZ RÍOS", "f", "2900002", True, False, False),
-        ("andres.ruiz@aprendiz.sena.edu.co", "Andrés Felipe Ruiz Castillo", "1025456789", "ti", "ANDRÉS FELIPE", "RUIZ CASTILLO", "m", "2900002", False, True, True),
-        ("camila.vargas@aprendiz.sena.edu.co", "Camila Andrea Vargas Soto", "1090567890", "cc", "CAMILA ANDREA", "VARGAS SOTO", "f", "2900003", True, False, False),
-        ("miguel.castro@aprendiz.sena.edu.co", "Miguel Ángel Castro Jiménez", "1090678901", "cc", "MIGUEL ÁNGEL", "CASTRO JIMÉNEZ", "m", "2900003", False, True, False),
-    ]
+    
 
     def execute(self, cur, params):
         """
