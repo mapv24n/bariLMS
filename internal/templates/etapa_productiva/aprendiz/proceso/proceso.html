@@ -53,9 +53,16 @@
     <!-- Pestanas: Planeacion / Seguimiento / Evaluacion -->
     <ul class="nav nav-tabs mb-0 border-bottom-0" id="procesoTab" role="tablist">
         <li class="nav-item">
-            <a class="nav-link active font-weight-bold" id="planeacion-tab"
+            <a class="nav-link active font-weight-bold" id="informacion_general-tab"
+               data-toggle="tab" href="#informacion_general" role="tab"
+               aria-controls="informacion_general" aria-selected="true">
+                <i class="fas fa-clipboard-list mr-1"></i> Informacion General
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link font-weight-bold" id="planeacion-tab"
                data-toggle="tab" href="#planeacion" role="tab"
-               aria-controls="planeacion" aria-selected="true">
+               aria-controls="planeacion" aria-selected="false  ">
                 <i class="fas fa-clipboard-list mr-1"></i> Planeacion
             </a>
         </li>
@@ -76,8 +83,12 @@
     </ul>
 
     <div class="tab-content" id="procesoTabContent">
+        
+         <div class="tab-pane fade show active" id="informacion_general" role="tabpanel" aria-labelledby="informacion_general-tab">
+            {% include 'etapa_productiva/aprendiz/proceso/informacion_general/informacion_general.html' %}
+        </div>
 
-        <div class="tab-pane fade show active" id="planeacion" role="tabpanel" aria-labelledby="planeacion-tab">
+        <div class="tab-pane fade" id="planeacion" role="tabpanel" aria-labelledby="planeacion-tab">
             {% include 'etapa_productiva/aprendiz/proceso/planeacion/planeacion.html' %}
         </div>
 
