@@ -1,0 +1,28 @@
+<div class="card shadow border-0 rounded-top-0">
+    <div class="card-header py-3 border-bottom-sena d-flex align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold text-sena">
+            <i class="fas fa-chart-line mr-1"></i> Seguimiento — Momento 2
+        </h6>
+        <button type="submit" form="m2-form" class="btn btn-sena btn-sm">
+            <i class="fas fa-save mr-1"></i> Guardar
+        </button>
+    </div>
+    <div class="card-body">
+        <form id="m2-form" novalidate>
+            <div id="m2-form-body">
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-spinner fa-spin fa-2x d-block mb-2"></i>
+                    Cargando formulario...
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script id="m2-data" type="application/json">{{ form_m2_json | safe }}</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        EPFormBuilder.render('m2-data', 'm2-form-body');
+    });
+</script>

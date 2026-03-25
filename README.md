@@ -385,8 +385,19 @@ python database/query.py
 Herramienta: **Dbmate**. Gestiona cambios incrementales al schema de la BD.
 
 ```bash
-# Aplicar migraciones pendientes
-dbmate --migrations-dir database/migrations up
+# instalar scoop
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+
+
+```bash
+# instalar db mate
+
+scoop install dbmate
+
+```bash
+# Aplicar migraciones pendientesdbmate --migrations-dir database/migrations up
+
 
 # Revertir la ultima
 dbmate --migrations-dir database/migrations down

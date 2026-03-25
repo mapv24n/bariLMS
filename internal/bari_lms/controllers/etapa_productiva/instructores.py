@@ -131,11 +131,18 @@ def register_routes(app):
             regional=regional_nombre,
         )
         form_ig_json = json.dumps(form_ig, ensure_ascii=False)
+        form_m1_json = json.dumps(DatosSeguimientoEP.fill_momento_1(aprendiz), ensure_ascii=False)
+        form_m2_json = json.dumps(DatosSeguimientoEP.fill_momento_2(), ensure_ascii=False)
+        form_m3_json = json.dumps(DatosSeguimientoEP.fill_momento_3(), ensure_ascii=False)
 
         return render_template(
             PlantillasEPInstructor.PROCESO,
             user=user,
             ficha=ficha,
             aprendiz=aprendiz,
+            
             form_ig_json=form_ig_json,
+            form_m1_json=form_m1_json,
+            form_m2_json=form_m2_json,
+            form_m3_json=form_m3_json,
         )

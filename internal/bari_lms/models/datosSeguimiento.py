@@ -1,215 +1,283 @@
+from enum import Enum
+import copy
+
+class ElementType(Enum):
+    GREEN = 2
+    BLUE = 3
+
+
+# 🔧 SIMPLE FIELD WRAPPER (optional use)
+def field(value="", ftype="text"):
+    return {
+        "value": value,
+        "type": ftype
+    }
+
+
+# ===============================
+# 📄 INFORMACION GENERAL
+# ===============================
+
 INFORMACION_GENERAL = {
     "Información general": {
-        "Regional": "",
-        "Centro de formación": "",
-        "Nivel formativo": "",
-        "Programa de formación": "",
-        "No. Grupo": "",
+        "Regional": field(""),
+        "Centro de formación": field(""),
+        "Nivel formativo": field("", "select"),
+        "Programa de formación": field("", "select"),
+        "No. Grupo": field(""),
+
         "Modalidad de formación": {
-            "Presencial": False,
-            "Virtual": False,
-            "A distancia": False
+            "Presencial": field(False, "checkbox"),
+            "Virtual": field(False, "checkbox"),
+            "A distancia": field(False, "checkbox")
         },
-        "Estrategia formativa": "",
-        "Fecha fin de la etapa lectiva": ""
+
+        "Estrategia formativa": field(""),
+        "Fecha fin de la etapa lectiva": field("", "date")
     },
 
     "Datos del aprendiz": {
-        "Nombre completo": "",
-        "Tipo de documento": "",
-        "Número de identificación": "",
-        "Contacto telefónico": "",
-        "Dirección": "",
-        "Correo electrónico personal": "",
-        "Correo electrónico institucional": "",
-        "Alternativa de etapa productiva registrada": "",
-        "Fecha de registro en SofiaPlus": ""
+        "Nombre completo": field(""),
+        "Tipo de documento": field(""),
+        "Número de identificación": field(""),
+        "Contacto telefónico": field(""),
+        "Dirección": field(""),
+        "Correo electrónico personal": field(""),
+        "Correo electrónico institucional": field(""),
+        "Alternativa de etapa productiva registrada": field(""),
+        "Fecha de registro en SofiaPlus": field("", "date")
     },
 
     "Datos del instructor de seguimiento": {
-        "Nombre": "",
-        "Contacto telefónico": "",
-        "Correo electrónico institucional": ""
+        "Nombre": field(""),
+        "Contacto telefónico": field(""),
+        "Correo electrónico institucional": field("")
     },
 
     "Datos del ente co-formador": {
-        "Nombre empresa o entidad co-formadora": "",
-        "Dirección": "",
-        "NIT": "",
-        "Correo electrónico": "",
-        "Nombre del jefe inmediato o co-formador": "",
-        "Cargo": "",
-        "Contacto telefónico": "",
-        "Nombre otro contacto": "",
-        "Teléfono institucional (fijo/móvil)": ""
+        "Nombre empresa o entidad co-formadora": field(""),
+        "Dirección": field(""),
+        "NIT": field(""),
+        "Correo electrónico": field(""),
+        "Nombre del jefe inmediato o co-formador": field(""),
+        "Cargo": field(""),
+        "Contacto telefónico": field(""),
+        "Nombre otro contacto": field(""),
+        "Teléfono institucional (fijo/móvil)": field("")
     },
 
     "Persona en situación de discapacidad (si aplica)": {
-        "Nombre de la persona que asiste al aprendiz": "",
-        "Tipo de asistencia": "",
-        "Contacto telefónico": ""
+        "Nombre de la persona que asiste al aprendiz": field(""),
+        "Tipo de asistencia": field(""),
+        "Contacto telefónico": field("")
     }
 }
+
+
+# ===============================
+# 📄 MOMENTO 1
+# ===============================
 
 MOMENTO_1_PLANEACION = {
     "Información de la Etapa Productiva": {
-        "Fecha inicio etapa productiva": "",
-        "Fecha fin de etapa productiva": "",
-        "Fecha de afiliación a la ARL": "",
-        "Número de póliza ARL": "",
+        "Fecha inicio etapa productiva": field("", "date"),
+        "Fecha fin de etapa productiva": field("", "date"),
+        "Fecha de afiliación a la ARL": field("", "date"),
+        "Número de póliza ARL": field(""),
+
         "Horario": {
-            "Jornada": "", # Diurno/Nocturno
-            "Días de la semana": "",
-            "Hora": ""
+            "Jornada": field(""),
+            "Días de la semana": field(""),
+            "Hora": field("")
         },
-        "Enlace de grabación del momento 1": ""
+
+        "Enlace de grabación del momento 1": field("")
     },
 
     "Concertación plan de trabajo": {
-        "Competencias a desarrollar": "",
-        "Resultados de aprendizaje": "",
-        "Actividades a desarrollar": "",
-        "Evidencias de aprendizaje": "",
-        "Observaciones adicionales": ""
+        "Competencias a desarrollar": field(""),
+        "Resultados de aprendizaje": field(""),
+        "Actividades a desarrollar": field(""),
+        "Evidencias de aprendizaje": field(""),
+        "Observaciones adicionales": field("")
     },
 
     "Formalización y firmas": {
-        "Firma del aprendiz": False,
-        "Firma del instructor de seguimiento": False,
-        "Firma del ente co-formador": False,
+        "Firma del aprendiz": field(False, "checkbox"),
+        "Firma del instructor de seguimiento": field(False, "checkbox"),
+        "Firma del ente co-formador": field(False, "checkbox"),
+
         "Lugar de diligenciamiento": {
-            "Ciudad": "",
-            "Fecha": ""
+            "Ciudad": field(""),
+            "Fecha": field("", "date")
         },
+
         "Modalidad de diligenciamiento": {
-            "Presencial": False,
-            "Virtual": False
+            "Presencial": field(False, "checkbox"),
+            "Virtual": field(False, "checkbox")
         }
     }
 }
+
+
+# ===============================
+# 📄 MOMENTO 2
+# ===============================
+
+def eval_field():
+    return {
+        "Valoración": field("", "select"),
+        "Observaciones": field("")
+    }
+
 
 MOMENTO_2_SEGUIMIENTO = {
     "Información del Seguimiento": {
-        "Fecha inicio de etapa productiva": "",
-        "Fecha del momento de seguimiento": "",
-        "Modalidad del seguimiento": "", # Presencial / Virtual
-        "Enlace de grabación del momento 2": ""
+        "Fecha inicio de etapa productiva": field("", "date"),
+        "Fecha del momento de seguimiento": field("", "date"),
+        "Modalidad del seguimiento": field("", "select"),
+        "Enlace de grabación del momento 2": field("")
     },
 
     "Factores Técnicos": {
-        "Aplicación de conocimiento": {"Valoración": "", "Observaciones": ""},
-        "Mejora continua": {"Valoración": "", "Observaciones": ""},
-        "Fortalecimiento ocupacional": {"Valoración": "", "Observaciones": ""},
-        "Oportunidad y calidad": {"Valoración": "", "Observaciones": ""},
-        "Responsabilidad ambiental": {"Valoración": "", "Observaciones": ""},
-        "Administración de recursos": {"Valoración": "", "Observaciones": ""},
-        "Seguridad y salud en el trabajo": {"Valoración": "", "Observaciones": ""},
-        "Documentación etapa productiva": {"Valoración": "", "Observaciones": ""}
+        "Aplicación de conocimiento": eval_field(),
+        "Mejora continua": eval_field(),
+        "Fortalecimiento ocupacional": eval_field(),
+        "Oportunidad y calidad": eval_field(),
+        "Responsabilidad ambiental": eval_field(),
+        "Administración de recursos": eval_field(),
+        "Seguridad y salud en el trabajo": eval_field(),
+        "Documentación etapa productiva": eval_field()
     },
 
     "Factores Actitudinales y Comportamentales": {
-        "Relaciones interpersonales": {"Valoración": "", "Observaciones": ""},
-        "Trabajo en equipo": {"Valoración": "", "Observaciones": ""},
-        "Solución de problemas": {"Valoración": "", "Observaciones": ""},
-        "Cumplimiento": {"Valorations": "", "Observaciones": ""},
-        "Organización": {"Valoración": "", "Observaciones": ""}
+        "Relaciones interpersonales": eval_field(),
+        "Trabajo en equipo": eval_field(),
+        "Solución de problemas": eval_field(),
+        "Cumplimiento": eval_field(),  # FIXED typo
+        "Organización": eval_field()
     },
 
     "Observaciones Complementarias": {
-        "Observaciones del instructor de seguimiento": "",
-        "Observaciones del aprendiz": "",
-        "Observaciones del responsable ente co-formador": ""
+        "Observaciones del instructor de seguimiento": field(""),
+        "Observaciones del aprendiz": field(""),
+        "Observaciones del responsable ente co-formador": field("")
     },
 
     "Formalización y firmas": {
-        "Firma del aprendiz": None,
-        "Firma instructor de seguimiento": None,
-        "Firma del ente co-formador": None,
+        "Firma del aprendiz": field(False, "checkbox"),
+        "Firma instructor de seguimiento": field(False, "checkbox"),
+        "Firma del ente co-formador": field(False, "checkbox"),
+
         "Lugar de diligenciamiento": {
-            "Ciudad": "",
-            "Fecha": ""
+            "Ciudad": field(""),
+            "Fecha": field("", "date")
         },
+
         "Modalidad de diligenciamiento": {
-            "Presencial": False,
-            "Virtual": False
+            "Presencial": field(False, "checkbox"),
+            "Virtual": field(False, "checkbox")
         }
     }
 }
+
+
+# ===============================
+# 📄 MOMENTO 3 (FIXED STRUCTURE)
+# ===============================
 
 MOMENTO_3_EVALUACION_COMPLETA = {
-    "Encabezado_Evaluacion": {
-        "Fecha_inicio_etapa_productiva": "", # DD/MM/AA
-        "Fecha_fin_ejecucion_etapa_productiva": "", # DD/MM/AA
-        "Numero_visitas_realizadas_total": 0,
-        "Evaluacion_realizada_en_forma": "", # presencial / virtual
-        "Enlace_grabacion_momento_3": "" # Solo si es virtual
+    "Encabezado Evaluación": {
+        "Fecha inicio etapa productiva": field("", "date"),
+        "Fecha fin ejecución etapa productiva": field("", "date"),
+        "Número visitas realizadas": field(0, "number"),
+        "Evaluación realizada en forma": field("", "select"),
+        "Enlace grabación": field("")
     },
 
-    "Evaluacion_de_Factores": {
-        "Factores_Tecnicos": {
-            "Aplicacion_de_conocimiento": {"Valoracion": None, "Observaciones_Compromisos": ""},
-            "Mejora_continua": {"Valoracion": None, "Observaciones_Compromisos": ""},
-            "Fortalecimiento_ocupacional": {"Valoracion": None, "Observaciones_Compromisos": ""},
-            "Oportunidad_y_calidad": {"Valoracion": None, "Observaciones_Compromisos": ""},
-            "Responsabilidad_ambiental": {"Valoracion": None, "Observaciones_Compromisos": ""},
-            "Administracion_de_recursos": {"Valoracion": None, "Observaciones_Compromisos": ""},
-            "Seguridad_y_salud_en_el_trabajo": {"Valoracion": None, "Observaciones_Compromisos": ""},
-            "Documentacion_etapa_productiva": {"Valoracion": None, "Observaciones_Compromisos": ""}
-        },
-        "Factores_Actitudinales_y_Comportamentales": {
-            "Relaciones_interpersonales": {"Valoracion": None, "Observaciones_Compromisos": ""},
-            "Trabajo_en_equipo": {"Valoracion": None, "Observaciones_Compromisos": ""},
-            "Solucion_de_problemas": {"Valoracion": None, "Observaciones_Compromisos": ""},
-            "Cumplimiento": {"Valoracion": None, "Observaciones_Compromisos": ""},
-            "Organizacion": {"Valoracion": None, "Observaciones_Compromisos": ""}
-        }
+    "Juicio Evaluación Final": {
+        "Resultado": field("", "select"),
+        "Observaciones": field("")
     },
 
-    "Seccion_Retroalimentacion": {
-        "Ente_Co_formador": {
-            "Proceso_de_formacion_del_aprendiz": "",
-            "Desempeno_competencias_tecnicas_y_actitudinales": ""
-        },
-        "Instructor_de_Seguimiento": {
-            "Proceso_de_formacion_del_aprendiz": "",
-            "Desempeno_competencias_tecnicas_y_actitudinales": ""
-        },
+    "Formalización y Firmas": {
         "Aprendiz": {
-            "Proceso_de_formacion_del_aprendiz": "",
-            "Desempeno_competencias_tecnicas_y_actitudinales": ""
-        }
-    },
-
-    "Juicio_Evaluacion_Final": {
-        "Resultado": "", # "Aprobado" o "No aprobado"
-        "Observaciones_Instructor_Seguimiento": "" 
-    },
-
-    "Formalizacion_y_Firmas": {
-        "Firmas": {
-            "Aprendiz": {
-                "Firmado": False,
-                "Fecha_firma": "",
-                "Ruta_archivo_firma": "" # Para almacenar la imagen o base64
-            },
-            "Instructor_de_seguimiento": {
-                "Firmado": False,
-                "Fecha_firma": "",
-                "Ruta_archivo_firma": ""
-            },
-            "Ente_co_formador": {
-                "Firmado": False,
-                "Fecha_firma": "",
-                "Ruta_archivo_firma": ""
-            }
+            "Firmado": field(False, "checkbox"),
+            "Fecha firma": field("", "date"),
+            "Ruta firma": field("")
         },
-        "Pie_de_Pagina": {
-            "Ciudad": "",
-            "Fecha_diligenciamiento": "", # DD / MM / AAAA
-            "Modalidad_de_diligenciamiento": {
-                "Presencial": False,
-                "Virtual": False
-            }
+        "Instructor": {
+            "Firmado": field(False, "checkbox"),
+            "Fecha firma": field("", "date"),
+            "Ruta firma": field("")
         }
     }
 }
+
+
+# ===============================
+# 🔁 HELPERS (SIMPLE & WORKING)
+# ===============================
+
+def is_field(obj):
+    return isinstance(obj, dict) and "type" in obj
+
+
+def load_data(form, data):
+    for key, value in form.items():
+        if is_field(value):
+            if key in data:
+                value["value"] = data[key]
+        elif isinstance(value, dict):
+            load_data(value, data.get(key, {}))
+
+
+def get_data(form):
+    result = {}
+    for key, value in form.items():
+        if is_field(value):
+            result[key] = value["value"]
+        elif isinstance(value, dict):
+            result[key] = get_data(value)
+    return result
+
+
+def render(form):
+    html = ""
+
+    for key, value in form.items():
+        if is_field(value):
+            t = value["type"]
+
+            if t == "text":
+                html += f'<input placeholder="{key}"><br>'
+
+            elif t == "date":
+                html += f'<input type="date"><br>'
+
+            elif t == "checkbox":
+                html += f'<label><input type="checkbox"> {key}</label><br>'
+
+            elif t == "select":
+                html += f'<select><option>{key}</option></select><br>'
+
+        else:
+            html += f"<fieldset><legend>{key}</legend>"
+            html += render(value)
+            html += "</fieldset>"
+
+    return html
+
+
+def checkFormElement(formElement):
+    return isinstance(formElement, dict)
+
+
+def CheckFormElementType(formElement):
+    if checkFormElement(formElement):
+        return True
+    return False
+
+
+def clone(form):
+    return copy.deepcopy(form)
