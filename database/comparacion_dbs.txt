@@ -1,0 +1,39 @@
+COMPARACIÓN DE ESQUEMAS (TABLAS)
+=================================================================
+
+[Anamaria_bari_lms_postgresql.sql]
+Total de tablas: 40
+
+[bari_EtapaProductiva_postgresql.sql]
+Total de tablas: 3
+
+[bari_lms_postgresql.sql]
+Total de tablas: 40
+
+=================================================================
+1. TABLAS EN Anamaria_bari_lms_postgresql.sql FALTANTES EN bari_lms_postgresql.sql:
+   (Ninguna)
+
+2. TABLAS EN bari_EtapaProductiva_postgresql.sql FALTANTES EN bari_lms_postgresql.sql:
+   + contrato_aprendizaje
+   + empresa
+   + ficha_aprendiz
+
+3. TABLAS EXCLUSIVAS DE bari_lms_postgresql.sql (que Anamaria_bari_lms no tiene):
+   (Ninguna)
+
+4. INTERSECCIÓN: Tablas que están tanto en Anamaria como en EtapaProductiva:
+   (Ninguna)
+
+=================================================================
+5. ANÁLISIS A NIVEL DE COLUMNAS ENTRE Anamaria y bari_lms:
+
+   Diferencias en la tabla 'usuario':
+      + Columna añadida en Anamaria: correo_institucional
+      - Columna eliminada en Anamaria (presente en bari_lms): correo
+      - Columna eliminada en Anamaria (presente en bari_lms): nombre
+
+   Diferencias en la tabla 'guia_actividad_proyecto':
+      + Columna añadida en Anamaria: tipo
+
+=================================================================
