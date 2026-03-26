@@ -30,10 +30,10 @@ secrets.json
 bari_lms.db
 
 # Uploads de usuario (archivos subidos por los usuarios del LMS)
-static/uploads/
+internal/static/uploads/
 
 # Vendor / dependencias front-end (instalar por CDN o gestor de paquetes)
-static/vendor/
+internal/static/vendor/
 
 # Archivos generados / mapas de fuente
 *.map
@@ -45,26 +45,27 @@ static/vendor/
 *.swo
 *~
 
-# macOS
+# Sistema operativo (macOS y Windows)
 .DS_Store
 .AppleDouble
 .LSOverride
-
-# Windows
 Thumbs.db
 ehthumbs.db
 desktop.ini
 
-# Claude Code (solo configuración local del desarrollador)
-.claude/settings.local.json
+# Claude Code
+.claude/
 
 # Logs
 *.log
 logs/
 
-# Pytest / cobertura
+# Pruebas y cobertura
 .pytest_cache/
 .coverage
 htmlcov/
 
+
+# Base de datos
+database/seed_test_data.py
 

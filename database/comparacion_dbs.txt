@@ -1,0 +1,31 @@
+============================================================
+REPORTE DE COMPARACIÓN DE ESTRUCTURAS SQL (BASES DE DATOS)
+============================================================
+
+1. ARCHIVOS ANALIZADOS
+------------------------------------------------------------
+A) Anamaria_bari_lms_postgresql.sql
+B) bari_lms_postgresql.sql
+
+2. RESUMEN DE TABLAS
+------------------------------------------------------------
+- Total de tablas en Anamaria_bari_lms_postgresql.sql: 40
+- Total de tablas en bari_lms_postgresql.sql: 40
+
+> No falta ninguna tabla entera en ninguno de los dos archivos; 
+> ambos comparten exactamente las mismas 40 tablas.
+
+3. DIFERENCIAS EN COLUMNAS (ACTUALIZACIONES FALTANTES)
+------------------------------------------------------------
+Solamente existe una (1) diferencia estructural de columnas entre ambos archivos:
+
+📌 Tabla afectada: "guia_actividad_proyecto"
+
+   -> Lo que le FALTA al archivo [bari_lms_postgresql.sql]:
+      + Columna: `tipo` (definida como: VARCHAR(30) DEFAULT 'concertado')
+
+CONCLUSIÓN:
+------------------------------------------------------------
+El archivo "Anamaria_bari_lms_postgresql.sql" se encuentra totalmente actualizado con el último campo necesario para separar "Guías de Trabajo Concertado" y "Guías de Aprendizaje" dentro de la tabla `guia_actividad_proyecto`. 
+
+Por el contrario, el archivo "bari_lms_postgresql.sql" se quedó desactualizado por una columna; le falta el campo `tipo VARCHAR(30) DEFAULT 'concertado'` en la misma tabla. Toda su demás estructura es idéntica punto por punto.

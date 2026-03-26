@@ -53,8 +53,8 @@ def register_routes(app):
         user_id = str(uuid.uuid7())
         try:
             db.execute(
-                "INSERT INTO usuario (id, correo, contrasena_hash, nombre, activo) VALUES (?, ?, ?, ?, ?)",
-                (user_id, email, hash_password(password), name, active),
+                "INSERT INTO usuario (id, correo_institucional, contrasena_hash, activo) VALUES (?, ?, ?, ?)",
+                (user_id, email, hash_password(password), active),
             )
             db.execute(
                 """
@@ -131,13 +131,13 @@ def register_routes(app):
         db = get_db()
         if password:
             db.execute(
-                "UPDATE usuario SET nombre = ?, correo = ?, activo = ?, contrasena_hash = ? WHERE id = ?",
-                (name, email, active, hash_password(password), user_id),
+                "UPDATE usuario SET correo_institucional = ?, activo = ?, contrasena_hash = ? WHERE id = ?",
+                (email, active, hash_password(password), user_id),
             )
         else:
             db.execute(
-                "UPDATE usuario SET nombre = ?, correo = ?, activo = ? WHERE id = ?",
-                (name, email, active, user_id),
+                "UPDATE usuario SET correo_institucional = ?, activo = ? WHERE id = ?",
+                (email, active, user_id),
             )
         db.execute("DELETE FROM usuario_perfil WHERE usuario_id = ?", (user_id,))
         db.execute(
@@ -149,9 +149,6 @@ def register_routes(app):
             (str(uuid.uuid7()), user_id, role),
         )
         db.commit()
-        if current_user()["id"] == user_id:
-            session["user_email"] = email
-            session["user_profile"] = role
         flash("Usuario actualizado correctamente.", "success")
         return redirect(url_for("admin_users"))
 

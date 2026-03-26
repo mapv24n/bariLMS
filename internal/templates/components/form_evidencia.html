@@ -10,7 +10,7 @@
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <span class="panel-title">Evidencia recibida</span>
-        <button class="close text-muted" onclick="hideSidePanelCal()">&times;</button>
+        <button class="close text-muted" data-btn="cancelar-panel-cal">&times;</button>
     </div>
 
     <div class="ev-group">
@@ -53,10 +53,10 @@
     <div id="ev-estado-badge"></div>
 
     <div style="display:flex; gap:8px;">
-        <button class="btn-aceptar" onclick="guardarCalificacion()">
+        <button class="btn-aceptar" data-btn="guardar-calificacion">
             Aceptar y subir calificación
         </button>
-        <button class="btn-cancelar" onclick="hideSidePanelCal()">Cancelar</button>
+        <button class="btn-cancelar" data-btn="cancelar-panel-cal">Cancelar</button>
     </div>
 
 </div>

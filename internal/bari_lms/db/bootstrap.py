@@ -165,6 +165,7 @@ def _provision_admin(db):
 
     # ── SI YA EXISTE → no hacer nada ────────────────────────────────
     if row and row["total"] > 0:
+        db.commit()
         return
 
     # ── SI NO EXISTE → CREA ADMIN PROVISIONAL ───────────────────────
@@ -173,11 +174,9 @@ def _provision_admin(db):
     user_id = str(uuid.uuid7())
 
     db.execute(
-        """
-        INSERT INTO usuario (id, correo, contrasena_hash, nombre, activo)
-        VALUES (?, ?, ?, ?, TRUE)
-        """,
-        (user_id, temp_email, hash_password(temp_password), "Admin Provisional"),
+        "INSERT INTO usuario (id, correo_institucional, contrasena_hash, activo) "
+        "VALUES (?, ?, ?, TRUE)",
+        (user_id, temp_email, hash_password(temp_password)),
     )
 
     db.execute(
@@ -191,7 +190,7 @@ def _provision_admin(db):
     db.commit()
 
     print()
-    print("[bariLMS] ⚠  No se encontró ningún administrador.")
+    print("[bariLMS] AVISO: No se encontro ningun administrador.")
     print(f"[bariLMS]    Correo     : {temp_email}")
     print(f"[bariLMS]    Contraseña : {temp_password}")
     print("[bariLMS]    Úsalas para el primer acceso y crea tu cuenta real de inmediato.")

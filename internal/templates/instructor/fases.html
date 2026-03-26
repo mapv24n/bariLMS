@@ -3,1464 +3,269 @@
 {% block title %}Fases - Ficha {{ ficha.numero }}{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/fase.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/fase.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/form.css') }}">
 {% endblock %}
 
 {% block content %}
-    <!-- ── Encabezado de ficha ── -->
-    <div class="d-flex align-items-start justify-content-between mb-3 flex-wrap" style="gap:10px;">
-        <div>
-            <div class="text-muted small mb-1">
-                {% if ficha.nivel_nombre %}{{ ficha.nivel_nombre }} &rsaquo; {% endif %}
-                {{ ficha.programa_nombre }}
-            </div>
-            <h4 class="mb-0 text-gray-800 font-weight-bold">
-                {{ ficha.programa_nombre }}
-                <span class="text-muted font-weight-normal" style="font-size:1rem;">
-                    &nbsp; Ficha: {{ ficha.numero }}
+<!-- ── Encabezado de ficha ── -->
+<div class="d-flex align-items-start justify-content-between mb-3 flex-wrap" style="gap:10px;">
+    <div>
+        <div class="text-muted small mb-1">
+            {% if ficha.nivel_nombre %}{{ ficha.nivel_nombre }} &rsaquo; {% endif %}
+            {{ ficha.programa_nombre }}
+        </div>
+        <h4 class="mb-0 text-gray-800 font-weight-bold">
+            {{ ficha.programa_nombre }}
+            <span class="text-muted font-weight-normal" style="font-size:1rem;">
+                &nbsp; Ficha: {{ ficha.numero }}
+            </span>
+        </h4>
+        <div class="text-muted small mt-1">
+            "{{ ficha.proyecto_nombre or 'Sin proyecto formativo' }}"
+            &nbsp;Este es el proyecto formativo que maneja esta ficha
+        </div>
+    </div>
+    <a href="{{ url_for('instructor_fichas') }}" class="btn btn-outline-success btn-sm shadow-sm">
+        <i class="fas fa-arrow-left mr-1"></i> Volver a la Ficha
+    </a>
+</div>
+
+<!-- ── Layout principal ── -->
+<div class="row" style="min-height:500px;">
+
+    <!-- ── Árbol de fases (izquierda) ── -->
+    <div class="col-lg-3 col-md-4 mb-4">
+        <div class="card shadow border-0" style="display:flex; flex-direction:column; min-height:400px;">
+            <div class="card-header py-2 border-bottom-sena">
+                <span class="font-weight-bold text-sena small">
+                    <i class="fas fa-sitemap mr-1"></i>
                 </span>
-            </h4>
-            <div class="text-muted small mt-1">
-                "{{ ficha.proyecto_nombre or 'Sin proyecto formativo' }}"
-                &nbsp;Este es el proyecto formativo que maneja esta ficha
+            </div>
+            <div class="card-body p-2" style="flex:1; overflow-y:auto;">
+                <div id="fase-tree">
+                    <div class="empty-state">
+                        <i class="fas fa-spinner fa-spin"></i> Cargando...
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white p-2">
+                <button class="btn btn-success btn-sm btn-block mb-1" data-btn="calificaciones">
+                    <i class="fas fa-chart-bar mr-1"></i> Calificaciones
+                </button>
+                <button class="btn btn-primary btn-sm btn-block" data-btn="asistencia">
+                    <i class="fas fa-user-check mr-1"></i> Asistencia
+                </button>
             </div>
         </div>
-        <a href="{{ url_for('instructor_fichas') }}" class="btn btn-outline-success btn-sm shadow-sm">
-            <i class="fas fa-arrow-left mr-1"></i> Volver a la Ficha
-        </a>
     </div>
 
-    <!-- ── Layout principal ── -->
-    <div class="row" style="min-height:500px;">
+    <!-- ── Panel derecho ── -->
+    <div class="col-lg-9 col-md-8">
 
-        <!-- ── Árbol de fases (izquierda) ── -->
-        <div class="col-lg-3 col-md-4 mb-4">
-            <div class="card shadow border-0" style="display:flex; flex-direction:column; min-height:400px;">
-                <div class="card-header py-2 border-bottom-sena">
-                    <span class="font-weight-bold text-sena small">
-                        <i class="fas fa-sitemap mr-1"></i> Estructura del Proyecto
-                    </span>
-                </div>
-                <div class="card-body p-2" style="flex:1; overflow-y:auto;">
-                    <div id="fase-tree">
-                        <div class="empty-state">
-                            <i class="fas fa-spinner fa-spin"></i> Cargando...
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer bg-white p-2">
-                    <button class="btn btn-success btn-sm btn-block mb-1" onclick="clickCalificaciones()">
-                        <i class="fas fa-chart-bar mr-1"></i> Calificaciones
-                    </button>
-                    <button class="btn btn-primary btn-sm btn-block" onclick="clickAsistencia()">
-                        <i class="fas fa-user-check mr-1"></i> Asistencia de Aprendices
-                    </button>
+        <!-- Estado inicial -->
+        <div id="panel-vacio" class="card shadow border-0" style="min-height:300px;">
+            <div class="card-body d-flex align-items-center justify-content-center empty-state">
+                <div>
+                    <i class="fas fa-hand-point-left fa-2x mb-2"></i>
+                    <p class="mb-1">Selecciona una <strong>Actividad de Proyecto</strong> del árbol para ver sus
+                        opciones.</p>
+                    <p class="small text-muted mb-0">O usa los botones <strong>Calificaciones</strong> y
+                        <strong>Asistencia</strong> del panel izquierdo.
+                    </p>
                 </div>
             </div>
         </div>
 
-        <!-- ── Panel derecho ── -->
-        <div class="col-lg-9 col-md-8">
+        <!-- ─── Panel: Actividad de Proyecto ─── -->
+        <div id="panel-actividad" style="display:none;">
 
-            <!-- Estado inicial -->
-            <div id="panel-vacio" class="card shadow border-0" style="min-height:300px;">
-                <div class="card-body d-flex align-items-center justify-content-center empty-state">
-                    <div>
-                        <i class="fas fa-hand-point-left fa-2x mb-2"></i>
-                        <p class="mb-1">Selecciona una <strong>Actividad de Proyecto</strong> del árbol para ver sus opciones.</p>
-                        <p class="small text-muted mb-0">O usa los botones <strong>Calificaciones</strong> y <strong>Asistencia</strong> del panel izquierdo.</p>
+            <!-- Header actividad de proyecto -->
+            <div class="d-flex align-items-center mb-3 flex-wrap" style="gap:8px;">
+                <span class="text-muted small">Actividad de Proyecto:</span>
+                <span class="font-weight-bold" id="ap-titulo-nombre"></span>
+            </div>
+
+            <!-- Guías de trabajo concertado -->
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-header py-2 d-flex align-items-center justify-content-between">
+                    <span class="font-weight-bold text-sena small">
+                        <i class="fas fa-book-open mr-1"></i> Plan de trabajo concertado
+                    </span>
+                    <button class="btn btn-sm btn-outline-success border-0" data-btn="toggle-form-guia">
+                        <i class="fas fa-plus mr-1"></i> Subir guía
+                    </button>
+                </div>
+                <div class="card-body p-3">
+
+                    <!-- Formulario subir guía -->
+                    {% include 'components/form_guia.html' %}
+
+                    <!-- Lista de guías -->
+                    <div id="guias-lista"></div>
+
+                    <!-- Estado sin guías -->
+                    <div id="guias-lock" class="empty-state py-3" style="display:none;">
+                        <i class="fas fa-lock fa-2x mb-2 text-warning"></i>
+                        <p class="mb-1 font-weight-bold">Sin guías subidas</p>
+                        <p class="small mb-0">Debes subir al menos una guía antes de poder crear actividades de
+                            aprendizaje.</p>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Guías de actividades de aprendizaje -->
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-header py-2 d-flex align-items-center justify-content-between">
+                    <span class="font-weight-bold text-sena small">
+                        <i class="fas fa-book-open mr-1"></i> Guía de actividades de aprendizaje
+                    </span>
+                    <button class="btn btn-sm btn-outline-success border-0" data-btn="toggle-form-guia-aprendizaje">
+                        <i class="fas fa-plus mr-1"></i> Subir guía
+                    </button>
+                </div>
+                <div class="card-body p-3">
+                    <!-- Formulario subir guía -->
+                    {% include 'components/form_guia_aprendizaje.html' %}
+
+                    <div id="guias-aprendizaje-lista"></div>
+                    <div id="guias-aprendizaje-lock" class="empty-state py-3" style="display:none;">
+                        <i class="fas fa-lock fa-2x mb-2 text-warning"></i>
+                        <p class="mb-1 font-weight-bold">Sin guías subidas</p>
+                        <p class="small mb-0">Debes subir al menos una guía antes de poder crear actividades de aprendizaje.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- ─── Panel: Actividad de Proyecto ─── -->
-            <div id="panel-actividad" style="display:none;">
 
-                <!-- Header actividad de proyecto -->
-                <div class="d-flex align-items-center mb-3 flex-wrap" style="gap:8px;">
-                    <span class="text-muted small">Actividad de Proyecto:</span>
-                    <span class="font-weight-bold" id="ap-titulo-nombre"></span>
-                </div>
-
-                <!-- Guías de trabajo concertado -->
-                <div class="card shadow-sm border-0 mb-3">
-                    <div class="card-header py-2 d-flex align-items-center justify-content-between">
-                        <span class="font-weight-bold text-sena small">
-                            <i class="fas fa-book-open mr-1"></i> Guías de trabajo concertado
-                        </span>
-                        <button class="btn btn-sm btn-outline-success border-0" onclick="toggleFormGuia()">
-                            <i class="fas fa-plus mr-1"></i> Agregar guía
-                        </button>
-                    </div>
-                    <div class="card-body p-3">
-
-                        <!-- Formulario subir guía -->
-                        {% include 'components/form_guia.html' %}
-
-                        <!-- Lista de guías -->
-                        <div id="guias-lista"></div>
-
-                        <!-- Estado sin guías -->
-                        <div id="guias-lock" class="empty-state py-3" style="display:none;">
-                            <i class="fas fa-lock fa-2x mb-2 text-warning"></i>
-                            <p class="mb-1 font-weight-bold">Sin guías subidas</p>
-                            <p class="small mb-0">Debes subir al menos una guía antes de poder crear actividades de aprendizaje.</p>
-                        </div>
-
-                    </div>
-                </div>
-
-                <!-- Sección de Actividades (se muestra solo cuando hay ≥1 guía) -->
-                <div id="actividades-section" style="display:none;">
-                    <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap" style="gap:8px;">
-                        <span class="font-weight-bold text-gray-700">
-                            <i class="fas fa-tasks mr-1 text-sena"></i> Actividades de Aprendizaje
-                        </span>
-                        <button class="btn btn-success btn-sm shadow-sm" onclick="toggleCrearPanel()">
-                            <i class="fas fa-plus mr-1"></i> Crear actividad de aprendizaje
-                        </button>
-                    </div>
-
-                    <!-- Flex: lista + panel lateral -->
-                    <div class="d-flex" id="panel-flex-row">
-
-                        <!-- Lista de actividades -->
-                        <div id="panel-tabs-content" class="flex-grow-1" style="min-width:0;">
-                            <div id="act-loading" class="text-center py-4">
-                                <i class="fas fa-spinner fa-spin text-sena"></i>
-                            </div>
-                            <div id="actividades-lista"></div>
-                        </div>
-
-                        <!-- Panel lateral -->
-                        <div id="side-panel" style="display:none;">
-
-                            {% include 'components/form_actividad.html' %}
-                            {% include 'components/form_seccion.html' %}
-                            {% include 'components/form_subseccion.html' %}
-
-                        </div><!-- /side-panel -->
-
-                    </div><!-- /panel-flex-row -->
-                </div><!-- /actividades-section -->
-
-            </div><!-- /panel-actividad -->
-
-            <!-- ─── Panel: Calificaciones ─── -->
-            <div id="panel-calificaciones" style="display:none;">
-
-                <div class="d-flex align-items-center mb-3">
-                    <i class="fas fa-chart-bar text-success mr-2 fa-lg"></i>
-                    <h5 class="mb-0 font-weight-bold text-gray-800">Calificaciones</h5>
-                </div>
-
-                <!-- Selector de Actividad de Proyecto -->
-                <div class="card shadow-sm border-0 mb-3">
-                    <div class="card-body p-3">
-                        <label class="font-weight-bold small text-muted mb-1">Selecciona una Actividad de Proyecto:</label>
-                        <select id="cal-ap-selector" class="form-control form-control-sm" onchange="seleccionarCalAP()">
-                            <option value="">-- Seleccionar --</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Sub-tabs -->
-                <ul class="nav nav-tabs" id="cal-tabs" style="display:none;">
-                    <li class="nav-item">
-                        <a class="nav-link active" id="cal-tab-link-1" href="#" onclick="setCalTab(1); return false;">
-                            Evidencias por actividad
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" id="cal-tab-link-2" href="#" onclick="setCalTab(2); return false;">
-                            Total de Calificaciones
-                        </a>
-                    </li>
-                </ul>
-
-                <!-- Flex: contenido tabs + panel evidencia -->
-                <div id="cal-flex-row" class="d-flex" style="display:none !important;">
-                    <div class="flex-grow-1" style="min-width:0;">
-                        <div id="cal-tab-1-content" class="p-3"></div>
-                        <div id="cal-tab-2-content" class="p-3" style="display:none;"></div>
-                    </div>
-                    <!-- Panel lateral evidencia -->
-                    {% include 'components/form_evidencia.html' %}
-                </div>
-
-            </div><!-- /panel-calificaciones -->
-
-            <!-- ─── Panel: Asistencia ─── -->
-            <div id="panel-asistencia" style="display:none;">
-
-                <div class="d-flex align-items-center mb-3">
-                    <i class="fas fa-user-check text-primary mr-2 fa-lg"></i>
-                    <h5 class="mb-0 font-weight-bold text-gray-800">Asistencia de Aprendices</h5>
-                </div>
-
-                <div class="card shadow-sm border-0 mb-3">
-                    <div class="card-body p-3">
-                        <div class="row align-items-end">
-                            <div class="col-auto">
-                                <label class="font-weight-bold small text-muted mb-1">Fecha:</label>
-                                <input type="date" id="asistencia-fecha" class="form-control form-control-sm">
-                            </div>
-                            <div class="col-auto">
-                                <button class="btn btn-primary btn-sm" onclick="cargarAsistencia()">
-                                    <i class="fas fa-search mr-1"></i> Cargar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="asistencia-loading" class="text-center py-3" style="display:none;">
-                    <i class="fas fa-spinner fa-spin text-primary"></i>
-                </div>
-
-                <div id="asistencia-content" style="display:none;">
-                    <div id="asistencia-tabla"></div>
-                    <button class="btn btn-primary btn-sm mt-3" onclick="guardarAsistencia()">
-                        <i class="fas fa-save mr-1"></i> Guardar asistencia
+            <!-- Sección de Actividades (se muestra solo cuando hay ≥1 guía) -->
+            <div id="actividades-section" style="display:none;">
+                <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap" style="gap:8px;">
+                    <span class="font-weight-bold text-gray-700">
+                        <i class="fas fa-tasks mr-1 text-sena"></i> Actividades de Aprendizaje
+                    </span>
+                    <button class="btn btn-success btn-sm shadow-sm" data-btn="crear-actividad">
+                        <i class="fas fa-plus mr-1"></i> Crear actividad de aprendizaje
                     </button>
-                    <div id="asistencia-ok" class="text-success small mt-2" style="display:none;">
-                        <i class="fas fa-check mr-1"></i> Asistencia guardada correctamente.
-                    </div>
                 </div>
 
-            </div><!-- /panel-asistencia -->
+                <!-- Flex: lista + panel lateral -->
+                <div class="d-flex" id="panel-flex-row">
 
-        </div><!-- /col-lg-9 -->
-    </div><!-- /row -->
+                    <!-- Lista de actividades -->
+                    <div id="panel-tabs-content" class="flex-grow-1" style="min-width:0;">
+                        <div id="act-loading" class="text-center py-4">
+                            <i class="fas fa-spinner fa-spin text-sena"></i>
+                        </div>
+                        <div id="actividades-lista"></div>
+                    </div>
+
+                    <!-- Panel lateral -->
+                    <div id="side-panel" style="display:none;">
+
+                        {% include 'components/form_actividad.html' %}
+                        {% include 'components/form_seccion.html' %}
+                        {% include 'components/form_subseccion.html' %}
+
+                    </div><!-- /side-panel -->
+
+                </div><!-- /panel-flex-row -->
+            </div><!-- /actividades-section -->
+
+        </div><!-- /panel-actividad -->
+
+        <!-- ─── Panel: Calificaciones ─── -->
+        <div id="panel-calificaciones" style="display:none;">
+
+            <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-chart-bar text-success mr-2 fa-lg"></i>
+                <h5 class="mb-0 font-weight-bold text-gray-800">Calificaciones</h5>
+            </div>
+
+            <!-- Selector de Actividad de Proyecto -->
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body p-3">
+                    <label class="font-weight-bold small text-muted mb-1">Selecciona una Actividad de Proyecto:</label>
+                    <select id="cal-ap-selector" class="form-control form-control-sm">
+                        <option value="">-- Seleccionar --</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Sub-tabs -->
+            <ul class="nav nav-tabs" id="cal-tabs" style="display:none;">
+                <li class="nav-item">
+                    <a class="nav-link active" id="cal-tab-link-1" href="#">
+                        Evidencias por actividad
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="cal-tab-link-2" href="#">
+                        Total de Calificaciones
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Flex: contenido tabs + panel evidencia -->
+            <div id="cal-flex-row" class="d-flex" style="display:none !important;">
+                <div class="flex-grow-1" style="min-width:0;">
+                    <div id="cal-tab-1-content" class="p-3"></div>
+                    <div id="cal-tab-2-content" class="p-3" style="display:none;"></div>
+                </div>
+                <!-- Panel lateral evidencia -->
+                {% include 'components/form_evidencia.html' %}
+            </div>
+
+        </div><!-- /panel-calificaciones -->
+
+        <!-- ─── Panel: Asistencia ─── -->
+        <div id="panel-asistencia" style="display:none;">
+
+            <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-user-check text-primary mr-2 fa-lg"></i>
+                <h5 class="mb-0 font-weight-bold text-gray-800">Asistencia</h5>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body p-3">
+                    <div class="row align-items-end">
+                        <div class="col-auto">
+                            <label class="font-weight-bold small text-muted mb-1">Fecha:</label>
+                            <input type="date" id="asistencia-fecha" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-primary btn-sm" data-btn="cargar-asistencia">
+                                <i class="fas fa-search mr-1"></i> Cargar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="asistencia-loading" class="text-center py-3" style="display:none;">
+                <i class="fas fa-spinner fa-spin text-primary"></i>
+            </div>
+
+            <div id="asistencia-content" style="display:none;">
+                <div id="asistencia-tabla"></div>
+                <button class="btn btn-primary btn-sm mt-3" data-btn="guardar-asistencia">
+                    <i class="fas fa-save mr-1"></i> Guardar asistencia
+                </button>
+                <div id="asistencia-ok" class="text-success small mt-2" style="display:none;">
+                    <i class="fas fa-check mr-1"></i> Asistencia guardada correctamente.
+                </div>
+            </div>
+
+        </div><!-- /panel-asistencia -->
+
+    </div><!-- /col-lg-9 -->
+</div><!-- /row -->
 {% endblock %}
 
 {% block extra_js %}
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
-    <script>
-        const FICHA_ID = {{ ficha.id }};
-
-        // ── Alertas inline en formularios ──
-        function showFormAlert(alertId, type, message, autohide) {
-            const el = document.getElementById(alertId);
-            if (!el) return;
-            el.className = `alert alert-${type}`;
-            el.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-1"></i>${message}`;
-            el.style.display = 'block';
-            if (autohide !== false && type === 'success') {
-                setTimeout(() => { el.style.display = 'none'; }, 3500);
-            }
-        }
-        function hideFormAlert(alertId) {
-            const el = document.getElementById(alertId);
-            if (el) el.style.display = 'none';
-        }
-
-        // ── Estado global ──
-        let currentMode = null; // 'actividad' | 'calificaciones' | 'asistencia'
-        let selectedActProyId = null;
-        let sidePanelMode = null;
-        let matrizData = null;
-        let currentEntregaId = null;
-        let editingActId = null;
-        let actividadesCache = [];
-        let currentSecId = null;
-        let currentSubId = null;
-        let guiasCache = [];
-        let treeData = [];         // árbol completo para poblar selector
-        let calActProyId = null;   // AP seleccionada en panel calificaciones
-        let calTab = 1;
-        let asistenciaAprendices = []; // cache para guardar
-
-        const _apData = {};
-        const _secData = {};
-        const _subData = {};
-
-        // ═══════════════════════════════
-        //  Árbol de fases
-        // ═══════════════════════════════
-        async function cargarArbol() {
-            const res = await fetch(`/api/instructor/ficha/${FICHA_ID}/tree`);
-            const data = await res.json();
-            treeData = data.fases || [];
-            renderArbol(treeData);
-        }
-
-        function renderArbol(fases) {
-            const container = document.getElementById('fase-tree');
-            if (!fases || fases.length === 0) {
-                container.innerHTML = `<div class="empty-state small p-2">
-                    <i class="fas fa-info-circle mb-1"></i>
-                    <p class="mb-0">Sin fases asignadas para esta ficha.</p></div>`;
-                return;
-            }
-
-            let html = '';
-            fases.forEach(fase => {
-                const colId = `fase-${fase.id}`;
-                html += `
-        <div class="mb-1">
-            <button class="fase-btn collapsed" data-toggle="collapse" data-target="#${colId}">
-                <span><i class="fas fa-layer-group mr-1" style="font-size:.8em;opacity:.85"></i>${escapar(fase.nombre)}</span>
-                <i class="fas fa-chevron-down chevron" style="font-size:.75em;"></i>
-            </button>
-            <div class="collapse tree-indent-1" id="${colId}">`;
-
-                if (fase.actividades_proyecto.length === 0) {
-                    html += `<p class="text-muted small px-2 py-1 mb-1">Sin actividades de proyecto.</p>`;
-                }
-
-                fase.actividades_proyecto.forEach(ap => {
-                    _apData[ap.id] = { faseId: fase.id, nombre: ap.nombre, guias_count: ap.guias_count };
-                    const lockIcon = ap.guias_count === 0
-                        ? `<i class="fas fa-lock ml-1 text-warning" style="font-size:.7em;" title="Sin guías"></i>`
-                        : '';
-                    html += `
-            <button class="act-proy-btn" id="btn-ap-${ap.id}"
-                    onclick="seleccionarActProyById(${ap.id})">
-                <span><i class="fas fa-folder mr-1" style="font-size:.8em;opacity:.8"></i>${escapar(ap.nombre)}${lockIcon}</span>
-            </button>`;
-                });
-
-                html += `</div></div>`;
-            });
-
-            container.innerHTML = html;
-        }
-
-        function seleccionarActProyById(apId) {
-            const d = _apData[apId];
-            if (d) seleccionarActProy(d.faseId, apId, d.nombre, d.guias_count);
-        }
-
-        function escapar(s) {
-            return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        }
-
-        // ═══════════════════════════════
-        //  Cambio de modo (panel activo)
-        // ═══════════════════════════════
-        function setMode(mode) {
-            currentMode = mode;
-            document.getElementById('panel-vacio').style.display = 'none';
-            document.getElementById('panel-actividad').style.display = 'none';
-            document.getElementById('panel-calificaciones').style.display = 'none';
-            document.getElementById('panel-asistencia').style.display = 'none';
-
-            if (mode === 'actividad') document.getElementById('panel-actividad').style.display = 'block';
-            else if (mode === 'calificaciones') document.getElementById('panel-calificaciones').style.display = 'block';
-            else if (mode === 'asistencia') document.getElementById('panel-asistencia').style.display = 'block';
-            else document.getElementById('panel-vacio').style.display = 'block';
-        }
-
-        // ═══════════════════════════════
-        //  Selección de Actividad de Proyecto
-        // ═══════════════════════════════
-        async function seleccionarActProy(faseId, apId, apNombre, guiasCount) {
-            selectedActProyId = apId;
-            matrizData = null;
-
-            // Highlight
-            document.querySelectorAll('.act-proy-btn').forEach(b => b.classList.remove('active'));
-            const btn = document.getElementById(`btn-ap-${apId}`);
-            if (btn) btn.classList.add('active');
-
-            setMode('actividad');
-            hideSidePanel();
-
-            document.getElementById('ap-titulo-nombre').textContent = apNombre;
-
-            await cargarGuias(apId);
-
-            if (guiasCount > 0) {
-                document.getElementById('actividades-section').style.display = 'block';
-                await cargarActividades();
-            } else {
-                document.getElementById('actividades-section').style.display = 'none';
-            }
-        }
-
-        // ═══════════════════════════════
-        //  Guías de trabajo concertado
-        // ═══════════════════════════════
-        async function cargarGuias(apId) {
-            const res = await fetch(`/api/instructor/actividad-proyecto/${apId}/guias`);
-            const data = await res.json();
-            guiasCache = data.guias || [];
-            renderGuias(guiasCache);
-
-            const tieneGuias = guiasCache.length > 0;
-            document.getElementById('guias-lock').style.display = tieneGuias ? 'none' : 'block';
-            document.getElementById('actividades-section').style.display = tieneGuias ? 'block' : 'none';
-
-            if (tieneGuias && _apData[selectedActProyId] && _apData[selectedActProyId].guias_count === 0) {
-                _apData[selectedActProyId].guias_count = guiasCache.length;
-                await cargarActividades();
-            }
-        }
-
-        let sortableGuias = null;
-
-        function renderGuias(guias) {
-            const container = document.getElementById('guias-lista');
-            if (!guias || guias.length === 0) {
-                container.innerHTML = '';
-                if (sortableGuias) { sortableGuias.destroy(); sortableGuias = null; }
-                return;
-            }
-            let html = '<ul class="list-group list-group-flush mb-2" id="guias-sortable-list">';
-            guias.forEach(g => {
-                const nombre = escapar(g.nombre || 'Guía sin nombre');
-                const url = escapar(g.url || '');
-                const desc = escapar(g.descripcion || '');
-                html += `
-                <li class="list-group-item p-2" data-id="${g.id}" style="cursor:default;">
-                    <div class="d-flex align-items-center" style="gap:6px;">
-                        <i class="fas fa-grip-vertical text-muted guia-handle" title="Arrastrar para reordenar"
-                           style="cursor:grab; font-size:.9em; flex-shrink:0;"></i>
-                        <div style="flex:1; min-width:0;">
-                            <i class="fas fa-file-alt mr-1 text-sena" style="font-size:.85em;"></i>
-                            <a href="${url}" target="_blank" class="text-sena font-weight-bold small">${nombre}</a>
-                            ${g.descripcion ? `<div class="text-muted small mt-1" style="font-size:.78rem;">${desc}</div>` : ''}
-                        </div>
-                        <button class="btn btn-sm btn-link text-warning p-0" title="Editar" onclick="abrirEditarGuia(${g.id})">
-                            <i class="fas fa-edit fa-sm"></i>
-                        </button>
-                        <button class="btn btn-sm btn-link text-danger p-0 ml-1" title="Eliminar" onclick="eliminarGuia(${g.id})">
-                            <i class="fas fa-trash fa-sm"></i>
-                        </button>
-                    </div>
-                    <div id="guia-edit-form-${g.id}" class="guia-edit-form mt-2">
-                        <div id="guia-edit-alert-${g.id}" class="alert mb-2" role="alert" style="display:none; font-size:.82rem; padding:8px 12px;"></div>
-                        <div class="guia-edit-group">
-                            <label class="guia-edit-label">Nombre</label>
-                            <input type="text" class="guia-edit-input" id="guia-edit-nombre-${g.id}"
-                                placeholder="Nombre de la guía" value="${nombre}">
-                        </div>
-                        <div class="guia-edit-group">
-                            <label class="guia-edit-label">Enlace (URL)</label>
-                            <input type="url" class="guia-edit-input" id="guia-edit-url-${g.id}"
-                                placeholder="https://..." value="${url}">
-                        </div>
-                        <div class="guia-edit-group">
-                            <label class="guia-edit-label">Descripción</label>
-                            <textarea class="guia-edit-input" id="guia-edit-desc-${g.id}" rows="2"
-                                placeholder="Descripción opcional...">${desc}</textarea>
-                        </div>
-                        <div style="display:flex; gap:6px;">
-                            <button class="btn btn-success btn-sm py-1 px-3" onclick="guardarGuia(${g.id})">
-                                <i class="fas fa-save mr-1"></i>Guardar
-                            </button>
-                            <button class="btn btn-outline-secondary btn-sm py-1 px-3" onclick="cancelarEditarGuia(${g.id})">
-                                Cancelar
-                            </button>
-                        </div>
-                    </div>
-                </li>`;
-            });
-            html += '</ul>';
-            container.innerHTML = html;
-            initSortableGuias();
-        }
-
-        function initSortableGuias() {
-            const ul = document.getElementById('guias-sortable-list');
-            if (!ul) return;
-            if (sortableGuias) sortableGuias.destroy();
-            sortableGuias = new Sortable(ul, {
-                handle: '.guia-handle',
-                animation: 150,
-                ghostClass: 'bg-light',
-                onEnd: async function () {
-                    const items = ul.querySelectorAll('li[data-id]');
-                    const orden = Array.from(items).map(li => parseInt(li.dataset.id));
-                    await fetch(`/api/instructor/actividad-proyecto/${selectedActProyId}/guias/orden`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ orden }),
-                    });
-                },
-            });
-        }
-
-        function abrirEditarGuia(guiaId) {
-            document.querySelectorAll('[id^="guia-edit-form-"]').forEach(el => {
-                if (el.id !== `guia-edit-form-${guiaId}`) el.style.display = 'none';
-            });
-            document.getElementById(`guia-edit-form-${guiaId}`).style.display = 'block';
-        }
-
-        function cancelarEditarGuia(guiaId) {
-            document.getElementById(`guia-edit-form-${guiaId}`).style.display = 'none';
-        }
-
-        async function guardarGuia(guiaId) {
-            const nombre = document.getElementById(`guia-edit-nombre-${guiaId}`).value.trim();
-            const url = document.getElementById(`guia-edit-url-${guiaId}`).value.trim();
-            const descripcion = document.getElementById(`guia-edit-desc-${guiaId}`).value.trim();
-            if (!url) {
-                showFormAlert(`guia-edit-alert-${guiaId}`, 'danger', 'El enlace es obligatorio.', false);
-                return;
-            }
-            hideFormAlert(`guia-edit-alert-${guiaId}`);
-            try {
-                const res = await fetch(`/api/instructor/guia-actividad-proyecto/${guiaId}/editar`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nombre, url, descripcion }),
-                });
-                const data = await res.json();
-                if (data.ok) {
-                    await cargarGuias(selectedActProyId);
-                } else {
-                    showFormAlert(`guia-edit-alert-${guiaId}`, 'danger', data.error || 'Error al guardar.', false);
-                }
-            } catch(e) {
-                showFormAlert(`guia-edit-alert-${guiaId}`, 'danger', 'Error inesperado: ' + e.message, false);
-            }
-        }
-
-        function toggleFormGuia() {
-            const form = document.getElementById('form-guia-ap');
-            const visible = form.style.display !== 'none';
-            form.style.display = visible ? 'none' : 'block';
-            if (!visible) {
-                document.getElementById('guia-ap-nombre').value = '';
-                document.getElementById('guia-ap-archivo').value = '';
-                document.getElementById('guia-ap-url').value = '';
-                hideFormAlert('form-guia-alert');
-            }
-        }
-
-        async function subirGuia() {
-            const fileInput = document.getElementById('guia-ap-archivo');
-            const urlInput = document.getElementById('guia-ap-url');
-
-            if (!fileInput.files.length && !urlInput.value.trim()) {
-                showFormAlert('form-guia-alert', 'danger', 'Debes subir un archivo o ingresar un enlace.', false);
-                return;
-            }
-            hideFormAlert('form-guia-alert');
-
-            const formData = new FormData();
-            formData.append('nombre', document.getElementById('guia-ap-nombre').value.trim());
-            formData.append('guia_url', urlInput.value.trim());
-            if (fileInput.files.length > 0) {
-                formData.append('guia_archivo', fileInput.files[0]);
-            }
-
-            try {
-                const res = await fetch(`/api/instructor/actividad-proyecto/${selectedActProyId}/guias/nueva`, {
-                    method: 'POST',
-                    body: formData,
-                });
-                const data = await res.json();
-                if (data.ok) {
-                    showFormAlert('form-guia-alert', 'success', 'Guía subida correctamente.');
-                    setTimeout(() => { toggleFormGuia(); cargarGuias(selectedActProyId); cargarArbol(); }, 1200);
-                } else {
-                    showFormAlert('form-guia-alert', 'danger', data.error || 'No se pudo subir la guía.', false);
-                }
-            } catch(e) {
-                showFormAlert('form-guia-alert', 'danger', 'Error de conexión. Intenta de nuevo.', false);
-            }
-        }
-
-        async function eliminarGuia(guiaId) {
-            if (!confirm('¿Eliminar esta guía?')) return;
-            const res = await fetch(`/api/instructor/guia-actividad-proyecto/${guiaId}`, { method: 'DELETE' });
-            const data = await res.json();
-            if (data.ok) {
-                await cargarGuias(selectedActProyId);
-                cargarArbol();
-            }
-        }
-
-        // ═══════════════════════════════
-        //  Actividades de aprendizaje
-        // ═══════════════════════════════
-        async function cargarActividades() {
-            document.getElementById('act-loading').style.display = 'block';
-            document.getElementById('actividades-lista').innerHTML = '';
-
-            const res = await fetch(`/api/instructor/actividad-proyecto/${selectedActProyId}/actividades-aprendizaje`);
-            const data = await res.json();
-
-            document.getElementById('act-loading').style.display = 'none';
-            renderActividades(data.actividades);
-        }
-
-        const sortableInstances = new Map();
-        function destroySortable(key) {
-            if (sortableInstances.has(key)) { sortableInstances.get(key).destroy(); sortableInstances.delete(key); }
-        }
-
-        function renderActividades(actividades) {
-            actividadesCache = actividades || [];
-            const container = document.getElementById('actividades-lista');
-            destroySortable('actividades');
-            if (!actividades || actividades.length === 0) {
-                container.innerHTML = `<div class="empty-state py-4">
-                    <i class="fas fa-tasks fa-2x mb-2"></i>
-                    <p class="mb-1">No hay actividades de aprendizaje creadas.</p>
-                    <p class="small mb-0">Usa el botón <strong>Crear actividad de aprendizaje</strong> para agregar la primera.</p>
-                </div>`;
-                return;
-            }
-
-            let html = '<div class="accordion" id="accordionActividades">';
-            actividades.forEach((act, i) => {
-                const inicioFmt = act.fecha_inicio ? formatFecha(act.fecha_inicio) : null;
-                const finFmt = act.fecha_fin ? formatFecha(act.fecha_fin) : null;
-                const colId = `collapseAct${act.id}`;
-                const headId = `headingAct${act.id}`;
-
-                html += `
-                <div class="card mb-2 shadow-sm border-0 actividad-card" data-id="${act.id}" style="padding:0;">
-                    <div class="card-header bg-white py-2" id="${headId}">
-                        <div class="d-flex align-items-center" style="gap:6px;">
-                            <i class="fas fa-grip-vertical act-drag-handle text-muted"
-                               title="Arrastrar para reordenar"
-                               style="cursor:grab; font-size:.9em; flex-shrink:0; padding:4px 2px;"></i>
-                            <button class="btn btn-link text-left text-dark font-weight-bold text-decoration-none p-0 d-flex align-items-center"
-                                    type="button" data-toggle="collapse" data-target="#${colId}" aria-expanded="false" style="flex:1;">
-                                <i class="fas fa-chevron-down mr-2 text-sena" style="font-size:0.8rem;"></i>
-                                ${escapar(act.nombre)}
-                            </button>
-                        </div>
-                    </div>
-                    <div id="${colId}" class="collapse" aria-labelledby="${headId}" data-parent="#accordionActividades">
-                        <div class="card-body bg-light p-3">
-                            <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap" style="gap:8px;">
-                                <div style="flex:1; min-width:0;">
-                                    ${act.descripcion ? `<div class="small text-gray-700 mb-2">${escapar(act.descripcion)}</div>` : ''}
-                                    <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; font-size:.8em;">
-                                        ${inicioFmt ? `<span class="badge badge-light border"><i class="fas fa-calendar-alt mr-1 text-sena"></i>Inicio: ${inicioFmt}</span>` : ''}
-                                        ${finFmt
-                                            ? `<span class="badge badge-light border" id="badge-fin-${act.id}">
-                                                <i class="fas fa-calendar-times mr-1 text-warning"></i>Fin: ${finFmt}
-                                                <button class="btn btn-sm btn-link p-0 ml-1" style="font-size:.9em;line-height:1;" onclick="editarFechaFin(${act.id}, '${act.fecha_fin || ''}')"><i class="fas fa-edit text-warning"></i></button>
-                                               </span>`
-                                            : `<button class="btn btn-sm btn-outline-warning py-0 px-2" style="font-size:.75rem;" onclick="editarFechaFin(${act.id}, '')"><i class="fas fa-calendar-plus mr-1"></i>Agregar fecha fin</button>`
-                                        }
-                                        ${act.guia_url ? `<a href="${act.guia_url}" target="_blank" class="badge badge-success border text-white"><i class="fas fa-link mr-1"></i>Guía / Recurso</a>` : ''}
-                                    </div>
-                                </div>
-                                <div style="flex-shrink:0; display:flex; gap:6px;">
-                                    ${act.evidencia_id
-                                        ? `<span class="badge badge-success py-1 px-2" style="font-size:.78rem;"><i class="fas fa-check-circle mr-1"></i>Evidencia activa</span>`
-                                        : `<button class="btn btn-outline-warning btn-sm border-0" style="font-size:.75rem;" onclick="activarEvidencia(${act.id})"><i class="fas fa-plus-circle mr-1"></i>Activar evidencia</button>`
-                                    }
-                                    <button class="btn btn-outline-secondary btn-sm border-0" style="font-size:.75rem;" onclick="editarActividad(${act.id})"><i class="fas fa-edit mr-1"></i>Editar</button>
-                                    <button class="btn btn-outline-primary btn-sm border-0" style="font-size:.75rem;" onclick="abrirCrearSeccion(${act.id})"><i class="fas fa-plus mr-1"></i>Nueva Sección</button>
-                                </div>
-                            </div>
-                            <div id="secciones-act-${act.id}">
-                                ${renderSecciones(act.secciones, act.id)}
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
-            });
-            html += '</div>';
-            container.innerHTML = html;
-
-            const acordeon = document.getElementById('accordionActividades');
-            if (acordeon) {
-                const s = new Sortable(acordeon, {
-                    handle: '.act-drag-handle',
-                    animation: 150,
-                    ghostClass: 'bg-light',
-                    onEnd: async function () {
-                        const cards = acordeon.querySelectorAll('.actividad-card[data-id]');
-                        const orden = Array.from(cards).map(c => parseInt(c.dataset.id));
-                        await fetch(`/api/instructor/actividad-proyecto/${selectedActProyId}/aprendizaje/orden`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ orden }),
-                        });
-                    },
-                });
-                sortableInstances.set('actividades', s);
-            }
-
-            actividades.forEach(act => {
-                initSortableSecciones(act.id);
-                if (act.secciones) act.secciones.forEach(sec => initSortableSubSecciones(sec.id));
-            });
-        }
-
-        function initSortableSecciones(actId) {
-            const el = document.getElementById(`accordionSec${actId}`);
-            if (!el) return;
-            destroySortable(`sec-${actId}`);
-            const s = new Sortable(el, {
-                handle: '.sec-drag-handle',
-                animation: 150,
-                ghostClass: 'bg-light',
-                onEnd: async function () {
-                    const cards = el.querySelectorAll('.seccion-card[data-id]');
-                    const orden = Array.from(cards).map(c => parseInt(c.dataset.id));
-                    await fetch(`/api/instructor/actividad-aprendizaje/${actId}/secciones/orden`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ orden }),
-                    });
-                },
-            });
-            sortableInstances.set(`sec-${actId}`, s);
-        }
-
-        function initSortableSubSecciones(secId) {
-            const el = document.getElementById(`subsec-list-${secId}`);
-            if (!el) return;
-            destroySortable(`sub-${secId}`);
-            const s = new Sortable(el, {
-                handle: '.sub-drag-handle',
-                animation: 150,
-                ghostClass: 'bg-light',
-                onEnd: async function () {
-                    const items = el.querySelectorAll('li[data-id]');
-                    const orden = Array.from(items).map(li => parseInt(li.dataset.id));
-                    await fetch(`/api/instructor/seccion/${secId}/sub-secciones/orden`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ orden }),
-                    });
-                },
-            });
-            sortableInstances.set(`sub-${secId}`, s);
-        }
-
-        function renderSecciones(secciones, actId) {
-            if (!secciones || secciones.length === 0) return '';
-            let html = `<div class="accordion" id="accordionSec${actId}">`;
-            secciones.forEach(sec => {
-                _secData[sec.id] = sec;
-                const colId = `collapseSec${sec.id}`;
-                const headId = `headingSec${sec.id}`;
-                const inicio = sec.fecha_inicio ? formatFecha(sec.fecha_inicio) : '';
-                const fin = sec.fecha_fin ? formatFecha(sec.fecha_fin) : '';
-
-                html += `
-                <div class="card mb-1 shadow-sm seccion-card" data-id="${sec.id}" style="border: 1px solid #e3e6f0;">
-                    <div class="card-header bg-white py-2 d-flex align-items-center" id="${headId}" style="gap:6px;">
-                        <i class="fas fa-grip-vertical sec-drag-handle text-muted"
-                           title="Arrastrar para reordenar"
-                           style="cursor:grab; font-size:.85em; flex-shrink:0; padding:4px 2px;"></i>
-                        <button class="btn btn-link text-left text-primary font-weight-bold text-decoration-none p-0 flex-grow-1 d-flex align-items-center"
-                                type="button" data-toggle="collapse" data-target="#${colId}">
-                            <i class="fas fa-layer-group mr-2" style="font-size:0.8rem;"></i> ${escapar(sec.nombre)}
-                        </button>
-                        <div style="flex-shrink:0;">
-                            <button class="btn btn-sm btn-link text-secondary p-0 mx-1" onclick="abrirEditarSeccion(${sec.id})"><i class="fas fa-edit"></i></button>
-                            <button class="btn btn-sm btn-link text-danger p-0 mr-2" onclick="eliminarSeccion(${sec.id})"><i class="fas fa-trash"></i></button>
-                            <button class="btn btn-sm btn-outline-success border-0 py-0" style="font-size:0.75rem;" onclick="abrirCrearSubSeccion(${sec.id})"><i class="fas fa-plus"></i> Sub-sección</button>
-                        </div>
-                    </div>
-                    <div id="${colId}" class="collapse" aria-labelledby="${headId}" data-parent="#accordionSec${actId}">
-                        <div class="card-body p-2" style="background:#fdfdfd;">
-                            ${sec.descripcion ? `<div class="small text-muted mb-2 px-2">${escapar(sec.descripcion)}</div>` : ''}
-                            <div class="px-2 mb-2 d-flex flex-wrap align-items-center" style="gap:6px; font-size:.75rem;">
-                                ${sec.archivo_url ? `<a href="${sec.archivo_url}" target="_blank" class="badge badge-info border text-white"><i class="fas fa-link mr-1"></i>URL / Documento</a>` : ''}
-                                ${inicio ? `<span class="badge badge-light border text-muted"><i class="fas fa-calendar mr-1"></i>Ini: ${inicio}</span>` : ''}
-                                ${fin ? `<span class="badge badge-light border text-muted"><i class="fas fa-calendar-times mr-1"></i>Fin: ${fin}</span>` : ''}
-                            </div>
-                            <hr class="mt-1 mb-2">
-                            ${renderSubSecciones(sec.sub_secciones, sec.id)}
-                        </div>
-                    </div>
-                </div>`;
-            });
-            html += '</div>';
-            return html;
-        }
-
-        function renderSubSecciones(subsecciones, secId) {
-            if (!subsecciones || subsecciones.length === 0)
-                return '<div class="text-muted small p-2">No hay sub-secciones en esta sección.</div>';
-            let html = `<ul class="list-group list-group-flush border rounded" id="subsec-list-${secId}">`;
-            subsecciones.forEach(sub => {
-                _subData[sub.id] = sub;
-                const inicio = sub.fecha_inicio ? formatFecha(sub.fecha_inicio) : '';
-                const fin = sub.fecha_fin ? formatFecha(sub.fecha_fin) : '';
-                html += `
-                <li class="list-group-item p-2" data-id="${sub.id}">
-                    <div class="d-flex align-items-start" style="gap:6px;">
-                        <i class="fas fa-grip-vertical sub-drag-handle text-muted mt-1"
-                           title="Arrastrar para reordenar"
-                           style="cursor:grab; font-size:.85em; flex-shrink:0;"></i>
-                        <div style="flex:1; min-width:0;">
-                            <div class="font-weight-bold" style="font-size:0.85rem; color:#4e73df;">${escapar(sub.nombre)}</div>
-                            ${sub.descripcion ? `<div class="small text-muted mt-1">${escapar(sub.descripcion)}</div>` : ''}
-                            <div class="mt-1 d-flex flex-wrap align-items-center" style="gap:6px; font-size:.75rem;">
-                                ${sub.archivo_url ? `<a href="${sub.archivo_url}" target="_blank" class="badge badge-info border text-white"><i class="fas fa-link mr-1"></i>URL</a>` : ''}
-                                ${inicio ? `<span class="badge badge-light border text-muted"><i class="fas fa-calendar mr-1"></i>Ini: ${inicio}</span>` : ''}
-                                ${fin ? `<span class="badge badge-light border text-muted"><i class="fas fa-calendar-times mr-1"></i>Fin: ${fin}</span>` : ''}
-                            </div>
-                        </div>
-                        <div style="flex-shrink:0;">
-                            <button class="btn btn-sm btn-link text-info p-0 mx-1" onclick="abrirEditarSubSeccion(${sub.id})"><i class="fas fa-edit"></i></button>
-                            <button class="btn btn-sm btn-link text-danger p-0" onclick="eliminarSubSeccion(${sub.id})"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                </li>`;
-            });
-            html += '</ul>';
-            return html;
-        }
-
-        function formatFecha(iso) {
-            if (!iso) return '';
-            const d = new Date(iso);
-            if (isNaN(d.getTime())) return iso;
-            const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-            return `${d.getUTCDate()} ${meses[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
-        }
-
-        async function activarEvidencia(actId) {
-            const res = await fetch(`/api/instructor/actividad/${actId}/evidencia`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ descripcion: '' }),
-            });
-            const data = await res.json();
-            if (data.ok) await cargarActividades();
-        }
-
-        async function editarFechaFin(actId, fechaActual) {
-            const nueva = prompt('Nueva fecha de fin (AAAA-MM-DD):', fechaActual || '');
-            if (nueva === null) return;
-            const val = nueva.trim();
-            if (val && !/^\d{4}-\d{2}-\d{2}$/.test(val)) {
-                alert('Formato incorrecto. Usa AAAA-MM-DD'); return;
-            }
-            const res = await fetch(`/api/instructor/actividad-aprendizaje/${actId}/fecha-fin`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fecha_fin: val || null }),
-            });
-            const data = await res.json();
-            if (data.ok) await cargarActividades();
-        }
-
-        // ═══════════════════════════════
-        //  Panel lateral
-        // ═══════════════════════════════
-        function toggleCrearPanel() {
-            if (sidePanelMode === 'crear') {
-                hideSidePanel();
-            } else {
-                editingActId = null;
-                document.getElementById('form-nombre').value = '';
-                document.getElementById('form-desc').value = '';
-                const hoy = new Date().toISOString().split('T')[0];
-                document.getElementById('form-inicio').value = hoy;
-                document.getElementById('form-fin').value = '';
-                document.getElementById('form-nombre-error').style.display = 'none';
-                showSidePanel('crear');
-            }
-        }
-
-        function editarActividad(actId) {
-            const act = actividadesCache.find(a => a.id === actId);
-            if (!act) return;
-            editingActId = actId;
-            document.getElementById('form-nombre').value = act.nombre || '';
-            document.getElementById('form-desc').value = act.descripcion || '';
-            document.getElementById('form-inicio').value = act.fecha_inicio || '';
-            document.getElementById('form-fin').value = act.fecha_fin || '';
-            document.getElementById('form-nombre-error').style.display = 'none';
-            showSidePanel('editar');
-        }
-
-        function showSidePanel(mode) {
-            sidePanelMode = mode;
-            document.getElementById('side-panel').style.display = 'block';
-            const isForm = mode === 'crear' || mode === 'editar';
-            document.getElementById('side-crear').style.display = isForm ? 'block' : 'none';
-
-            const elSec = document.getElementById('side-seccion');
-            if (elSec) elSec.style.display = (mode === 'sec_crear' || mode === 'sec_editar') ? 'block' : 'none';
-            const elSub = document.getElementById('side-subseccion');
-            if (elSub) elSub.style.display = (mode === 'sub_crear' || mode === 'sub_editar') ? 'block' : 'none';
-
-            if (isForm) {
-                const isEdit = mode === 'editar';
-                document.getElementById('side-crear-title').textContent = isEdit
-                    ? 'Editar actividad de aprendizaje' : 'Crear actividad de aprendizaje';
-                document.getElementById('side-crear-btn').textContent = isEdit
-                    ? 'Guardar cambios' : 'Aceptar y crear actividad';
-            }
-            if (mode === 'sec_crear' || mode === 'sec_editar') {
-                const isEdit = mode === 'sec_editar';
-                document.getElementById('side-sec-title').textContent = isEdit ? 'Editar sección' : 'Nueva sección';
-                document.getElementById('side-sec-btn').textContent = isEdit ? 'Guardar cambios' : 'Aceptar y agregar';
-            }
-            if (mode === 'sub_crear' || mode === 'sub_editar') {
-                const isEdit = mode === 'sub_editar';
-                document.getElementById('side-sub-title').textContent = isEdit ? 'Editar sub-sección' : 'Nueva sub-sección';
-                document.getElementById('side-sub-btn').textContent = isEdit ? 'Guardar cambios' : 'Aceptar y agregar';
-            }
-        }
-
-        function hideSidePanel() {
-            sidePanelMode = null;
-            editingActId = null;
-            currentSecId = null;
-            currentSubId = null;
-            document.getElementById('side-panel').style.display = 'none';
-        }
-
-        // ═══════════════════════════════
-        //  Crear / Editar actividad
-        // ═══════════════════════════════
-        async function confirmarCrearActividad() {
-            if (sidePanelMode === 'editar') { await confirmarEditarActividad(); return; }
-
-            const nombre = document.getElementById('form-nombre').value.trim();
-            if (!nombre) {
-                showFormAlert('form-actividad-alert', 'danger', 'El nombre de la actividad es obligatorio.', false);
-                document.getElementById('form-nombre').focus();
-                return;
-            }
-            hideFormAlert('form-actividad-alert');
-
-            const formData = new FormData();
-            formData.append('nombre', nombre);
-            formData.append('descripcion', document.getElementById('form-desc').value.trim());
-            formData.append('fecha_inicio', document.getElementById('form-inicio').value);
-            formData.append('fecha_fin', document.getElementById('form-fin').value);
-
-            try {
-                const res = await fetch(`/api/instructor/actividad-proyecto/${selectedActProyId}/aprendizaje/nueva`, {
-                    method: 'POST', body: formData,
-                });
-                const data = await res.json();
-                if (data.ok) {
-                    showFormAlert('form-actividad-alert', 'success', `Actividad <strong>${nombre}</strong> creada correctamente.`);
-                    setTimeout(() => { hideSidePanel(); cargarActividades(); }, 1200);
-                } else {
-                    showFormAlert('form-actividad-alert', 'danger', data.error || 'No se pudo crear la actividad.', false);
-                }
-            } catch(e) {
-                showFormAlert('form-actividad-alert', 'danger', 'Error de conexión. Intenta de nuevo.', false);
-            }
-        }
-
-        async function confirmarEditarActividad() {
-            const nombre = document.getElementById('form-nombre').value.trim();
-            if (!nombre) {
-                showFormAlert('form-actividad-alert', 'danger', 'El nombre de la actividad es obligatorio.', false);
-                document.getElementById('form-nombre').focus();
-                return;
-            }
-            hideFormAlert('form-actividad-alert');
-
-            const formData = new FormData();
-            formData.append('nombre', nombre);
-            formData.append('descripcion', document.getElementById('form-desc').value.trim());
-            formData.append('fecha_inicio', document.getElementById('form-inicio').value);
-            formData.append('fecha_fin', document.getElementById('form-fin').value);
-
-            try {
-                const res = await fetch(`/api/instructor/actividad-aprendizaje/${editingActId}/editar`, {
-                    method: 'PATCH', body: formData,
-                });
-                const data = await res.json();
-                if (data.ok) {
-                    showFormAlert('form-actividad-alert', 'success', 'Actividad actualizada correctamente.');
-                    setTimeout(() => { hideSidePanel(); cargarActividades(); }, 1200);
-                } else {
-                    showFormAlert('form-actividad-alert', 'danger', data.error || 'No se pudo actualizar la actividad.', false);
-                }
-            } catch(e) {
-                showFormAlert('form-actividad-alert', 'danger', 'Error de conexión. Intenta de nuevo.', false);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('form-nombre').addEventListener('keydown', e => {
-                if (e.key === 'Enter') confirmarCrearActividad();
-            });
-        });
-
-        // ── Secciones ──
-        function abrirCrearSeccion(aa_id) {
-            editingActId = aa_id;
-            currentSecId = null;
-            document.getElementById('sec-nombre').value = '';
-            document.getElementById('sec-url').value = '';
-            document.getElementById('sec-desc').value = '';
-            document.getElementById('sec-inicio').value = '';
-            document.getElementById('sec-fin').value = '';
-            showSidePanel('sec_crear');
-        }
-
-        function abrirEditarSeccion(secId) {
-            const secObj = _secData[secId];
-            if (!secObj) return;
-            currentSecId = secObj.id;
-            document.getElementById('sec-nombre').value = secObj.nombre || '';
-            document.getElementById('sec-url').value = secObj.archivo_url || '';
-            document.getElementById('sec-desc').value = secObj.descripcion || '';
-            document.getElementById('sec-inicio').value = secObj.fecha_inicio || '';
-            document.getElementById('sec-fin').value = secObj.fecha_fin || '';
-            showSidePanel('sec_editar');
-        }
-
-        async function guardarSeccion() {
-            const nombre = document.getElementById('sec-nombre').value.trim();
-            if (!nombre) {
-                showFormAlert('form-seccion-alert', 'danger', 'El nombre de la sección es obligatorio.', false);
-                return;
-            }
-            hideFormAlert('form-seccion-alert');
-            const payload = {
-                nombre,
-                archivo_url: document.getElementById('sec-url').value.trim() || null,
-                descripcion: document.getElementById('sec-desc').value.trim() || null,
-                fecha_inicio: document.getElementById('sec-inicio').value || null,
-                fecha_fin: document.getElementById('sec-fin').value || null,
-            };
-
-            try {
-                let res;
-                if (sidePanelMode === 'sec_crear') {
-                    res = await fetch(`/api/instructor/actividad-aprendizaje/${editingActId}/seccion/nueva`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-                    });
-                } else {
-                    res = await fetch(`/api/instructor/seccion/${currentSecId}/editar`, {
-                        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-                    });
-                }
-                if (!res.ok) {
-                    showFormAlert('form-seccion-alert', 'danger', `Error del servidor (${res.status}). Intenta de nuevo.`, false);
-                    return;
-                }
-                const data = await res.json();
-                if (data.ok) {
-                    showFormAlert('form-seccion-alert', 'success', sidePanelMode === 'sec_crear' ? 'Sección creada correctamente.' : 'Sección actualizada correctamente.');
-                    setTimeout(() => { hideSidePanel(); cargarActividades(); }, 1200);
-                } else {
-                    showFormAlert('form-seccion-alert', 'danger', data.error || 'Error al guardar la sección.', false);
-                }
-            } catch(e) {
-                showFormAlert('form-seccion-alert', 'danger', 'Error inesperado: ' + e.message, false);
-            }
-        }
-
-        async function eliminarSeccion(sec_id) {
-            if (!confirm('¿Eliminar esta sección y todo su contenido?')) return;
-            const res = await fetch(`/api/instructor/seccion/${sec_id}`, { method: 'DELETE' });
-            const data = await res.json();
-            if (data.ok) await cargarActividades();
-            else alert(data.error || 'Error al eliminar sección');
-        }
-
-        function abrirCrearSubSeccion(sec_id) {
-            currentSecId = sec_id;
-            currentSubId = null;
-            document.getElementById('sub-nombre').value = '';
-            document.getElementById('sub-url').value = '';
-            document.getElementById('sub-desc').value = '';
-            document.getElementById('sub-inicio').value = '';
-            document.getElementById('sub-fin').value = '';
-            showSidePanel('sub_crear');
-        }
-
-        function abrirEditarSubSeccion(subId) {
-            const subObj = _subData[subId];
-            if (!subObj) return;
-            currentSecId = subObj.id_seccion;
-            currentSubId = subObj.id;
-            document.getElementById('sub-nombre').value = subObj.nombre || '';
-            document.getElementById('sub-url').value = subObj.archivo_url || '';
-            document.getElementById('sub-desc').value = subObj.descripcion || '';
-            document.getElementById('sub-inicio').value = subObj.fecha_inicio || '';
-            document.getElementById('sub-fin').value = subObj.fecha_fin || '';
-            showSidePanel('sub_editar');
-        }
-
-        async function guardarSubSeccion() {
-            const nombre = document.getElementById('sub-nombre').value.trim();
-            if (!nombre) {
-                showFormAlert('form-subseccion-alert', 'danger', 'El nombre de la sub-sección es obligatorio.', false);
-                return;
-            }
-            hideFormAlert('form-subseccion-alert');
-            const payload = {
-                nombre,
-                archivo_url: document.getElementById('sub-url').value.trim() || null,
-                descripcion: document.getElementById('sub-desc').value.trim() || null,
-                fecha_inicio: document.getElementById('sub-inicio').value || null,
-                fecha_fin: document.getElementById('sub-fin').value || null,
-            };
-
-            try {
-                let res;
-                if (sidePanelMode === 'sub_crear') {
-                    res = await fetch(`/api/instructor/seccion/${currentSecId}/sub-seccion/nueva`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-                    });
-                } else {
-                    res = await fetch(`/api/instructor/sub-seccion/${currentSubId}/editar`, {
-                        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-                    });
-                }
-                if (!res.ok) {
-                    showFormAlert('form-subseccion-alert', 'danger', `Error del servidor (${res.status}). Intenta de nuevo.`, false);
-                    return;
-                }
-                const data = await res.json();
-                if (data.ok) {
-                    showFormAlert('form-subseccion-alert', 'success', sidePanelMode === 'sub_crear' ? 'Sub-sección creada correctamente.' : 'Sub-sección actualizada correctamente.');
-                    setTimeout(() => { hideSidePanel(); cargarActividades(); }, 1200);
-                } else {
-                    showFormAlert('form-subseccion-alert', 'danger', data.error || 'Error al guardar la sub-sección.', false);
-                }
-            } catch(e) {
-                showFormAlert('form-subseccion-alert', 'danger', 'Error inesperado: ' + e.message, false);
-            }
-        }
-
-        async function eliminarSubSeccion(sub_id) {
-            if (!confirm('¿Eliminar esta sub-sección?')) return;
-            const res = await fetch(`/api/instructor/sub-seccion/${sub_id}`, { method: 'DELETE' });
-            const data = await res.json();
-            if (data.ok) await cargarActividades();
-            else alert(data.error || 'Error al eliminar sub-sección');
-        }
-
-        // ═══════════════════════════════
-        //  Panel Calificaciones
-        // ═══════════════════════════════
-        function clickCalificaciones() {
-            document.querySelectorAll('.act-proy-btn').forEach(b => b.classList.remove('active'));
-            setMode('calificaciones');
-            poblarSelectorCalAP();
-            document.getElementById('cal-tabs').style.display = 'none';
-            document.getElementById('cal-flex-row').style.display = 'none';
-            matrizData = null;
-            calActProyId = null;
-        }
-
-        function poblarSelectorCalAP() {
-            const sel = document.getElementById('cal-ap-selector');
-            sel.innerHTML = '<option value="">-- Seleccionar --</option>';
-            treeData.forEach(fase => {
-                fase.actividades_proyecto.forEach(ap => {
-                    const opt = document.createElement('option');
-                    opt.value = ap.id;
-                    opt.textContent = `${fase.nombre} › ${ap.nombre}`;
-                    sel.appendChild(opt);
-                });
-            });
-        }
-
-        async function seleccionarCalAP() {
-            const apId = parseInt(document.getElementById('cal-ap-selector').value);
-            if (!apId) {
-                document.getElementById('cal-tabs').style.display = 'none';
-                document.getElementById('cal-flex-row').style.display = 'none';
-                return;
-            }
-            calActProyId = apId;
-            matrizData = null;
-            document.getElementById('cal-tabs').style.display = 'flex';
-            document.getElementById('cal-flex-row').style.removeProperty('display');
-            hideSidePanelCal();
-            setCalTab(1);
-        }
-
-        async function setCalTab(tab) {
-            calTab = tab;
-            ['cal-tab-link-1', 'cal-tab-link-2'].forEach(id => {
-                document.getElementById(id).classList.remove('active');
-            });
-            document.getElementById(`cal-tab-link-${tab}`).classList.add('active');
-            document.getElementById('cal-tab-1-content').style.display = tab === 1 ? 'block' : 'none';
-            document.getElementById('cal-tab-2-content').style.display = tab === 2 ? 'block' : 'none';
-
-            if (!matrizData) {
-                const res = await fetch(`/api/instructor/actividad-proyecto/${calActProyId}/evidencias-matriz`);
-                matrizData = await res.json();
-            }
-            if (tab === 1) renderMatriz(matrizData);
-            else renderCalificaciones(matrizData);
-        }
-
-        function renderMatriz(data) {
-            const container = document.getElementById('cal-tab-1-content');
-            if (!data.actividades || data.actividades.length === 0) {
-                container.innerHTML = `<div class="empty-state py-4">
-                    <i class="fas fa-clipboard fa-2x mb-2"></i>
-                    <p class="mb-0">No hay actividades de aprendizaje para mostrar evidencias.</p></div>`;
-                return;
-            }
-
-            let html = `<div class="table-responsive">
-            <table class="table table-bordered table-hover mb-0" style="font-size:.82rem;">
-                <thead class="thead-dark"><tr>
-                    <th style="white-space:nowrap;">Documento</th>
-                    <th>Aprendiz</th>`;
-            data.actividades.forEach((act, i) => {
-                html += `<th style="min-width:90px; text-align:center;">Actividad ${i + 1}<br>
-                    <small class="font-weight-normal" style="font-size:.72rem;">${escapar(act.nombre)}</small></th>`;
-            });
-            html += `</tr></thead><tbody>`;
-
-            data.aprendices.forEach((ap, apIdx) => {
-                html += `<tr>
-                    <td class="small text-muted align-middle">${escapar(ap.documento || '—')}</td>
-                    <td class="font-weight-bold align-middle">${escapar(ap.nombre)}</td>`;
-                ap.entregas.forEach(e => {
-                    const tieneEntrega = !!e.entrega;
-                    const cal = tieneEntrega ? e.entrega.calificacion : null;
-                    const aprobado = cal !== null && cal !== undefined && parseFloat(cal) >= 75;
-                    const colorCal = cal !== null && cal !== undefined
-                        ? (aprobado ? 'style="color:#1cc88a;"' : 'style="color:#e74a3b;"') : '';
-                    html += `<td class="text-center align-middle">
-                        ${tieneEntrega
-                            ? `<button class="btn btn-sm btn-link p-0" ${colorCal}
-                                onclick="abrirEvidenciaCal(${apIdx}, ${e.actividad_id})">
-                                <i class="fas fa-eye mr-1"></i><span>${cal !== null && cal !== undefined ? cal : '—'}</span>
-                               </button>`
-                            : `<span class="text-muted">—</span>`
-                        }</td>`;
-                });
-                html += `</tr>`;
-            });
-
-            html += `</tbody></table></div>`;
-            container.innerHTML = html;
-        }
-
-        function renderCalificaciones(data) {
-            const container = document.getElementById('cal-tab-2-content');
-            if (!data.actividades || data.actividades.length === 0) {
-                container.innerHTML = `<div class="empty-state py-4">
-                    <i class="fas fa-chart-bar fa-2x mb-2"></i>
-                    <p class="mb-0">No hay calificaciones para mostrar.</p></div>`;
-                return;
-            }
-
-            let html = `<div class="table-responsive">
-            <table class="table table-bordered mb-0" style="font-size:.82rem;">
-                <thead class="thead-dark"><tr><th>Aprendiz</th>`;
-            data.actividades.forEach((act, i) => {
-                html += `<th class="text-center" title="${escapar(act.nombre)}">Act. ${i + 1}</th>`;
-            });
-            html += `<th class="text-center">Total</th></tr></thead><tbody>`;
-
-            data.aprendices.forEach(ap => {
-                let suma = 0, count = 0;
-                let celdas = '';
-                ap.entregas.forEach(e => {
-                    const cal = e.entrega ? e.entrega.calificacion : null;
-                    if (cal !== null && cal !== undefined) { suma += parseFloat(cal); count++; }
-                    const aprobado = cal !== null && cal !== undefined && parseFloat(cal) >= 75;
-                    const cls = cal !== null && cal !== undefined
-                        ? (aprobado ? 'class="text-success font-weight-bold"' : 'class="text-danger font-weight-bold"') : '';
-                    celdas += `<td class="text-center" ${cls}>${cal !== null && cal !== undefined ? cal : '—'}</td>`;
-                });
-                const total = data.actividades.length > 0
-                    ? (suma / data.actividades.length).toFixed(1) : '—';
-                const totalAprueba = data.actividades.length > 0 && parseFloat(total) >= 75;
-                const totalCls = data.actividades.length > 0
-                    ? (totalAprueba ? 'text-success font-weight-bold' : 'text-danger font-weight-bold') : 'text-muted';
-                html += `<tr><td class="font-weight-bold">${escapar(ap.nombre)}</td>${celdas}
-                    <td class="text-center ${totalCls}">${total}</td></tr>`;
-            });
-
-            html += `</tbody></table></div>`;
-            container.innerHTML = html;
-        }
-
-        function abrirEvidenciaCal(apIdx, actividadId) {
-            if (!matrizData) return;
-            const ap = matrizData.aprendices[apIdx];
-            const act = matrizData.actividades.find(a => a.id === actividadId);
-            const eObj = ap.entregas.find(e => e.actividad_id === actividadId);
-            if (!eObj || !eObj.entrega) return;
-
-            currentEntregaId = eObj.entrega.id;
-            document.getElementById('ev-aprendiz').textContent = ap.nombre;
-            document.getElementById('ev-actividad').textContent = act ? act.nombre : '';
-            document.getElementById('ev-url').value = eObj.entrega.url || '';
-            document.getElementById('ev-url-link').href = eObj.entrega.url || '#';
-            document.getElementById('ev-observaciones').value = '';
-            document.getElementById('ev-calificacion').value =
-                eObj.entrega.calificacion !== null && eObj.entrega.calificacion !== undefined
-                    ? eObj.entrega.calificacion : '';
-            actualizarBadge(eObj.entrega.calificacion);
-            document.getElementById('side-panel-cal').style.display = 'block';
-        }
-
-        function hideSidePanelCal() {
-            currentEntregaId = null;
-            document.getElementById('side-panel-cal').style.display = 'none';
-        }
-
-        function actualizarBadge(cal) {
-            const el = document.getElementById('ev-estado-badge');
-            if (cal === null || cal === undefined || cal === '') { el.innerHTML = ''; return; }
-            const c = parseFloat(cal);
-            if (c >= 75) {
-                el.innerHTML = `<span class="badge badge-aprobado px-2 py-1"><i class="fas fa-check mr-1"></i>APROBADO (${c})</span>`;
-            } else {
-                el.innerHTML = `<span class="badge badge-reprobado px-2 py-1"><i class="fas fa-times mr-1"></i>REPROBADO (${c})</span>`;
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('ev-calificacion').addEventListener('input', function () {
-                actualizarBadge(this.value);
-            });
-        });
-
-        async function guardarCalificacion() {
-            if (!currentEntregaId) {
-                showFormAlert('form-evidencia-alert', 'danger', 'No hay entrega seleccionada.', false);
-                return;
-            }
-            const calVal = document.getElementById('ev-calificacion').value;
-            if (calVal === '') {
-                showFormAlert('form-evidencia-alert', 'danger', 'Ingresa una calificación.', false);
-                return;
-            }
-            const cal = parseFloat(calVal);
-            if (isNaN(cal) || cal < 0 || cal > 100) {
-                showFormAlert('form-evidencia-alert', 'danger', 'La calificación debe estar entre 0 y 100.', false);
-                return;
-            }
-            hideFormAlert('form-evidencia-alert');
-            const obs = document.getElementById('ev-observaciones').value.trim();
-
-            try {
-                const res = await fetch(`/api/instructor/entrega/${currentEntregaId}/calificar`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ calificacion: cal, observaciones: obs }),
-                });
-                const data = await res.json();
-                if (data.ok) {
-                    showFormAlert('form-evidencia-alert', 'success', 'Calificación guardada correctamente.');
-                    setTimeout(() => { hideSidePanelCal(); matrizData = null; setCalTab(calTab); }, 1200);
-                } else {
-                    showFormAlert('form-evidencia-alert', 'danger', 'Error al guardar: ' + (data.error || 'Intenta de nuevo.'), false);
-                }
-            } catch(e) {
-                showFormAlert('form-evidencia-alert', 'danger', 'Error de conexión. Intenta de nuevo.', false);
-            }
-        }
-
-        // ═══════════════════════════════
-        //  Panel Asistencia
-        // ═══════════════════════════════
-        function clickAsistencia() {
-            document.querySelectorAll('.act-proy-btn').forEach(b => b.classList.remove('active'));
-            setMode('asistencia');
-            asistenciaAprendices = [];
-            document.getElementById('asistencia-content').style.display = 'none';
-            const hoy = new Date().toISOString().split('T')[0];
-            document.getElementById('asistencia-fecha').value = hoy;
-        }
-
-        async function cargarAsistencia() {
-            const fecha = document.getElementById('asistencia-fecha').value;
-            if (!fecha) { alert('Selecciona una fecha.'); return; }
-
-            document.getElementById('asistencia-loading').style.display = 'block';
-            document.getElementById('asistencia-content').style.display = 'none';
-
-            const res = await fetch(`/api/instructor/ficha/${FICHA_ID}/asistencia?fecha=${fecha}`);
-            const data = await res.json();
-
-            document.getElementById('asistencia-loading').style.display = 'none';
-            asistenciaAprendices = data.aprendices || [];
-            renderAsistencia(asistenciaAprendices);
-        }
-
-        function renderAsistencia(aprendices) {
-            const container = document.getElementById('asistencia-tabla');
-            if (!aprendices || aprendices.length === 0) {
-                container.innerHTML = `<div class="empty-state py-3">
-                    <i class="fas fa-users fa-2x mb-2"></i>
-                    <p class="mb-0">No hay aprendices registrados en esta ficha.</p></div>`;
-                document.getElementById('asistencia-content').style.display = 'block';
-                return;
-            }
-
-            let html = `<div class="table-responsive">
-            <table class="table table-bordered mb-0" style="font-size:.85rem;">
-                <thead class="thead-light">
-                    <tr>
-                        <th>Documento</th>
-                        <th>Aprendiz</th>
-                        <th class="text-center text-success">Presente</th>
-                        <th class="text-center text-danger">Ausente</th>
-                        <th class="text-center text-warning">Excusa</th>
-                    </tr>
-                </thead>
-                <tbody>`;
-
-            aprendices.forEach((ap, i) => {
-                const p = ap.estado === 'Presente';
-                const a = ap.estado === 'Ausente';
-                const e = ap.estado === 'Excusa';
-                html += `
-                <tr>
-                    <td class="text-muted small align-middle">${escapar(ap.documento || '—')}</td>
-                    <td class="font-weight-bold align-middle">${escapar(ap.nombre)}</td>
-                    <td class="text-center align-middle">
-                        <input type="radio" name="asist-${i}" value="Presente" data-idx="${i}" ${p ? 'checked' : ''} onchange="actualizarEstadoAp(${i}, 'Presente')">
-                    </td>
-                    <td class="text-center align-middle">
-                        <input type="radio" name="asist-${i}" value="Ausente" data-idx="${i}" ${a ? 'checked' : ''} onchange="actualizarEstadoAp(${i}, 'Ausente')">
-                    </td>
-                    <td class="text-center align-middle">
-                        <input type="radio" name="asist-${i}" value="Excusa" data-idx="${i}" ${e ? 'checked' : ''} onchange="actualizarEstadoAp(${i}, 'Excusa')">
-                    </td>
-                </tr>`;
-            });
-
-            html += `</tbody></table></div>`;
-            container.innerHTML = html;
-            document.getElementById('asistencia-ok').style.display = 'none';
-            document.getElementById('asistencia-content').style.display = 'block';
-        }
-
-        function actualizarEstadoAp(idx, estado) {
-            if (asistenciaAprendices[idx]) {
-                asistenciaAprendices[idx].estado = estado;
-            }
-        }
-
-        async function guardarAsistencia() {
-            const fecha = document.getElementById('asistencia-fecha').value;
-            if (!fecha) { alert('Sin fecha seleccionada.'); return; }
-
-            const registros = asistenciaAprendices.map(ap => ({
-                id_aprendiz: ap.id,
-                estado: ap.estado || 'Presente',
-            }));
-
-            const res = await fetch(`/api/instructor/ficha/${FICHA_ID}/asistencia`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fecha, registros }),
-            });
-            const data = await res.json();
-            if (data.ok) {
-                document.getElementById('asistencia-ok').style.display = 'block';
-            } else {
-                alert('Error al guardar: ' + (data.error || 'Intenta de nuevo.'));
-            }
-        }
-
-        // ── Init ──
-        cargarArbol();
-    </script>
+{% include 'components/modal_confirmar.html' %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
+<script>window.FICHA_ID = "{{ ficha.id }}";</script>
+<script type="module" src="{{ url_for('static', filename='js/instructor-fases.js') }}"></script>
 {% endblock %}

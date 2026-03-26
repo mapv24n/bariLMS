@@ -7,17 +7,20 @@ from bari_lms.db import get_db
 
 
 def get_user_by_email(email):
-    db = get_db()
-    return db.execute("""
-        SELECT
-            id,
-            correo AS email,
-            contrasena_hash AS password_hash,
-            nombre AS name,
-            activo AS active
-        FROM usuario
-        WHERE correo = ?
-    """, (email,)).fetchone()   
+    if not email:
+        return None
+    return get_db().execute(
+        """
+        SELECT u.id, u.correo_institucional AS email,
+               COALESCE(pe.nombres || ' ' || pe.apellidos, u.correo_institucional) AS name,
+               u.activo AS active,
+               u.creado_en AS created_at, u.contrasena_hash AS password_hash
+        FROM usuario u
+        LEFT JOIN persona pe ON pe.id = u.id
+        WHERE lower(u.correo_institucional) = lower(?)
+        """,
+        (email,),
+    ).fetchone()
 
 
 def user_has_profile(user_id, profile_name):
@@ -36,12 +39,15 @@ def user_has_profile(user_id, profile_name):
 def get_user_by_id(user_id):
     return get_db().execute(
         """
-        SELECT u.id, u.correo AS email, u.nombre AS name, u.activo AS active,
+        SELECT u.id, u.correo_institucional AS email,
+               COALESCE(pe.nombres || ' ' || pe.apellidos, u.correo_institucional) AS name,
+               u.activo AS active,
                u.creado_en AS created_at,
                (SELECT p.nombre FROM usuario_perfil up
                 JOIN perfil p ON p.id = up.perfil_id
                 WHERE up.usuario_id = u.id LIMIT 1) AS role
         FROM usuario u
+        LEFT JOIN persona pe ON pe.id = u.id
         WHERE u.id = ?
         """,
         (user_id,),
@@ -51,12 +57,15 @@ def get_user_by_id(user_id):
 def get_all_users():
     return get_db().execute(
         """
-        SELECT u.id, u.correo AS email, u.nombre AS name, u.activo AS active,
+        SELECT u.id, u.correo_institucional AS email,
+               COALESCE(pe.nombres || ' ' || pe.apellidos, u.correo_institucional) AS name,
+               u.activo AS active,
                u.creado_en AS created_at,
                (SELECT p.nombre FROM usuario_perfil up
                 JOIN perfil p ON p.id = up.perfil_id
                 WHERE up.usuario_id = u.id LIMIT 1) AS role
         FROM usuario u
+        LEFT JOIN persona pe ON pe.id = u.id
         ORDER BY u.creado_en DESC, u.id DESC
         """
     ).fetchall()
@@ -78,11 +87,13 @@ def get_admin_dashboard_data():
     ).fetchone()["total"]
     latest_users = db.execute(
         """
-        SELECT u.nombre AS name, u.correo AS email,
+        SELECT COALESCE(pe.nombres || ' ' || pe.apellidos, u.correo_institucional) AS name,
+               u.correo_institucional AS email,
                (SELECT p.nombre FROM usuario_perfil up
                 JOIN perfil p ON p.id = up.perfil_id
                 WHERE up.usuario_id = u.id LIMIT 1) AS role
         FROM usuario u
+        LEFT JOIN persona pe ON pe.id = u.id
         ORDER BY u.creado_en DESC, u.id DESC
         LIMIT 3
         """

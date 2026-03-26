@@ -1,5 +1,7 @@
 """Repositorio genérico de entidades: CRUD, validación y utilidades de formulario."""
 
+import uuid
+
 from bari_lms.db import get_db, parse_int
 from bari_lms.repositories._config import ENTITY_CONFIG
 
@@ -9,32 +11,35 @@ from bari_lms.repositories._config import ENTITY_CONFIG
 def entity_select_clause(entity):
     config = ENTITY_CONFIG[entity]
     alias_map = config.get("select_aliases", {})
-    fields = ["id"]
+    table = config["table"]
+    fields = [f"{table}.id"]
     for field in config["fields"]:
         alias = alias_map.get(field)
-        fields.append(f"{field} AS {alias}" if alias else field)
-    if entity == "instructor" and "usuario_id AS user_id" not in fields:
-        fields.append("usuario_id AS user_id")
-    if entity == "instructor" and "area_id" not in fields:
-        fields.append("area_id")
-    if entity in {"aprendiz", "administrativo_persona"} and "usuario_id AS user_id" not in fields:
-        fields.append("usuario_id AS user_id")
+        col = f"{table}.{field}"
+        fields.append(f"{col} AS {alias}" if alias else col)
+    extra = config.get("extra_select")
+    if extra:
+        fields.append(extra)
     return ", ".join(fields)
 
 
 def get_entity(entity, item_id):
     if entity not in ENTITY_CONFIG or item_id is None:
         return None
-    table = ENTITY_CONFIG[entity]["table"]
+    config = ENTITY_CONFIG[entity]
+    table = config["table"]
+    join = config.get("join", "")
     return get_db().execute(
-        f"SELECT {entity_select_clause(entity)} FROM {table} WHERE id = ?",
+        f"SELECT {entity_select_clause(entity)} FROM {table} {join} WHERE {table}.id = ?",
         (item_id,),
     ).fetchone()
 
 
 def get_entities(entity, where=None, params=(), order_by="id DESC"):
-    table = ENTITY_CONFIG[entity]["table"]
-    sql = f"SELECT {entity_select_clause(entity)} FROM {table}"
+    config = ENTITY_CONFIG[entity]
+    table = config["table"]
+    join = config.get("join", "")
+    sql = f"SELECT {entity_select_clause(entity)} FROM {table} {join}"
     if where:
         sql += f" WHERE {where}"
     sql += f" ORDER BY {order_by}"
@@ -45,9 +50,10 @@ def get_entities(entity, where=None, params=(), order_by="id DESC"):
 
 def insert_entity(entity, data):
     config = ENTITY_CONFIG[entity]
-    columns = ", ".join(config["fields"])
-    placeholders = ", ".join(["?"] * len(config["fields"]))
-    values = tuple(data[field] for field in config["fields"])
+    entity_id = str(uuid.uuid7())
+    columns = "id, " + ", ".join(config["fields"])
+    placeholders = ", ".join(["?"] * (len(config["fields"]) + 1))
+    values = (entity_id,) + tuple(data[field] for field in config["fields"])
     cursor = get_db().execute(
         f"INSERT INTO {config['table']} ({columns}) VALUES ({placeholders}) RETURNING id",
         values,
@@ -75,8 +81,10 @@ def delete_entity(entity, item_id):
 
 def entity_form_data(entity, form):
     data = {}
-    form_to_db = ENTITY_CONFIG[entity].get("form_to_db", {})
-    for field in ENTITY_CONFIG[entity]["fields"]:
+    config = ENTITY_CONFIG[entity]
+    form_to_db = config.get("form_to_db", {})
+    all_fields = config["fields"] + config.get("persona_form_fields", [])
+    for field in all_fields:
         form_field = next(
             (name for name, db_name in form_to_db.items() if db_name == field), field
         )

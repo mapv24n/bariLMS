@@ -12,7 +12,7 @@ from bari_lms.repositories._config import ENTITY_CONFIG, PEOPLE_ENTITIES
 from bari_lms.repositories.entidad import (
     delete_entity,
     entity_form_data,
-    insert_entity,
+    update_entity,
     validate_entity_payload,
 )
 from bari_lms.repositories.admin.personas import (
@@ -26,9 +26,9 @@ from bari_lms.repositories.admin.personas import (
 # ── Importación CSV ──────────────────────────────────────────────────────────
 
 _IMPORT_FIELD_MAP = {
-    "instructor": {"email": "correo", "correo": "correo"},
-    "aprendiz": {"email": "correo", "correo": "correo"},
-    "administrativo_persona": {"email": "correo", "correo": "correo"},
+    "instructor": {"email": "correo"},
+    "aprendiz": {},
+    "administrativo_persona": {},
 }
 
 
@@ -41,8 +41,10 @@ def _normalize_import_row(entity, row):
             continue
         target_key = field_map.get(normalized_key, normalized_key)
         mapped[target_key] = (value or "").strip()
+    config = ENTITY_CONFIG[entity]
+    all_fields = config["fields"] + config.get("persona_form_fields", [])
     data = {}
-    for field in ENTITY_CONFIG[entity]["fields"]:
+    for field in all_fields:
         raw_value = mapped.get(field, "")
         if field.endswith("_id"):
             data[field] = raw_value or None
@@ -77,10 +79,8 @@ def _import_people_csv(entity, storage):
         if error:
             errors.append(f"Fila {index}: {error}")
             continue
-        created_id = None
         try:
-            created_id = insert_entity(entity, data)
-            create_linked_person_user(entity, created_id, data)
+            create_linked_person_user(entity, data)
             created += 1
         except IntegrityError:
             get_db().rollback()
@@ -89,8 +89,6 @@ def _import_people_csv(entity, storage):
             )
         except ValueError as exc:
             get_db().rollback()
-            if created_id is not None:
-                delete_entity(entity, created_id)
             errors.append(f"Fila {index}: {exc}")
 
     return created, errors
@@ -118,10 +116,8 @@ def register_routes(app):
         if error:
             flash(error, "danger")
             return redirect(url_for("admin_people", **get_people_redirect_args(request.form)))
-        created_id = None
         try:
-            created_id = insert_entity(entity, data)
-            create_linked_person_user(entity, created_id, data)
+            create_linked_person_user(entity, data)
         except IntegrityError:
             get_db().rollback()
             flash(
@@ -131,8 +127,7 @@ def register_routes(app):
             )
             return redirect(url_for("admin_people", **get_people_redirect_args(request.form)))
         except ValueError as exc:
-            if created_id is not None:
-                delete_entity(entity, created_id)
+            get_db().rollback()
             flash(str(exc), "danger")
             return redirect(url_for("admin_people", **get_people_redirect_args(request.form)))
         flash(
@@ -218,6 +213,5 @@ def register_routes(app):
             flash("La persona solicitada no existe.", "danger")
             return redirect(url_for("admin_people"))
         delete_linked_person_user(entity, item_id)
-        delete_entity(entity, item_id)
         flash(f"{ENTITY_CONFIG[entity]['label']} eliminada correctamente.", "success")
         return redirect(url_for("admin_people"))

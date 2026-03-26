@@ -3,7 +3,7 @@
 import uuid
 
 from bari_lms.db import get_db, parse_uuid
-from bari_lms.repositories._config import PEOPLE_ENTITIES, PERSON_USER_CONFIG
+from bari_lms.repositories._config import ENTITY_CONFIG, PEOPLE_ENTITIES, PERSON_USER_CONFIG
 from bari_lms.repositories.entidad import get_entities, get_entity
 from bari_lms.repositories.usuario import get_user_by_email
 from bari_lms.services.security import hash_password
@@ -12,13 +12,13 @@ from bari_lms.services.security import hash_password
 # ── Utilidades ───────────────────────────────────────────────────────────────
 
 def person_full_name(data):
-    return f"{data['nombres']} {data['apellidos']}".strip()
+    return f"{data.get('nombres', '')} {data.get('apellidos', '')}".strip()
 
 
-def generate_person_email(prefix, documento, email):
-    clean_email = (email or "").strip().lower()
-    if clean_email:
-        return clean_email
+def generate_person_email(prefix, documento, correo_personal):
+    clean = (correo_personal or "").strip().lower()
+    if clean:
+        return clean
     return f"{prefix}.{documento}@barilms.local"
 
 
@@ -51,10 +51,10 @@ def normalize_people_context(args):
         "coordinaciones": get_entities("coordinacion", order_by="nombre ASC"),
         "centros": centros,
         "areas_academicas": areas_academicas,
-        "instructores": get_entities("instructor", order_by="nombres ASC, apellidos ASC"),
-        "aprendices": get_entities("aprendiz", order_by="nombres ASC, apellidos ASC"),
+        "instructores": get_entities("instructor", order_by="pe.nombres ASC, pe.apellidos ASC"),
+        "aprendices": get_entities("aprendiz", order_by="pe.nombres ASC, pe.apellidos ASC"),
         "administrativos": get_entities(
-            "administrativo_persona", order_by="nombres ASC, apellidos ASC"
+            "administrativo_persona", order_by="pe.nombres ASC, pe.apellidos ASC"
         ),
         "regional_map": {r["id"]: r["nombre"] for r in regionales},
         "centro_map": {c["id"]: c["nombre"] for c in centros},
@@ -67,27 +67,36 @@ def normalize_people_context(args):
 
 # ── Vinculación persona ↔ usuario ────────────────────────────────────────────
 
-def create_linked_person_user(entity, item_id, data):
+def create_linked_person_user(entity, data):
+    """Crea usuario, persona, usuario_perfil y la entidad de rol. Retorna el id del rol."""
     config = PERSON_USER_CONFIG[entity]
-    login_email = generate_person_email(
-        config["email_prefix"], data["documento"], data.get("correo")
+    entity_config = ENTITY_CONFIG[entity]
+
+    nombres = (data.get("nombres") or "").strip().upper()
+    apellidos = (data.get("apellidos") or "").strip().upper()
+    numero_documento = (data.get("documento") or "").strip()
+    correo_personal = (data.get("correo") or "").strip().lower() or None
+
+    correo_institucional = generate_person_email(
+        config["email_prefix"], numero_documento, correo_personal
     )
-    if get_user_by_email(login_email) is not None:
+    if get_user_by_email(correo_institucional) is not None:
         raise ValueError(
             "Ya existe un usuario con el correo que se intenta asignar a la persona."
         )
 
     db = get_db()
-    new_user_id = str(uuid.uuid7())
+    persona_id = str(uuid.uuid7())
+
     db.execute(
-        "INSERT INTO usuario (id, correo, contrasena_hash, nombre, activo) "
-        "VALUES (?, ?, ?, ?, TRUE)",
-        (
-            new_user_id,
-            login_email,
-            hash_password(data["documento"]),
-            person_full_name(data),
-        ),
+        "INSERT INTO usuario (id, correo_institucional, contrasena_hash, activo) "
+        "VALUES (?, ?, ?, TRUE)",
+        (persona_id, correo_institucional, hash_password(numero_documento)),
+    )
+    db.execute(
+        "INSERT INTO persona (id, nombres, apellidos, numero_documento, correo_personal) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (persona_id, nombres, apellidos, numero_documento, correo_personal),
     )
     db.execute(
         """
@@ -95,64 +104,67 @@ def create_linked_person_user(entity, item_id, data):
         SELECT ?, ?, p.id FROM perfil p WHERE p.nombre = ?
         ON CONFLICT (usuario_id, perfil_id) DO NOTHING
         """,
-        (str(uuid.uuid7()), new_user_id, config["role"]),
+        (str(uuid.uuid7()), persona_id, config["role"]),
     )
+
+    role_id = str(uuid.uuid7())
+    role_fields = ["persona_id"] + entity_config["fields"]
+    columns = "id, " + ", ".join(role_fields)
+    placeholders = ", ".join(["?"] * (len(role_fields) + 1))
+    values = (role_id, persona_id) + tuple(data.get(f) for f in entity_config["fields"])
     db.execute(
-        f"UPDATE {config['table']} SET {config['email_column']} = ?, {config['user_column']} = ? WHERE id = ?",
-        (login_email, new_user_id, item_id),
+        f"INSERT INTO {entity_config['table']} ({columns}) VALUES ({placeholders})",
+        values,
     )
     db.commit()
-    return new_user_id
+    return role_id
 
 
 def sync_linked_person_user(entity, item_id, data):
+    """Actualiza los datos de persona y usuario vinculados a la entidad de rol."""
     item = get_entity(entity, item_id)
     if item is None:
         return
 
     config = PERSON_USER_CONFIG[entity]
-    login_email = generate_person_email(
-        config["email_prefix"], data["documento"], data.get("correo")
+    persona_id = item["persona_id"]
+
+    nombres = (data.get("nombres") or "").strip().upper()
+    apellidos = (data.get("apellidos") or "").strip().upper()
+    numero_documento = (data.get("documento") or "").strip()
+    correo_personal = (data.get("correo") or "").strip().lower() or None
+
+    correo_institucional = generate_person_email(
+        config["email_prefix"], numero_documento, correo_personal
     )
+    existing = get_user_by_email(correo_institucional)
+    if existing is not None and existing["id"] != persona_id:
+        raise ValueError(
+            "Ya existe un usuario con el correo que se intenta asignar a la persona."
+        )
+
     db = get_db()
-
-    if item["user_id"]:
-        existing_user = get_user_by_email(login_email)
-        if existing_user is not None and existing_user["id"] != item["user_id"]:
-            raise ValueError(
-                "Ya existe un usuario con el correo que se intenta asignar a la persona."
-            )
-        db.execute(
-            "UPDATE usuario SET correo = ?, contrasena_hash = ?, nombre = ?, activo = TRUE WHERE id = ?",
-            (
-                login_email,
-                hash_password(data["documento"]),
-                person_full_name(data),
-                item["user_id"],
-            ),
-        )
-        db.execute(
-            """
-            INSERT INTO usuario_perfil (id, usuario_id, perfil_id)
-            SELECT ?, ?, p.id FROM perfil p WHERE p.nombre = ?
-            ON CONFLICT (usuario_id, perfil_id) DO NOTHING
-            """,
-            (str(uuid.uuid7()), item["user_id"], config["role"]),
-        )
-        db.execute(
-            f"UPDATE {config['table']} SET {config['email_column']} = ? WHERE id = ?",
-            (login_email, item_id),
-        )
-        db.commit()
-        return
-
-    create_linked_person_user(entity, item_id, data)
+    db.execute(
+        "UPDATE persona SET nombres = ?, apellidos = ?, numero_documento = ?, correo_personal = ? "
+        "WHERE id = ?",
+        (nombres, apellidos, numero_documento, correo_personal, persona_id),
+    )
+    db.execute(
+        "UPDATE usuario SET correo_institucional = ? WHERE id = ?",
+        (correo_institucional, persona_id),
+    )
+    db.commit()
 
 
 def delete_linked_person_user(entity, item_id):
+    """Elimina la entidad de rol, su persona y su usuario (en orden por restricciones FK)."""
     item = get_entity(entity, item_id)
-    if item is None or not item.get("user_id"):
+    if item is None:
         return
+    persona_id = item["persona_id"]
+    config = PERSON_USER_CONFIG[entity]
     db = get_db()
-    db.execute("DELETE FROM usuario WHERE id = ?", (item["user_id"],))
+    db.execute(f"DELETE FROM {config['table']} WHERE id = ?", (item_id,))
+    db.execute("DELETE FROM persona WHERE id = ?", (persona_id,))
+    db.execute("DELETE FROM usuario WHERE id = ?", (persona_id,))
     db.commit()
