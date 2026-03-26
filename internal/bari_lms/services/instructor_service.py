@@ -67,15 +67,15 @@ class InstructorService:
         ficha = db.execute(
             """
             SELECT f.id, f.numero,
-                   p.nombre  AS programa_nombre,
-                   pf.nombre AS proyecto_nombre,
-                   pf.codigo AS proyecto_codigo,
-                   pf.id     AS proyecto_id,
-                   n.nombre  AS nivel_nombre
+                p.nombre  AS programa_nombre,
+                pf.nombre AS proyecto_nombre,
+                pf.codigo AS proyecto_codigo,
+                pf.id     AS proyecto_id,
+                n.nombre  AS nivel_nombre
             FROM ficha_formacion f
-            JOIN programa_formacion      p  ON p.id  = f.id_programa_formacion
-            LEFT JOIN proyecto_formativo pf ON pf.id = f.id_proyecto_formativo
-            LEFT JOIN nivel_formacion    n  ON n.id  = p.id_nivel_formacion
+            JOIN programa_formacion      p  ON p.id  = f.programa_formacion_id
+            LEFT JOIN proyecto_formativo pf ON pf.id = f.proyecto_formativo_id
+            LEFT JOIN nivel_formacion    n  ON n.id  = p.nivel_formacion_id
             WHERE f.id = ?
             """,
             (id_ficha,),
@@ -188,12 +188,8 @@ class InstructorService:
         correo: Optional[str],
         genero: str,
     ) -> dict:
-        """Actualiza los datos personales del instructor en la BD.
+        """Actualiza los datos personales del instructor en la BD."""
 
-        Returns:
-            {"ok": True,  "instructor": Instructor}
-            {"ok": False, "error": str}
-        """
         instructor = Instructor.por_id(db, id_instructor)
         if instructor is None:
             return {"ok": False, "error": "Instructor no encontrado."}
@@ -206,19 +202,21 @@ class InstructorService:
         except ValueError as e:
             return {"ok": False, "error": str(e)}
 
+        # 🔥 FIX: update persona instead of instructor
         db.execute(
             """
-            UPDATE instructor
-               SET nombres = ?, apellidos = ?, correo = ?, genero = ?
-             WHERE id = ?
+            UPDATE persona
+            SET nombres = ?, apellidos = ?, correo_personal = ?, genero = ?
+            WHERE id = ?
             """,
             (
                 instructor.get_nombres(),
                 instructor.get_apellidos(),
                 instructor.get_correo(),
                 instructor.get_genero(),
-                instructor.get_id(),
+                instructor.get_persona_id(),  # ⚠️ must exist in model
             ),
         )
         db.commit()
+
         return {"ok": True, "instructor": instructor}
