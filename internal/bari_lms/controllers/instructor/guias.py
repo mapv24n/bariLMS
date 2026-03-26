@@ -47,7 +47,7 @@ def register_routes(app):
         db = get_db()
         rows = db.execute(
             "SELECT id, nombre, url, descripcion, orden, subido_en "
-            "FROM guia_actividad_proyecto WHERE actividad_proyecto_id = ? ORDER BY orden ASC, id ASC",
+            "FROM guia_actividad_proyecto WHERE actividad_proyecto_id = ? AND COALESCE(tipo, 'concertado') = 'concertado' ORDER BY orden ASC, id ASC",
             (ap_id,),
         ).fetchall()
         return jsonify({"guias": [dict(r) for r in rows]})
@@ -75,7 +75,47 @@ def register_routes(app):
 
         db = get_db()
         row = db.execute(
-            "INSERT INTO guia_actividad_proyecto (id, actividad_proyecto_id, nombre, url) VALUES (?, ?, ?, ?) RETURNING id",
+            "INSERT INTO guia_actividad_proyecto (id, actividad_proyecto_id, nombre, url, tipo) VALUES (?, ?, ?, ?, 'concertado') RETURNING id",
+            (str(uuid.uuid7()), ap_id, nombre, guia_url),
+        ).fetchone()
+        db.commit()
+        return jsonify({"ok": True, "id": row["id"], "nombre": nombre, "url": guia_url})
+
+    @app.get("/api/instructor/actividad-proyecto/<ap_id>/guias-aprendizaje")
+    @role_required("Instructor")
+    def api_instructor_guias_aprendizaje_ap(ap_id):
+        db = get_db()
+        rows = db.execute(
+            "SELECT id, nombre, url, descripcion, orden, subido_en "
+            "FROM guia_actividad_proyecto WHERE actividad_proyecto_id = ? AND tipo = 'aprendizaje' ORDER BY orden ASC, id ASC",
+            (ap_id,),
+        ).fetchall()
+        return jsonify({"guias": [dict(r) for r in rows]})
+
+    @app.post("/api/instructor/actividad-proyecto/<ap_id>/guias-aprendizaje/nueva")
+    @role_required("Instructor")
+    def api_instructor_guia_aprendizaje_ap_nueva(ap_id):
+        guia_url = None
+        nombre = (request.form.get("nombre") or "").strip() or None
+
+        if "guia_archivo" in request.files and request.files["guia_archivo"].filename:
+            file = request.files["guia_archivo"]
+            filename = secure_filename(file.filename)
+            unique_name = f"{uuid.uuid7().hex}_{filename}"
+            upload_folder = current_app.config["UPLOAD_FOLDER_GUIAS"]
+            file.save(os.path.join(upload_folder, unique_name))
+            guia_url = url_for("static", filename=f"uploads/guias/{unique_name}")
+            if not nombre:
+                nombre = file.filename
+        else:
+            guia_url = (request.form.get("guia_url") or "").strip() or None
+
+        if not guia_url:
+            return jsonify({"ok": False, "error": "Se requiere un archivo o URL"}), 400
+
+        db = get_db()
+        row = db.execute(
+            "INSERT INTO guia_actividad_proyecto (id, actividad_proyecto_id, nombre, url, tipo) VALUES (?, ?, ?, ?, 'aprendizaje') RETURNING id",
             (str(uuid.uuid7()), ap_id, nombre, guia_url),
         ).fetchone()
         db.commit()

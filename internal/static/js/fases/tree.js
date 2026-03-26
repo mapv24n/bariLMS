@@ -3,6 +3,7 @@
 import { state } from './state.js';
 import { escapar } from './utils.js';
 import { cargarGuias } from './guias.js';
+import { cargarGuiasAprendizaje } from './guias-aprendizaje.js';
 import { cargarActividades } from './actividades.js';
 import { hideSidePanel } from './side-panel.js';
 
@@ -105,11 +106,33 @@ export async function seleccionarActProy(faseId, apId, apNombre, guiasCount) {
     document.getElementById('ap-titulo-nombre').textContent = apNombre;
 
     await cargarGuias(apId);
+    await cargarGuiasAprendizaje(apId);
+    // La visibilidad de actividades-section se evalúa automáticamente 
+    // mediante los eventos 'fases:evaluar-desbloqueo' lanzados por cargarGuias.
+}
 
-    if (guiasCount > 0) {
-        document.getElementById('actividades-section').style.display = 'block';
-        await cargarActividades();
+export async function evaluarDesbloqueoActividades() {
+    const tieneConcertado = state.guiasCache && state.guiasCache.length > 0;
+    const tieneAprendizaje = state.guiasAprendizajeCache && state.guiasAprendizajeCache.length > 0;
+    
+    const lock1 = document.getElementById('guias-lock');
+    if (lock1) lock1.style.display = tieneConcertado ? 'none' : 'block';
+    
+    const lock2 = document.getElementById('guias-aprendizaje-lock');
+    if (lock2) lock2.style.display = tieneAprendizaje ? 'none' : 'block';
+
+    const actSection = document.getElementById('actividades-section');
+    if (!actSection) return;
+
+    if (tieneConcertado && tieneAprendizaje) {
+        const estabaOculto = actSection.style.display === 'none' || actSection.style.display === '';
+        actSection.style.display = 'block';
+        if (estabaOculto && state.selectedActProyId) {
+            await cargarActividades();
+        }
     } else {
-        document.getElementById('actividades-section').style.display = 'none';
+        actSection.style.display = 'none';
     }
 }
+
+document.addEventListener('fases:evaluar-desbloqueo', evaluarDesbloqueoActividades);

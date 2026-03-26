@@ -39,7 +39,7 @@
         <div class="card shadow border-0" style="display:flex; flex-direction:column; min-height:400px;">
             <div class="card-header py-2 border-bottom-sena">
                 <span class="font-weight-bold text-sena small">
-                    <i class="fas fa-sitemap mr-1"></i> Estructura del Proyecto
+                    <i class="fas fa-sitemap mr-1"></i>
                 </span>
             </div>
             <div class="card-body p-2" style="flex:1; overflow-y:auto;">
@@ -114,6 +114,30 @@
 
                 </div>
             </div>
+
+            <!-- Guías de actividades de aprendizaje -->
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-header py-2 d-flex align-items-center justify-content-between">
+                    <span class="font-weight-bold text-sena small">
+                        <i class="fas fa-book-open mr-1"></i> Guía de actividades de aprendizaje
+                    </span>
+                    <button class="btn btn-sm btn-outline-success border-0" data-btn="toggle-form-guia-aprendizaje">
+                        <i class="fas fa-plus mr-1"></i> Subir guía
+                    </button>
+                </div>
+                <div class="card-body p-3">
+                    <!-- Formulario subir guía -->
+                    {% include 'components/form_guia_aprendizaje.html' %}
+
+                    <div id="guias-aprendizaje-lista"></div>
+                    <div id="guias-aprendizaje-lock" class="empty-state py-3" style="display:none;">
+                        <i class="fas fa-lock fa-2x mb-2 text-warning"></i>
+                        <p class="mb-1 font-weight-bold">Sin guías subidas</p>
+                        <p class="small mb-0">Debes subir al menos una guía antes de poder crear actividades de aprendizaje.</p>
+                    </div>
+                </div>
+            </div>
+
 
             <!-- Sección de Actividades (se muestra solo cuando hay ≥1 guía) -->
             <div id="actividades-section" style="display:none;">

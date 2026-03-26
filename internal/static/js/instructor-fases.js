@@ -10,6 +10,7 @@
 import { cargarArbol, setMode }                                from './fases/tree.js';
 import { cargarActividades, initActividadesDelegate }          from './fases/actividades.js';
 import { toggleFormGuia, subirGuia, initGuiasDelegate }        from './fases/guias.js';
+import { toggleFormGuiaAprendizaje, subirGuiaAprendizaje, initGuiasDelegate as initGuiasAprendizajeDelegate } from './fases/guias-aprendizaje.js';
 import { toggleCrearPanel, confirmarCrearActividad,
          guardarSeccion, guardarSubSeccion,
          hideSidePanel, initSidePanelDelegate }                from './fases/side-panel.js';
@@ -36,6 +37,12 @@ document.addEventListener('DOMContentLoaded', () => {
         ?.addEventListener('click', toggleFormGuia);
     document.querySelector('[data-btn="subir-guia"]')
         ?.addEventListener('click', subirGuia);
+
+    // Guías de Aprendizaje
+    document.querySelector('[data-btn="toggle-form-guia-aprendizaje"]')
+        ?.addEventListener('click', toggleFormGuiaAprendizaje);
+    document.querySelector('[data-btn="subir-guia-aprendizaje"]')
+        ?.addEventListener('click', subirGuiaAprendizaje);
 
     // Actividades
     document.querySelector('[data-btn="crear-actividad"]')
@@ -73,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Delegaciones de eventos sobre contenedores dinámicos ─────────────────
     initGuiasDelegate();
+    initGuiasAprendizajeDelegate();
     initActividadesDelegate();
     initSidePanelDelegate();
     initCalificacionesDelegate();
