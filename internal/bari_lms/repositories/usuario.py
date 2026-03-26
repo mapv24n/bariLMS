@@ -11,13 +11,13 @@ def get_user_by_email(email):
         return None
     return get_db().execute(
         """
-        SELECT u.id, u.correo_institucional AS email,
-               COALESCE(pe.nombres || ' ' || pe.apellidos, u.correo_institucional) AS name,
+        SELECT u.id, u.correo AS email,
+               COALESCE(pe.nombres || ' ' || pe.apellidos, u.correo) AS name,
                u.activo AS active,
                u.creado_en AS created_at, u.contrasena_hash AS password_hash
         FROM usuario u
         LEFT JOIN persona pe ON pe.id = u.id
-        WHERE lower(u.correo_institucional) = lower(?)
+        WHERE lower(u.correo) = lower(?)
         """,
         (email,),
     ).fetchone()
@@ -39,8 +39,8 @@ def user_has_profile(user_id, profile_name):
 def get_user_by_id(user_id):
     return get_db().execute(
         """
-        SELECT u.id, u.correo_institucional AS email,
-               COALESCE(pe.nombres || ' ' || pe.apellidos, u.correo_institucional) AS name,
+        SELECT u.id, u.correo AS email,
+               COALESCE(pe.nombres || ' ' || pe.apellidos, u.correo) AS name,
                u.activo AS active,
                u.creado_en AS created_at,
                (SELECT p.nombre FROM usuario_perfil up
@@ -57,8 +57,8 @@ def get_user_by_id(user_id):
 def get_all_users():
     return get_db().execute(
         """
-        SELECT u.id, u.correo_institucional AS email,
-               COALESCE(pe.nombres || ' ' || pe.apellidos, u.correo_institucional) AS name,
+        SELECT u.id, u.correo AS email,
+               COALESCE(pe.nombres || ' ' || pe.apellidos, u.correo) AS name,
                u.activo AS active,
                u.creado_en AS created_at,
                (SELECT p.nombre FROM usuario_perfil up
@@ -87,8 +87,8 @@ def get_admin_dashboard_data():
     ).fetchone()["total"]
     latest_users = db.execute(
         """
-        SELECT COALESCE(pe.nombres || ' ' || pe.apellidos, u.correo_institucional) AS name,
-               u.correo_institucional AS email,
+        SELECT COALESCE(pe.nombres || ' ' || pe.apellidos, u.correo) AS name,
+               u.correo AS email,
                (SELECT p.nombre FROM usuario_perfil up
                 JOIN perfil p ON p.id = up.perfil_id
                 WHERE up.usuario_id = u.id LIMIT 1) AS role
