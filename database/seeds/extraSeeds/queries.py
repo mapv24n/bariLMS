@@ -112,6 +112,35 @@ class SeedQueries(Enum):
     
     
 
+    # ── Activity Content ───────────────────────────────────────────────────────
+    INSERT_ACTIVIDAD_PROYECTO = """
+        INSERT INTO actividad_proyecto (id, fase_proyecto_id, nombre, creado_por)
+        VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING
+    """
+
+    INSERT_ACTIVIDAD_APRENDIZAJE = """
+        INSERT INTO actividad_aprendizaje
+            (id, actividad_proyecto_id, nombre, descripcion, fecha_inicio, fecha_fin, orden, creado_por)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING
+    """
+
+    INSERT_GUIA_APRENDIZAJE = """
+        INSERT INTO guia_aprendizaje (id, actividad_aprendizaje_id, url, creado_por)
+        VALUES (%s, %s, %s, %s) ON CONFLICT (actividad_aprendizaje_id) DO NOTHING
+    """
+
+    INSERT_SECCION_ACTIVIDAD = """
+        INSERT INTO seccion_actividad
+            (id, actividad_aprendizaje_id, nombre, descripcion, orden, creado_por)
+        VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING
+    """
+
+    INSERT_SUB_SECCION_ACTIVIDAD = """
+        INSERT INTO sub_seccion_actividad
+            (id, seccion_id, nombre, descripcion, orden, creado_por)
+        VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING
+    """
+
     def execute(self, cur, params):
         """
         Executes the query associated with the enum member.

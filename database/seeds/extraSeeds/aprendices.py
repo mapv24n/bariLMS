@@ -1,85 +1,95 @@
+"""
+aprendices.py — Seed for apprentices, enrollments, and EP companies.
+
+Depends on: estructura.py, instructores.py.
+
+Creates 12 apprentices (2 per ficha, 6 fichas) with varied states,
+4 companies, and ficha_aprendiz enrollment records.
+
+The company ↔ apprentice link (contrato_aprendizaje) lives in a separate
+EP seed — this file only handles the formation-stage data.
+
+Credentials (profile: Aprendiz) — password: Sena2024*
+    Ficha 2900001: ana.gomez, luis.torres
+    Ficha 2900002: sofia.mendez, andres.ruiz
+    Ficha 2900003: camila.vargas, miguel.castro
+    Ficha 2900004: mario.duarte, claudia.nieto
+    Ficha 2900005: felipe.basto, paola.ortiz
+    Ficha 2900006: jorge.vivas, diana.solano
+    (all @aprendiz.sena.edu.co)
+
+Run from project root:
+    python database/seeds/extraSeeds/aprendices.py
+"""
+
 import os
 import sys
-import psycopg
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
-sys.path.insert(0, os.path.join(project_root, "internal"))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "internal"))
 
 from bari_lms.services.security import hash_password
-from data import DATA_APRENDICES, DATA_EMPRESAS, SEED_PASSWORD, generate_id
+from db import connect, resolve_id
 from queries import SeedQueries
+from data import generate_id, DATA_APRENDICES, DATA_EMPRESAS, SEED_PASSWORD
 
-def connect():
-    return psycopg.connect(
-        host=os.getenv("PGHOST", "127.0.0.1"),
-        port=int(os.getenv("PGPORT", "5432")),
-        dbname=os.getenv("PGDATABASE", "bari_lms"),
-        user=os.getenv("PGUSER", "postgres"),
-        password=os.getenv("PGPASSWORD", ""),
-    )
-
-def _resolve_id(cur, table, col, val):
-    cur.execute(f"SELECT id FROM {table} WHERE {col} = %s", (val,))
-    row = cur.fetchone()
-    return str(row[0]) if row else None
 
 def run(cur):
     print("  → Resolving dependencies...")
     pw_hash = hash_password(SEED_PASSWORD)
-    
-    # Global dependencies
-    deps = {
-        "cc": _resolve_id(cur, "tipo_documento", "codigo", "cc"),
-        "ti": _resolve_id(cur, "tipo_documento", "codigo", "ti"),
-        "m": _resolve_id(cur, "sexo", "codigo", "m"),
-        "f": _resolve_id(cur, "sexo", "codigo", "f"),
-        "regional": _resolve_id(cur, "regional", "nombre", "Regional Antioquia"), # Adjust to your Regional
-        "perfil": _resolve_id(cur, "perfil", "nombre", "Aprendiz")
-    }
 
-    # 1. Seed Companies
-    print("  → Seeding companies...")
+    regional_id = resolve_id(cur, "regional", "nombre", "Regional Norte de Santander")
+    perfil_id   = resolve_id(cur, "perfil", "nombre", "Aprendiz")
+
+    # ── Companies ──────────────────────────────────────────────────────────────
+    print("  → empresa...")
     for razon, nit, sector, correo, tel in DATA_EMPRESAS:
-        SeedQueries.INSERT_EMPRESA.execute(cur, (generate_id(), razon, nit, sector, correo, tel))
+        was_inserted = SeedQueries.INSERT_EMPRESA.execute(cur, (generate_id(), razon, nit, sector, correo, tel))
+        print(f"    {'[+]' if was_inserted else '[skipped]'} {razon}")
 
-    # 2. Seed Apprentices & Enrollments
-    print("  → Seeding apprentices...")
-    for correo, full_n, doc, t_doc, nom, ape, sex, f_num, lect, concl, prod in DATA_APRENDICES:
-        print(f"    - Apprentice: {correo}")
-        
-        # A. User
-        u_id = generate_id()
-        SeedQueries.INSERT_USUARIO.execute(cur, (u_id, correo, pw_hash, full_n))
-        actual_u_id = _resolve_id(cur, "usuario", "correo", correo)
+    # ── Apprentices & Enrollments ──────────────────────────────────────────────
+    print("  → aprendices...")
+    for correo, full_n, doc, tipo_doc_cod, nom, ape, sex_cod, f_num, lect, concl, prod in DATA_APRENDICES:
+        print(f"    - {correo}")
+
+        tipo_doc_id = resolve_id(cur, "tipo_documento", "codigo", tipo_doc_cod)
+        sexo_id     = resolve_id(cur, "sexo", "codigo", sex_cod)
+
+        # A. Usuario
+        u_id   = generate_id()
+        is_new = SeedQueries.INSERT_USUARIO.execute(cur, (u_id, correo, pw_hash, full_n))
+        u_id   = resolve_id(cur, "usuario", "correo", correo)
 
         # B. Persona
-        SeedQueries.INSERT_PERSONA.execute(cur, (
-            actual_u_id, deps[t_doc], doc, nom, ape, deps[sex]
-        ))
+        SeedQueries.INSERT_PERSONA.execute(cur, (u_id, tipo_doc_id, doc, nom, ape, sexo_id))
 
-        # C. Aprendiz Entity
-        SeedQueries.INSERT_APRENDIZ.execute(cur, (generate_id(), actual_u_id, deps["regional"]))
-        actual_apr_id = _resolve_id(cur, "aprendiz", "persona_id", actual_u_id)
+        # C. Aprendiz entity
+        SeedQueries.INSERT_APRENDIZ.execute(cur, (generate_id(), u_id, regional_id))
+        apr_id = resolve_id(cur, "aprendiz", "persona_id", u_id)
 
-        # D. Profile Link
-        if deps["perfil"]:
-            SeedQueries.INSERT_PERFIL_LINK.execute(cur, (generate_id(), actual_u_id, deps["perfil"]))
+        # D. Profile link
+        if perfil_id:
+            SeedQueries.INSERT_PERFIL_LINK.execute(cur, (generate_id(), u_id, perfil_id))
 
-        # E. Ficha Enrollment
-        ficha_id = _resolve_id(cur, "ficha_formacion", "numero", f_num)
+        # E. Ficha enrollment
+        ficha_id = resolve_id(cur, "ficha_formacion", "numero", f_num)
         if ficha_id:
             SeedQueries.INSERT_FICHA_APRENDIZ.execute(cur, (
-                generate_id(), ficha_id, actual_apr_id, lect, concl, prod
+                generate_id(), ficha_id, apr_id, lect, concl, prod,
             ))
 
+        print(f"      {'[NEW]' if is_new else '[EXISTING]'}")
+
+
 if __name__ == "__main__":
-    print("[ Seed 03 - Refactored ] Starting Apprentices & EP...")
+    print("[ Seed 03 - Aprendices ] Starting...")
+    print(f"  Password for all: {SEED_PASSWORD}")
     try:
         with connect() as conn:
             with conn.cursor() as cur:
                 run(cur)
             conn.commit()
-        print("[ Seed 03 ] Success.\n")
+        print("[ Seed 03 - Aprendices ] Done.\n")
     except Exception as e:
-        print(f"[ Seed 03 ] Error: {e}")
+        print(f"[ Seed 03 - Aprendices ] Fatal Error: {e}")
+        raise
