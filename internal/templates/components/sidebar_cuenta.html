@@ -1,0 +1,14 @@
+{#
+  Sección "Cuenta" de la barra lateral (cambio de contraseña).
+  Variables requeridas:
+    cp_url     — URL del cambio de contraseña, ej. url_for('instructor_change_password')
+    cp_active  — booleano, calculado por el base del rol antes del include
+#}
+<hr class="sidebar-divider">
+<div class="sidebar-heading">Cuenta</div>
+<li class="nav-item {% if cp_active %}active{% endif %}">
+    <a class="nav-link" href="{{ cp_url }}">
+        <i class="fas fa-fw fa-key"></i>
+        <span>Cambiar contraseña</span>
+    </a>
+</li>

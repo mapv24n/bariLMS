@@ -1,0 +1,38 @@
+{% extends "instructor/base.html" %}
+
+{% block title %}Ficha {{ ficha.numero }} — Sin empresas asignadas{% endblock %}
+
+{% block content %}
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div>
+            <div class="text-uppercase small font-weight-bold text-sena mb-1">Etapa Productiva</div>
+            <h1 class="h3 mb-0 text-gray-800">Ficha {{ ficha.numero }}</h1>
+            <small class="text-muted">{{ ficha.programa_nombre }}</small>
+        </div>
+        <a href="{{ url_for('ep_instructor_fichas') }}" class="btn btn-outline-success btn-sm shadow-sm">
+            <i class="fas fa-arrow-left fa-sm mr-1"></i> Volver a fichas
+        </a>
+    </div>
+
+    {% include 'components/flash_messages.html' %}
+
+    <div class="row justify-content-center mt-3">
+        <div class="col-lg-7 col-md-9">
+            <div class="card shadow border-0">
+                <div class="card-body text-center py-5 px-4">
+                    <div class="mb-4">
+                        <i class="fas fa-building fa-4x text-sena"></i>
+                    </div>
+                    <h4 class="font-weight-bold text-gray-800 mb-2">Sin empresas asignadas</h4>
+                    <p class="text-muted mb-4">
+                        No hay empresas asignadas a aprendices en esta ficha.<br>
+                        Las empresas aparecen aquí cuando se registra un contrato de aprendizaje activo.
+                    </p>
+                    <a href="{{ url_for('ep_instructor_fichas') }}" class="btn btn-sena">
+                        <i class="fas fa-arrow-left mr-1"></i> Volver a mis fichas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{#
+  Sección "Etapa Productiva" de la barra lateral.
+  Variables requeridas:
+    ep_active  — booleano, calculado por el base del rol antes del include
+#}
+<hr class="sidebar-divider">
+<div class="sidebar-heading">Etapa Productiva</div>
+<li class="nav-item {% if ep_active %}active{% endif %}">
+    <a class="nav-link" href="{{ url_for('ep_index') }}">
+        <i class="fas fa-fw fa-briefcase"></i>
+        <span>Etapa Productiva</span>
+    </a>
+</li>
