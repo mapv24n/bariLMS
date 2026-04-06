@@ -253,8 +253,22 @@ class Instructor:
     def arbol_fases(db, id_ficha: int) -> list[dict]:
         """Retorna el árbol Fase > ActProyecto > ActAprendizaje de una ficha."""
         ficha = db.execute(
-            "SELECT id_proyecto_formativo FROM ficha_formacion WHERE id = ?", (id_ficha,)
+            """
+            SELECT f.id, f.numero,
+                p.nombre  AS programa_nombre,
+                pf.nombre AS proyecto_nombre,
+                pf.codigo AS proyecto_codigo,
+                pf.id     AS proyecto_id,
+                n.nombre  AS nivel_nombre
+            FROM ficha_formacion f
+            JOIN programa_formacion      p  ON p.id  = f.programa_formacion_id
+            LEFT JOIN proyecto_formativo pf ON pf.id = f.proyecto_formativo_id
+            LEFT JOIN nivel_formacion    n  ON n.id  = p.nivel_formacion_id
+            WHERE f.id = ?
+            """,
+            (id_ficha,),
         ).fetchone()
+        
         if ficha is None or ficha["id_proyecto_formativo"] is None:
             return []
 
