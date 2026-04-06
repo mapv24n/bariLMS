@@ -1,0 +1,158 @@
+{% extends "instructor/base.html" %}
+
+{% block title %}Planeación — {{ aprendiz_apellidos }}, {{ aprendiz_nombres }}{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <div class="text-uppercase small font-weight-bold text-sena mb-1">Momento 1 — Planeación</div>
+        <h1 class="h4 mb-0 text-gray-800">{{ aprendiz_apellidos }}, {{ aprendiz_nombres }}</h1>
+        <small class="text-muted">Ficha {{ ficha.numero }} &mdash; {{ ficha.programa_nombre }}</small>
+    </div>
+    <a href="{{ url_for('ep_gestionar_proceso', ficha_id=ficha.id, aprendiz_id=aprendiz_id) }}"
+       class="btn btn-outline-success btn-sm shadow-sm">
+        <i class="fas fa-arrow-left fa-sm mr-1"></i> Volver al proceso
+    </a>
+</div>
+
+{% include 'components/flash_messages.html' %}
+
+<form method="POST" action="{{ url_for('ep_guardar_momento1', proceso_id=proceso.id) }}">
+
+    {# ── Información de la Etapa Productiva ── #}
+    <div class="card shadow-sm mb-3">
+        <div class="card-header py-2 bg-white">
+            <span class="font-weight-bold text-sena small text-uppercase">Información de la Etapa Productiva</span>
+        </div>
+        <div class="card-body py-3">
+            <div class="form-row">
+                <div class="col-md-4 form-group">
+                    <label class="small font-weight-bold text-gray-700">Fecha inicio EP</label>
+                    <input type="date" name="fecha_inicio_ep" class="form-control form-control-sm"
+                           value="{{ momento_1.fecha_inicio_ep if momento_1 and momento_1.fecha_inicio_ep else '' }}">
+                </div>
+                <div class="col-md-4 form-group">
+                    <label class="small font-weight-bold text-gray-700">Fecha fin EP</label>
+                    <input type="date" name="fecha_fin_ep" class="form-control form-control-sm"
+                           value="{{ momento_1.fecha_fin_ep if momento_1 and momento_1.fecha_fin_ep else '' }}">
+                </div>
+                <div class="col-md-4 form-group">
+                    <label class="small font-weight-bold text-gray-700">Fecha afiliación ARL</label>
+                    <input type="date" name="fecha_arl" class="form-control form-control-sm"
+                           value="{{ momento_1.arl_fecha_afiliacion if momento_1 and momento_1.arl_fecha_afiliacion else '' }}">
+                </div>
+                <div class="col-md-4 form-group">
+                    <label class="small font-weight-bold text-gray-700">Número de póliza ARL</label>
+                    <input type="text" name="poliza_arl" class="form-control form-control-sm"
+                           value="{{ momento_1.arl_poliza_numero or '' if momento_1 else '' }}">
+                </div>
+                <div class="col-md-4 form-group">
+                    <label class="small font-weight-bold text-gray-700">Jornada</label>
+                    <input type="text" name="jornada" class="form-control form-control-sm"
+                           value="{{ momento_1.jornada or '' if momento_1 else '' }}">
+                </div>
+                <div class="col-md-4 form-group">
+                    <label class="small font-weight-bold text-gray-700">Días de la semana</label>
+                    <input type="text" name="dias_semana" class="form-control form-control-sm"
+                           value="{{ momento_1.dias_semana or '' if momento_1 else '' }}">
+                </div>
+                <div class="col-md-4 form-group">
+                    <label class="small font-weight-bold text-gray-700">Hora</label>
+                    <input type="text" name="hora" class="form-control form-control-sm"
+                           value="{{ momento_1.hora or '' if momento_1 else '' }}">
+                </div>
+                <div class="col-md-8 form-group">
+                    <label class="small font-weight-bold text-gray-700">Enlace de grabación</label>
+                    <input type="text" name="url_grabacion" class="form-control form-control-sm"
+                           value="{{ momento_1.url_grabacion or '' if momento_1 else '' }}">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Plan de trabajo ── #}
+    <div class="card shadow-sm mb-3">
+        <div class="card-header py-2 bg-white">
+            <span class="font-weight-bold text-sena small text-uppercase">Concertación plan de trabajo</span>
+        </div>
+        <div class="card-body py-3">
+            <div class="form-group">
+                <label class="small font-weight-bold text-gray-700">Competencias a desarrollar</label>
+                <textarea name="competencias" rows="3" class="form-control form-control-sm">{{ momento_1.competencias or '' if momento_1 else '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="small font-weight-bold text-gray-700">Resultados de aprendizaje</label>
+                <textarea name="resultados_aprendizaje" rows="3" class="form-control form-control-sm">{{ momento_1.resultados_aprendizaje or '' if momento_1 else '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="small font-weight-bold text-gray-700">Actividades a desarrollar</label>
+                <textarea name="actividades" rows="3" class="form-control form-control-sm">{{ momento_1.actividades or '' if momento_1 else '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="small font-weight-bold text-gray-700">Evidencias de aprendizaje</label>
+                <textarea name="evidencias" rows="3" class="form-control form-control-sm">{{ momento_1.evidencias or '' if momento_1 else '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label class="small font-weight-bold text-gray-700">Observaciones adicionales</label>
+                <textarea name="observaciones" rows="2" class="form-control form-control-sm">{{ momento_1.observaciones or '' if momento_1 else '' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    {# ── Formalización ── #}
+    <div class="card shadow-sm mb-3">
+        <div class="card-header py-2 bg-white">
+            <span class="font-weight-bold text-sena small text-uppercase">Formalización y firmas</span>
+        </div>
+        <div class="card-body py-3">
+            <div class="form-row">
+                <div class="col-md-12 form-group">
+                    <div class="form-check form-check-inline">
+                        <input type="checkbox" class="form-check-input" name="firma_aprendiz" id="firma_aprendiz"
+                               {{ 'checked' if momento_1 and momento_1.firma_aprendiz else '' }}>
+                        <label class="form-check-label small" for="firma_aprendiz">Firma del aprendiz</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input type="checkbox" class="form-check-input" name="firma_instructor" id="firma_instructor"
+                               {{ 'checked' if momento_1 and momento_1.firma_instructor else '' }}>
+                        <label class="form-check-label small" for="firma_instructor">Firma del instructor</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input type="checkbox" class="form-check-input" name="firma_coformador" id="firma_coformador"
+                               {{ 'checked' if momento_1 and momento_1.firma_coformador else '' }}>
+                        <label class="form-check-label small" for="firma_coformador">Firma del co-formador</label>
+                    </div>
+                </div>
+                <div class="col-md-4 form-group">
+                    <label class="small font-weight-bold text-gray-700">Ciudad</label>
+                    <input type="text" name="ciudad" class="form-control form-control-sm"
+                           value="{{ momento_1.ciudad or '' if momento_1 else '' }}">
+                </div>
+                <div class="col-md-4 form-group">
+                    <label class="small font-weight-bold text-gray-700">Fecha de diligenciamiento</label>
+                    <input type="date" name="fecha_firma" class="form-control form-control-sm"
+                           value="{{ momento_1.fecha_firma if momento_1 and momento_1.fecha_firma else '' }}">
+                </div>
+                <div class="col-md-4 form-group">
+                    <label class="small font-weight-bold text-gray-700">Modalidad de diligenciamiento</label>
+                    <select name="modalidad_firma" class="form-control form-control-sm">
+                        <option value="">— Seleccionar —</option>
+                        {% for opt in ['Presencial', 'Virtual'] %}
+                        <option value="{{ opt }}" {{ 'selected' if momento_1 and momento_1.modalidad_firma == opt else '' }}>{{ opt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end mb-4">
+        <a href="{{ url_for('ep_gestionar_proceso', ficha_id=ficha.id, aprendiz_id=aprendiz_id) }}"
+           class="btn btn-outline-secondary btn-sm mr-2">Cancelar</a>
+        <button type="submit" class="btn btn-sena btn-sm">
+            <i class="fas fa-save mr-1"></i> Guardar Planeación
+        </button>
+    </div>
+
+</form>
+{% endblock %}
