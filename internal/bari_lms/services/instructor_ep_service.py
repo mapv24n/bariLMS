@@ -2,10 +2,17 @@
 
 NOTE FOR AI ASSISTANTS (Claude and similar):
   - EP tables: empresa, ficha_aprendiz, contrato_aprendizaje.
-  - empresa_id, fecha_inicio_ep, fecha_fin_ep no longer exist on ficha_aprendiz.
+  - ficha_aprendiz uses a single ENUM column `estado` (tipo estado_formacion_aprendiz).
+    Values: lectiva_en_curso, lectiva_concluida, productiva_en_curso, productiva_concluida,
+            trasladado, suspendido.
+    The old boolean columns (en_etapa_lectiva, etapa_lectiva_concluida, en_etapa_productiva,
+    etapa_productiva_concluida) were removed in migration 20260407000001.
+  - "In productive stage" means: estado IN ('productiva_en_curso', 'productiva_concluida').
+  - empresa_id, fecha_inicio_ep, fecha_fin_ep do not exist on ficha_aprendiz.
     Company assignment lives in contrato_aprendizaje (ficha_aprendiz_id + empresa_id).
   - Before editing queries here, verify the real schema with:
       python database/query.py "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'ficha_aprendiz' ORDER BY ordinal_position"
+  - Validation: python database/query.py "SELECT estado, COUNT(*) FROM ficha_aprendiz GROUP BY estado ORDER BY estado"
   - Migration history: database/migrations/  (managed with Dbmate)
   - TOKEN WARNING: use database/query.py sparingly — pipe specific columns and LIMIT rows.
 """
@@ -67,7 +74,7 @@ class InstructorEtapaProductivaService:
 
     @staticmethod
     def get_aprendices_ep(db, ficha_id):
-        """Aprendices con en_etapa_productiva = TRUE para la ficha dada (CU004).
+        """Aprendices en etapa productiva (en curso o concluida) para la ficha dada (CU004).
 
         La empresa y las fechas se obtienen del contrato activo en
         contrato_aprendizaje. Si el aprendiz aún no tiene contrato,
@@ -77,9 +84,7 @@ class InstructorEtapaProductivaService:
             """
             SELECT
                 fa.id                       AS inscripcion_id,
-                fa.en_etapa_productiva,
-                fa.etapa_productiva_concluida,
-                fa.etapa_lectiva_concluida,
+                fa.estado,
                 ca.fecha_inicio             AS fecha_inicio_ep,
                 ca.fecha_fin                AS fecha_fin_ep,
                 a.id                        AS aprendiz_id,
@@ -97,7 +102,7 @@ class InstructorEtapaProductivaService:
                                              AND ca.estado = 'activo'
             LEFT JOIN empresa              e  ON e.id  = ca.empresa_id
             WHERE  fa.ficha_id = ?
-              AND  fa.en_etapa_productiva = TRUE
+              AND  fa.estado IN ('productiva_en_curso', 'productiva_concluida')
             ORDER  BY per.apellidos, per.nombres
             """,
             (ficha_id,),
@@ -114,8 +119,7 @@ class InstructorEtapaProductivaService:
             """
             SELECT
                 fa.id                       AS inscripcion_id,
-                fa.en_etapa_productiva,
-                fa.etapa_productiva_concluida,
+                fa.estado,
                 a.id                        AS aprendiz_id,
                 per.nombres,
                 per.apellidos,
@@ -151,8 +155,7 @@ class InstructorEtapaProductivaService:
             """
             SELECT
                 fa.id                           AS inscripcion_id,
-                fa.en_etapa_productiva,
-                fa.etapa_productiva_concluida,
+                fa.estado,
                 a.id                            AS aprendiz_id,
                 per.nombres,
                 per.apellidos,
@@ -226,7 +229,7 @@ class InstructorEtapaProductivaService:
                                            AND ca.estado = 'activo'
             JOIN   empresa e ON e.id = ca.empresa_id
             WHERE  fa.ficha_id = ?
-              AND  fa.en_etapa_productiva = TRUE
+              AND  fa.estado IN ('productiva_en_curso', 'productiva_concluida')
             GROUP BY e.id, e.razon_social, e.nit, e.sector, e.correo, e.telefono, e.direccion
             ORDER BY e.razon_social
             """,

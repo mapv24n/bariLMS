@@ -112,6 +112,15 @@ def run(cur):
             """,
             (ct_id, fa_id, emp_id, inicio, fin, estado),
         )
+        cur.execute(
+            """
+            UPDATE ficha_aprendiz
+               SET estado = 'productiva_en_curso'
+             WHERE id = %s
+               AND estado NOT IN ('productiva_en_curso', 'productiva_concluida')
+            """,
+            (fa_id,),
+        )
 
 
 if __name__ == "__main__":

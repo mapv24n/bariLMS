@@ -396,7 +396,8 @@ Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
 scoop install dbmate
 
 ```bash
-# Aplicar migraciones pendientesdbmate --migrations-dir database/migrations up
+# Aplicar migraciones pendientes
+dbmate --migrations-dir database/migrations up
 
 
 # Revertir la ultima

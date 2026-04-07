@@ -1,0 +1,251 @@
+{% extends "instructor/base.html" %}
+
+{% block title %}Gestionar Proceso EP — {{ aprendiz.apellidos }}, {{ aprendiz.nombres }}{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <div class="text-uppercase small font-weight-bold text-sena mb-1">Etapa Productiva</div>
+        <h1 class="h3 mb-0 text-gray-800">{{ aprendiz.apellidos }}, {{ aprendiz.nombres }}</h1>
+        <small class="text-muted">Ficha {{ ficha.numero }} &mdash; {{ ficha.programa_nombre }}</small>
+    </div>
+    <a href="{{ url_for('ep_instructor_ficha', ficha_id=ficha.id) }}"
+       class="btn btn-outline-success btn-sm shadow-sm">
+        <i class="fas fa-arrow-left fa-sm mr-1"></i> Volver a la ficha
+    </a>
+</div>
+
+{% include 'components/flash_messages.html' %}
+
+{# ── Resumen contrato ─────────────────────────────────────────────── #}
+{% if contrato %}
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card border-left-sena shadow-sm h-100 py-2">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-sena text-uppercase mb-1">Empresa</div>
+                <div class="font-weight-bold text-gray-800">{{ contrato.empresa_nombre or '—' }}</div>
+                <div class="text-muted small">NIT {{ contrato.empresa_nit or '—' }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card border-left-sena shadow-sm h-100 py-2">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-sena text-uppercase mb-1">Inicio EP</div>
+                <div class="font-weight-bold text-gray-800">
+                    {{ contrato.fecha_inicio.strftime('%d/%m/%Y') if contrato.fecha_inicio else '—' }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card border-left-sena shadow-sm h-100 py-2">
+            <div class="card-body">
+                <div class="text-xs font-weight-bold text-sena text-uppercase mb-1">Fin EP</div>
+                <div class="font-weight-bold text-gray-800">
+                    {{ contrato.fecha_fin.strftime('%d/%m/%Y') if contrato.fecha_fin else '—' }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle mr-1"></i>
+    Este aprendiz no tiene un contrato de aprendizaje activo. No es posible gestionar el proceso EP.
+</div>
+{% endif %}
+
+{# ── Iniciar proceso ──────────────────────────────────────────────── #}
+{% if contrato and not proceso %}
+<div class="card shadow-sm mb-4">
+    <div class="card-body text-center py-4">
+        <p class="text-gray-600 mb-3">El proceso EP aún no ha sido iniciado para este aprendiz.</p>
+        <form method="POST" action="{{ url_for('ep_iniciar_proceso', ficha_id=ficha.id, aprendiz_id=aprendiz.aprendiz_id) }}">
+            <button type="submit" class="btn btn-sena">
+                <i class="fas fa-play-circle mr-1"></i> Iniciar Proceso EP
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{# ── Momento 1 — Planeación ───────────────────────────────────────── #}
+{% if proceso %}
+<div class="card shadow-sm mb-3">
+    <div class="card-header py-2 bg-white d-flex justify-content-between align-items-center">
+        <span class="font-weight-bold text-sena small text-uppercase">
+            <i class="fas fa-clipboard-list mr-1"></i> Planeación — Momento 1
+        </span>
+        <a href="{{ url_for('ep_editar_momento1', proceso_id=proceso.id) }}"
+           class="btn btn-sm btn-outline-sena">
+            <i class="fas fa-{{ 'edit' if momento_1 else 'plus' }} fa-sm mr-1"></i>
+            {{ 'Editar' if momento_1 else 'Registrar' }}
+        </a>
+    </div>
+    <div class="card-body py-3">
+        {% if momento_1 %}
+        <div class="row">
+            {% macro campo(label, valor) %}
+            <div class="col-md-4 mb-2">
+                <div class="text-xs text-muted text-uppercase">{{ label }}</div>
+                <div class="text-gray-800 small font-weight-bold">{{ valor or '—' }}</div>
+            </div>
+            {% endmacro %}
+            {{ campo("Fecha inicio EP",       momento_1.fecha_inicio_ep.strftime('%d/%m/%Y') if momento_1.fecha_inicio_ep else None) }}
+            {{ campo("Fecha fin EP",           momento_1.fecha_fin_ep.strftime('%d/%m/%Y') if momento_1.fecha_fin_ep else None) }}
+            {{ campo("Fecha afiliación ARL",   momento_1.arl_fecha_afiliacion.strftime('%d/%m/%Y') if momento_1.arl_fecha_afiliacion else None) }}
+            {{ campo("Póliza ARL",             momento_1.arl_poliza_numero) }}
+            {{ campo("Jornada",                momento_1.jornada) }}
+            {{ campo("Días",                   momento_1.dias_semana) }}
+            {{ campo("Hora",                   momento_1.hora) }}
+            {{ campo("Enlace grabación",       momento_1.url_grabacion) }}
+            {{ campo("Ciudad",                 momento_1.ciudad) }}
+            {{ campo("Fecha firma",            momento_1.fecha_firma.strftime('%d/%m/%Y') if momento_1.fecha_firma else None) }}
+            {{ campo("Modalidad firma",        momento_1.modalidad_firma) }}
+        </div>
+        <hr class="my-2">
+        <div class="row">
+            <div class="col-md-12 mb-2">
+                <div class="text-xs text-muted text-uppercase mb-1">Competencias</div>
+                <div class="text-gray-800 small">{{ momento_1.competencias or '—' }}</div>
+            </div>
+            <div class="col-md-12 mb-2">
+                <div class="text-xs text-muted text-uppercase mb-1">Resultados de aprendizaje</div>
+                <div class="text-gray-800 small">{{ momento_1.resultados_aprendizaje or '—' }}</div>
+            </div>
+        </div>
+        <div class="mt-2">
+            {% if momento_1.firma_aprendiz %}<span class="badge badge-success mr-1">Firma aprendiz</span>{% endif %}
+            {% if momento_1.firma_instructor %}<span class="badge badge-success mr-1">Firma instructor</span>{% endif %}
+            {% if momento_1.firma_coformador %}<span class="badge badge-success mr-1">Firma co-formador</span>{% endif %}
+        </div>
+        {% else %}
+        <p class="text-muted small mb-0"><i class="fas fa-info-circle mr-1"></i> Sin datos registrados.</p>
+        {% endif %}
+    </div>
+</div>
+
+{# ── Momento 2 — Seguimiento ──────────────────────────────────────── #}
+<div class="card shadow-sm mb-3">
+    <div class="card-header py-2 bg-white d-flex justify-content-between align-items-center">
+        <span class="font-weight-bold text-sena small text-uppercase">
+            <i class="fas fa-chart-line mr-1"></i> Seguimiento — Momento 2
+        </span>
+        <a href="{{ url_for('ep_editar_momento2', proceso_id=proceso.id) }}"
+           class="btn btn-sm btn-outline-sena">
+            <i class="fas fa-{{ 'edit' if momento_2 else 'plus' }} fa-sm mr-1"></i>
+            {{ 'Editar' if momento_2 else 'Registrar' }}
+        </a>
+    </div>
+    <div class="card-body py-3">
+        {% if momento_2 %}
+        <div class="row mb-2">
+            <div class="col-md-4 mb-2">
+                <div class="text-xs text-muted text-uppercase">Fecha seguimiento</div>
+                <div class="text-gray-800 small font-weight-bold">
+                    {{ momento_2.fecha_momento.strftime('%d/%m/%Y') if momento_2.fecha_momento else '—' }}
+                </div>
+            </div>
+            <div class="col-md-4 mb-2">
+                <div class="text-xs text-muted text-uppercase">Modalidad</div>
+                <div class="text-gray-800 small font-weight-bold">{{ momento_2.modalidad_seguimiento or '—' }}</div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered small mb-0">
+                <thead class="thead-light">
+                    <tr><th>Factor</th><th>Valoración</th><th>Observaciones</th></tr>
+                </thead>
+                <tbody>
+                    {% set current_tipo = namespace(val='') %}
+                    {% for factor in factores %}
+                    {% if factor.tipo != current_tipo.val %}
+                    {% set current_tipo.val = factor.tipo %}
+                    <tr><td colspan="3" class="bg-light font-weight-bold text-sena small py-1 px-2">
+                        {{ 'Técnicos' if factor.tipo == 'tecnico' else 'Actitudinales' }}
+                    </td></tr>
+                    {% endif %}
+                    {% set ev = eval_2.get(factor.id, {}) %}
+                    <tr>
+                        <td>{{ factor.nombre }}</td>
+                        <td>{{ ev.get('valoracion') or '—' }}</td>
+                        <td class="text-muted">{{ ev.get('observaciones') or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted small mb-0"><i class="fas fa-info-circle mr-1"></i> Sin datos registrados.</p>
+        {% endif %}
+    </div>
+</div>
+
+{# ── Momento 3 — Evaluación final ─────────────────────────────────── #}
+<div class="card shadow-sm mb-3">
+    <div class="card-header py-2 bg-white d-flex justify-content-between align-items-center">
+        <span class="font-weight-bold text-sena small text-uppercase">
+            <i class="fas fa-star-half-alt mr-1"></i> Evaluación Final — Momento 3
+        </span>
+        <a href="{{ url_for('ep_editar_momento3', proceso_id=proceso.id) }}"
+           class="btn btn-sm btn-outline-sena">
+            <i class="fas fa-{{ 'edit' if momento_3 else 'plus' }} fa-sm mr-1"></i>
+            {{ 'Editar' if momento_3 else 'Registrar' }}
+        </a>
+    </div>
+    <div class="card-body py-3">
+        {% if momento_3 %}
+        <div class="row mb-2">
+            <div class="col-md-3 mb-2">
+                <div class="text-xs text-muted text-uppercase">Visitas realizadas</div>
+                <div class="text-gray-800 small font-weight-bold">{{ momento_3.num_visitas or '—' }}</div>
+            </div>
+            <div class="col-md-3 mb-2">
+                <div class="text-xs text-muted text-uppercase">Modalidad</div>
+                <div class="text-gray-800 small font-weight-bold">{{ momento_3.modalidad_evaluacion or '—' }}</div>
+            </div>
+            <div class="col-md-3 mb-2">
+                <div class="text-xs text-muted text-uppercase">Resultado</div>
+                {% if momento_3.juicio_resultado == 'Aprobado' %}
+                    <span class="badge badge-success">Aprobado</span>
+                {% elif momento_3.juicio_resultado == 'No aprobado' %}
+                    <span class="badge badge-danger">No aprobado</span>
+                {% else %}
+                    <span class="text-gray-800 small font-weight-bold">—</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered small mb-0">
+                <thead class="thead-light">
+                    <tr><th>Factor</th><th>Valoración</th><th>Observaciones</th></tr>
+                </thead>
+                <tbody>
+                    {% set current_tipo = namespace(val='') %}
+                    {% for factor in factores %}
+                    {% if factor.tipo != current_tipo.val %}
+                    {% set current_tipo.val = factor.tipo %}
+                    <tr><td colspan="3" class="bg-light font-weight-bold text-sena small py-1 px-2">
+                        {{ 'Técnicos' if factor.tipo == 'tecnico' else 'Actitudinales' }}
+                    </td></tr>
+                    {% endif %}
+                    {% set ev = eval_3.get(factor.id, {}) %}
+                    <tr>
+                        <td>{{ factor.nombre }}</td>
+                        <td>{{ ev.get('valoracion') or '—' }}</td>
+                        <td class="text-muted">{{ ev.get('observaciones') or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted small mb-0"><i class="fas fa-info-circle mr-1"></i> Sin datos registrados.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

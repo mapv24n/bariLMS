@@ -1,0 +1,211 @@
+{% extends "instructor/base.html" %}
+
+{% block title %}Evaluación Final — {{ aprendiz_apellidos }}, {{ aprendiz_nombres }}{% endblock %}
+
+{% block content %}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <div class="text-uppercase small font-weight-bold text-sena mb-1">Momento 3 — Evaluación Final</div>
+        <h1 class="h4 mb-0 text-gray-800">{{ aprendiz_apellidos }}, {{ aprendiz_nombres }}</h1>
+        <small class="text-muted">Ficha {{ ficha.numero }} &mdash; {{ ficha.programa_nombre }}</small>
+    </div>
+    <a href="{{ url_for('ep_gestionar_proceso', ficha_id=ficha.id, aprendiz_id=aprendiz_id) }}"
+       class="btn btn-outline-success btn-sm shadow-sm">
+        <i class="fas fa-arrow-left fa-sm mr-1"></i> Volver al proceso
+    </a>
+</div>
+
+{% include 'components/flash_messages.html' %}
+
+{# evaluaciones viene del controlador: {factor_id: {valoracion, observaciones}} #}
+
+<form method="POST" action="{{ url_for('ep_guardar_momento3', proceso_id=proceso.id) }}">
+
+    {# ── Encabezado ── #}
+    <div class="card shadow-sm mb-3">
+        <div class="card-header py-2 bg-white">
+            <span class="font-weight-bold text-sena small text-uppercase">Encabezado de Evaluación</span>
+        </div>
+        <div class="card-body py-3">
+            <div class="form-row">
+                <div class="col-md-3 form-group">
+                    <label class="small font-weight-bold text-gray-700">Fecha inicio EP</label>
+                    <input type="date" name="fecha_inicio_ep" class="form-control form-control-sm"
+                           value="{{ momento_3.fecha_inicio_ep if momento_3 and momento_3.fecha_inicio_ep else '' }}">
+                </div>
+                <div class="col-md-3 form-group">
+                    <label class="small font-weight-bold text-gray-700">Fecha fin EP</label>
+                    <input type="date" name="fecha_fin_ep" class="form-control form-control-sm"
+                           value="{{ momento_3.fecha_fin_ep if momento_3 and momento_3.fecha_fin_ep else '' }}">
+                </div>
+                <div class="col-md-2 form-group">
+                    <label class="small font-weight-bold text-gray-700">N° visitas</label>
+                    <input type="number" name="num_visitas" min="0" class="form-control form-control-sm"
+                           value="{{ momento_3.num_visitas or '' if momento_3 else '' }}">
+                </div>
+                <div class="col-md-2 form-group">
+                    <label class="small font-weight-bold text-gray-700">Modalidad</label>
+                    <select name="modalidad_evaluacion" class="form-control form-control-sm">
+                        <option value="">— Seleccionar —</option>
+                        {% for opt in ['Presencial', 'Virtual'] %}
+                        <option value="{{ opt }}" {{ 'selected' if momento_3 and momento_3.modalidad_evaluacion == opt else '' }}>{{ opt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 form-group">
+                    <label class="small font-weight-bold text-gray-700">Enlace grabación</label>
+                    <input type="text" name="url_grabacion" class="form-control form-control-sm"
+                           value="{{ momento_3.url_grabacion or '' if momento_3 else '' }}">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Factores ── #}
+    <div class="card shadow-sm mb-3">
+        <div class="card-header py-2 bg-white">
+            <span class="font-weight-bold text-sena small text-uppercase">Factores de Evaluación</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="width:30%">Factor</th>
+                            <th style="width:15%">Valoración</th>
+                            <th>Observaciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% set current_tipo = namespace(val='') %}
+                        {% for factor in factores %}
+                        {% if factor.tipo != current_tipo.val %}
+                        {% set current_tipo.val = factor.tipo %}
+                        <tr><td colspan="3" class="bg-light font-weight-bold text-sena small py-1 px-2">
+                            {{ 'Técnicos' if factor.tipo == 'tecnico' else 'Actitudinales' }}
+                        </td></tr>
+                        {% endif %}
+                        {% set saved = evaluaciones.get(factor.id, {}) %}
+                        <tr>
+                            <td class="small align-middle">{{ factor.nombre }}</td>
+                            <td>
+                                <input type="text" name="factor_{{ factor.id }}_val"
+                                       class="form-control form-control-sm"
+                                       value="{{ saved.get('valoracion', '') }}">
+                            </td>
+                            <td>
+                                <textarea name="factor_{{ factor.id }}_obs" rows="1"
+                                          class="form-control form-control-sm">{{ saved.get('observaciones', '') }}</textarea>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# ── Retroalimentación ── #}
+    <div class="card shadow-sm mb-3">
+        <div class="card-header py-2 bg-white">
+            <span class="font-weight-bold text-sena small text-uppercase">Retroalimentación</span>
+        </div>
+        <div class="card-body py-3">
+            {% set retro_fields = [
+                ('retro_proceso_coformador',   'Proceso de formación — Co-formador'),
+                ('retro_desempeno_coformador', 'Desempeño competencias — Co-formador'),
+                ('retro_proceso_instructor',   'Proceso de formación — Instructor'),
+                ('retro_desempeno_instructor', 'Desempeño competencias — Instructor'),
+                ('retro_proceso_aprendiz',     'Proceso de formación — Aprendiz'),
+                ('retro_desempeno_aprendiz',   'Desempeño competencias — Aprendiz'),
+            ] %}
+            {% for name, label in retro_fields %}
+            <div class="form-group">
+                <label class="small font-weight-bold text-gray-700">{{ label }}</label>
+                <textarea name="{{ name }}" rows="2" class="form-control form-control-sm">{{ (momento_3[name] or '') if momento_3 else '' }}</textarea>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {# ── Juicio final ── #}
+    <div class="card shadow-sm mb-3">
+        <div class="card-header py-2 bg-white">
+            <span class="font-weight-bold text-sena small text-uppercase">Juicio de Evaluación Final</span>
+        </div>
+        <div class="card-body py-3">
+            <div class="form-row">
+                <div class="col-md-4 form-group">
+                    <label class="small font-weight-bold text-gray-700">Resultado</label>
+                    <select name="juicio_resultado" class="form-control form-control-sm">
+                        <option value="">— Seleccionar —</option>
+                        {% for opt in ['Aprobado', 'No aprobado'] %}
+                        <option value="{{ opt }}" {{ 'selected' if momento_3 and momento_3.juicio_resultado == opt else '' }}>{{ opt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-8 form-group">
+                    <label class="small font-weight-bold text-gray-700">Observaciones del instructor</label>
+                    <textarea name="juicio_observaciones" rows="2" class="form-control form-control-sm">{{ momento_3.juicio_observaciones or '' if momento_3 else '' }}</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Formalización ── #}
+    <div class="card shadow-sm mb-3">
+        <div class="card-header py-2 bg-white">
+            <span class="font-weight-bold text-sena small text-uppercase">Formalización y firmas</span>
+        </div>
+        <div class="card-body py-3">
+            <div class="form-row">
+                <div class="col-md-12 form-group">
+                    <div class="form-check form-check-inline">
+                        <input type="checkbox" class="form-check-input" name="firma_aprendiz" id="firma_aprendiz"
+                               {{ 'checked' if momento_3 and momento_3.firma_aprendiz else '' }}>
+                        <label class="form-check-label small" for="firma_aprendiz">Firma del aprendiz</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input type="checkbox" class="form-check-input" name="firma_instructor" id="firma_instructor"
+                               {{ 'checked' if momento_3 and momento_3.firma_instructor else '' }}>
+                        <label class="form-check-label small" for="firma_instructor">Firma del instructor</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input type="checkbox" class="form-check-input" name="firma_coformador" id="firma_coformador"
+                               {{ 'checked' if momento_3 and momento_3.firma_coformador else '' }}>
+                        <label class="form-check-label small" for="firma_coformador">Firma del co-formador</label>
+                    </div>
+                </div>
+                <div class="col-md-4 form-group">
+                    <label class="small font-weight-bold text-gray-700">Ciudad</label>
+                    <input type="text" name="ciudad" class="form-control form-control-sm"
+                           value="{{ momento_3.ciudad or '' if momento_3 else '' }}">
+                </div>
+                <div class="col-md-4 form-group">
+                    <label class="small font-weight-bold text-gray-700">Fecha</label>
+                    <input type="date" name="fecha_firma" class="form-control form-control-sm"
+                           value="{{ momento_3.fecha_firma if momento_3 and momento_3.fecha_firma else '' }}">
+                </div>
+                <div class="col-md-4 form-group">
+                    <label class="small font-weight-bold text-gray-700">Modalidad de diligenciamiento</label>
+                    <select name="modalidad_firma" class="form-control form-control-sm">
+                        <option value="">— Seleccionar —</option>
+                        {% for opt in ['Presencial', 'Virtual'] %}
+                        <option value="{{ opt }}" {{ 'selected' if momento_3 and momento_3.modalidad_firma == opt else '' }}>{{ opt }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end mb-4">
+        <a href="{{ url_for('ep_gestionar_proceso', ficha_id=ficha.id, aprendiz_id=aprendiz_id) }}"
+           class="btn btn-outline-secondary btn-sm mr-2">Cancelar</a>
+        <button type="submit" class="btn btn-sena btn-sm">
+            <i class="fas fa-save mr-1"></i> Guardar Evaluación Final
+        </button>
+    </div>
+
+</form>
+{% endblock %}

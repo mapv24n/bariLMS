@@ -50,7 +50,7 @@
                             </span>
                         </td>
                         <td class="text-center">
-                            {% if ap.etapa_productiva_concluida %}
+                            {% if ap.estado == 'productiva_concluida' %}
                                 <span class="badge badge-secondary">Finalizado</span>
                             {% elif ap.empresa_nombre %}
                                 <span class="badge badge-success">En práctica</span>
@@ -58,10 +58,10 @@
                                 <span class="badge badge-warning text-dark">Habilitado</span>
                             {% endif %}
                         </td>
-                        <td class="text-center">
-                            <a href="{{ url_for('ep_instructor_aprendiz_proceso', ficha_id=ficha.id, aprendiz_id=ap.aprendiz_id) }}"
+                        <td class="text-center" style="white-space:nowrap">
+                            <a href="{{ url_for('ep_gestionar_proceso', ficha_id=ficha.id, aprendiz_id=ap.aprendiz_id) }}"
                                class="btn btn-sena btn-sm">
-                                <i class="fas fa-eye fa-sm mr-1"></i> Ver proceso
+                                <i class="fas fa-tasks fa-sm mr-1"></i> Gestionar proceso
                             </a>
                         </td>
                     </tr>
