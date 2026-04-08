@@ -157,6 +157,7 @@ DATA_APRENDICES = [
     # ── Ficha 2900001 (Juan Pérez) ────────────────────────────────────────────
     ("ana.gomez@aprendiz.sena.edu.co",    "Ana Sofía Gómez Herrera",        "1090123456", "cc", "ANA SOFÍA",       "GÓMEZ HERRERA",    "f", "2900001", "lectiva_en_curso"),
     ("luis.torres@aprendiz.sena.edu.co",  "Luis Eduardo Torres Prado",      "1090234567", "cc", "LUIS EDUARDO",    "TORRES PRADO",     "m", "2900001", "productiva_en_curso"),
+    ("mateo.julian@aprendiz.sena.edu.co",  "Mateo Julian Paez Paez",      "1098765456", "cc", "MATEO JULIAN",    "PAEZ PAEZ",     "m", "2900001", "productiva_en_curso"),
     # ── Ficha 2900002 (María López) ───────────────────────────────────────────
     ("sofia.mendez@aprendiz.sena.edu.co", "Sofía Alejandra Méndez Ríos",    "1025345678", "ti", "SOFÍA ALEJANDRA", "MÉNDEZ RÍOS",      "f", "2900002", "lectiva_en_curso"),
     ("andres.ruiz@aprendiz.sena.edu.co",  "Andrés Felipe Ruiz Castillo",    "1025456789", "ti", "ANDRÉS FELIPE",   "RUIZ CASTILLO",    "m", "2900002", "productiva_en_curso"),

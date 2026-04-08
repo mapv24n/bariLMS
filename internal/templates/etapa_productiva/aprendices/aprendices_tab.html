@@ -59,10 +59,17 @@
                             {% endif %}
                         </td>
                         <td class="text-center" style="white-space:nowrap">
+                            {% if ap.empresa_nombre %}
                             <a href="{{ url_for('ep_gestionar_proceso', ficha_id=ficha.id, aprendiz_id=ap.aprendiz_id) }}"
                                class="btn btn-sena btn-sm">
                                 <i class="fas fa-tasks fa-sm mr-1"></i> Gestionar proceso
                             </a>
+                            {% else %}
+                            <a href="{{ url_for('ep_contrato_crear', ficha_id=ficha.id, aprendiz_id=ap.aprendiz_id) }}"
+                               class="btn btn-warning btn-sm text-dark">
+                                <i class="fas fa-file-contract fa-sm mr-1"></i> Asignar contrato
+                            </a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

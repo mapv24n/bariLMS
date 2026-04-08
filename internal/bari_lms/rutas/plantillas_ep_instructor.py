@@ -11,6 +11,10 @@ class PlantillasEPInstructor:
     # CU007 — DEPRECATED: formularios dinámicos (ver internal/deprecated/)
     PROCESO       = "etapa_productiva/aprendiz/proceso/proceso.html"
 
+    # Contrato de aprendizaje
+    CONTRATO_CREAR   = "etapa_productiva/aprendiz/contrato/contrato_crear.html"
+    CONTRATO_EDITAR  = "etapa_productiva/aprendiz/contrato/contrato_editar.html"
+
     # CU-G — Gestión relacional del proceso EP
     GESTIONAR        = "etapa_productiva/aprendiz/gestionar/gestionar.html"
     EDITAR_MOMENTO_1 = "etapa_productiva/aprendiz/gestionar/editar_momento_1.html"

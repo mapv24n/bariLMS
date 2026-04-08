@@ -1,3 +1,4 @@
+
 """Etapa Productiva — Gestión relacional del proceso (momentos 1, 2, 3)."""
 
 from flask import flash, redirect, render_template, request, url_for
@@ -71,7 +72,16 @@ def register_routes(app):
     # ------------------------------------------------------------------
     # CU-G02 — Iniciar proceso EP (POST)
     # ------------------------------------------------------------------
-
+    # @app.route(
+    #     "/etapa-productiva/instructor/ficha/<ficha_id>/aprendiz/<aprendiz_id>/gestionar/iniciar",
+    #     methods=["POST"],
+    # )
+    # @role_required("Instructor")
+    # def ep_iniciar_proceso(ficha_id, aprendiz_id):
+    #      return render_template(
+    #         "CONTRATO DE"
+    #     )
+        
     @app.route(
         "/etapa-productiva/instructor/ficha/<ficha_id>/aprendiz/<aprendiz_id>/gestionar/iniciar",
         methods=["POST"],

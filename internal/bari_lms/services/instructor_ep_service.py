@@ -206,6 +206,44 @@ class InstructorEtapaProductivaService:
         ).fetchone()
 
     @staticmethod
+    def get_all_empresas(db):
+        """Todas las empresas del sistema (para el dropdown de creación de contrato)."""
+        return db.execute(
+            """
+            SELECT id AS empresa_id, razon_social, nit, sector
+            FROM   empresa
+            WHERE  activo = TRUE
+            ORDER  BY razon_social
+            """
+        ).fetchall()
+
+    @staticmethod
+    def crear_contrato(db, inscripcion_id, empresa_id, fecha_inicio, fecha_fin, usuario_id):
+        """Inserta un nuevo contrato activo para la ficha_aprendiz dada."""
+        db.execute(
+            """
+            INSERT INTO contrato_aprendizaje
+                (id, ficha_aprendiz_id, empresa_id, fecha_inicio, fecha_fin, estado, creado_por)
+            VALUES (gen_random_uuid(), ?, ?, ?, ?, 'activo', ?)
+            """,
+            (inscripcion_id, empresa_id, fecha_inicio, fecha_fin, usuario_id),
+        )
+        db.commit()
+
+    @staticmethod
+    def actualizar_contrato(db, contrato_id, empresa_id, fecha_inicio, fecha_fin):
+        """Actualiza empresa y fechas del contrato activo existente."""
+        db.execute(
+            """
+            UPDATE contrato_aprendizaje
+               SET empresa_id = ?, fecha_inicio = ?, fecha_fin = ?, actualizado_en = NOW()
+             WHERE id = ?
+            """,
+            (empresa_id, fecha_inicio, fecha_fin, contrato_id),
+        )
+        db.commit()
+
+    @staticmethod
     def get_empresas_ep(db, ficha_id):
         """Empresas con al menos un contrato activo en EP para la ficha dada (CU006).
 
