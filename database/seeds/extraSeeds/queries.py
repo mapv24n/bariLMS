@@ -57,7 +57,7 @@ class SeedQueries(Enum):
 
     INSERT_FASE = """
         INSERT INTO fase_proyecto (id, proyecto_formativo_id, nombre)
-        VALUES (%s, %s, %s) ON CONFLICT DO NOTHING
+        VALUES (%s, %s, %s) ON CONFLICT (nombre, proyecto_formativo_id) DO NOTHING
     """
 
     # --- Users & Instructors ---
@@ -112,13 +112,13 @@ class SeedQueries(Enum):
     # ── Activity Content ───────────────────────────────────────────────────────
     INSERT_ACTIVIDAD_PROYECTO = """
         INSERT INTO actividad_proyecto (id, fase_proyecto_id, nombre, creado_por)
-        VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING
+        VALUES (%s, %s, %s, %s) ON CONFLICT (nombre, fase_proyecto_id) DO NOTHING
     """
 
     INSERT_ACTIVIDAD_APRENDIZAJE = """
         INSERT INTO actividad_aprendizaje
             (id, actividad_proyecto_id, nombre, descripcion, fecha_inicio, fecha_fin, orden, creado_por)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (nombre, actividad_proyecto_id) DO NOTHING
     """
 
     INSERT_GUIA_APRENDIZAJE = """
@@ -129,7 +129,7 @@ class SeedQueries(Enum):
     INSERT_SECCION_ACTIVIDAD = """
         INSERT INTO seccion_actividad
             (id, actividad_aprendizaje_id, nombre, descripcion, orden, creado_por)
-        VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING
+        VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT (nombre, actividad_aprendizaje_id) DO NOTHING
     """
 
     INSERT_SUB_SECCION_ACTIVIDAD = """

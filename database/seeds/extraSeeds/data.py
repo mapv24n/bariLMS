@@ -117,6 +117,28 @@ DATA_INSTRUCTORES = [
         "CARLOS ALBERTO", "RODRÍGUEZ GÓMEZ",
         "m", "2900003",
     ),
+    # Extra fichas for juan.perez — 2900007, 2900008, 2900009
+    (
+        "juan.perez@sena.edu.co",
+        "Juan Carlos Pérez Martínez",
+        "10254871", "cc",
+        "JUAN CARLOS", "PÉREZ MARTÍNEZ",
+        "m", "2900007",
+    ),
+    (
+        "juan.perez@sena.edu.co",
+        "Juan Carlos Pérez Martínez",
+        "10254871", "cc",
+        "JUAN CARLOS", "PÉREZ MARTÍNEZ",
+        "m", "2900008",
+    ),
+    (
+        "juan.perez@sena.edu.co",
+        "Juan Carlos Pérez Martínez",
+        "10254871", "cc",
+        "JUAN CARLOS", "PÉREZ MARTÍNEZ",
+        "m", "2900009",
+    ),
     # Extended set — fichas 2900004–2900006
     (
         "adriana.suarez@sena.edu.co",
@@ -173,6 +195,24 @@ DATA_APRENDICES = [
     # ── Ficha 2900006 (Elena Beltrán) ─────────────────────────────────────────
     ("jorge.vivas@aprendiz.sena.edu.co",  "Jorge Luis Vivas Mendez",        "1090444333", "cc", "JORGE LUIS",      "VIVAS MENDEZ",     "m", "2900006", "lectiva_en_curso"),
     ("diana.solano@aprendiz.sena.edu.co", "Diana Karime Solano Parra",      "1090222888", "cc", "DIANA KARIME",    "SOLANO PARRA",     "f", "2900006", "lectiva_concluida"),
+    # ── Ficha 2900007 (Juan Pérez — extra ficha 1) ────────────────────────────
+    ("valentina.rios@aprendiz.sena.edu.co",    "Valentina Ríos Castañeda",       "1091100001", "cc", "VALENTINA",       "RÍOS CASTAÑEDA",   "f", "2900007", "productiva_en_curso"),
+    ("samuel.guerrero@aprendiz.sena.edu.co",   "Samuel Guerrero Peña",           "1091100002", "cc", "SAMUEL",          "GUERRERO PEÑA",    "m", "2900007", "productiva_en_curso"),
+    ("isabella.mora@aprendiz.sena.edu.co",     "Isabella Mora Quintero",         "1091100003", "cc", "ISABELLA",        "MORA QUINTERO",    "f", "2900007", "productiva_en_curso"),
+    ("david.pineda@aprendiz.sena.edu.co",      "David Pineda Serrano",           "1091100004", "cc", "DAVID",           "PINEDA SERRANO",   "m", "2900007", "productiva_en_curso"),
+    ("laura.espinosa@aprendiz.sena.edu.co",    "Laura Espinosa Rangel",          "1091100005", "cc", "LAURA",           "ESPINOSA RANGEL",  "f", "2900007", "productiva_en_curso"),
+    # ── Ficha 2900008 (Juan Pérez — extra ficha 2) ────────────────────────────
+    ("nicolas.herrera@aprendiz.sena.edu.co",   "Nicolás Herrera Acosta",         "1091200001", "cc", "NICOLÁS",         "HERRERA ACOSTA",   "m", "2900008", "productiva_en_curso"),
+    ("maria.gonzalez@aprendiz.sena.edu.co",    "María Camila González Leal",     "1091200002", "cc", "MARÍA CAMILA",    "GONZÁLEZ LEAL",    "f", "2900008", "productiva_en_curso"),
+    ("sebastian.ramirez@aprendiz.sena.edu.co", "Sebastián Ramírez Cárdenas",     "1091200003", "cc", "SEBASTIÁN",       "RAMÍREZ CÁRDENAS", "m", "2900008", "productiva_en_curso"),
+    ("juliana.cardenas@aprendiz.sena.edu.co",  "Juliana Cárdenas Medina",        "1091200004", "cc", "JULIANA",         "CÁRDENAS MEDINA",  "f", "2900008", "productiva_en_curso"),
+    ("andres.mora@aprendiz.sena.edu.co",       "Andrés Mora Salcedo",            "1091200005", "cc", "ANDRÉS",          "MORA SALCEDO",     "m", "2900008", "productiva_en_curso"),
+    # ── Ficha 2900009 (Juan Pérez — extra ficha 3) ────────────────────────────
+    ("camilo.suarez@aprendiz.sena.edu.co",     "Camilo Suárez Bohórquez",        "1091300001", "cc", "CAMILO",          "SUÁREZ BOHÓRQUEZ", "m", "2900009", "productiva_en_curso"),
+    ("paula.mendez@aprendiz.sena.edu.co",      "Paula Méndez Fonseca",           "1091300002", "cc", "PAULA",           "MÉNDEZ FONSECA",   "f", "2900009", "productiva_en_curso"),
+    ("santiago.lopez@aprendiz.sena.edu.co",    "Santiago López Navarro",         "1091300003", "cc", "SANTIAGO",        "LÓPEZ NAVARRO",    "m", "2900009", "productiva_en_curso"),
+    ("sara.rodriguez@aprendiz.sena.edu.co",    "Sara Rodríguez Patiño",          "1091300004", "cc", "SARA",            "RODRÍGUEZ PATIÑO", "f", "2900009", "productiva_en_curso"),
+    ("juan.david@aprendiz.sena.edu.co",        "Juan David Arenas Villamizar",   "1091300005", "cc", "JUAN DAVID",      "ARENAS VILLAMIZAR","m", "2900009", "productiva_en_curso"),
 ]
 
 # ── Actividades de Proyecto ────────────────────────────────────────────────────

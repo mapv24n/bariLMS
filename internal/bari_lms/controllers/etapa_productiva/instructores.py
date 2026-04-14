@@ -32,6 +32,7 @@ def register_routes(app):
         user = current_user()
         db = get_db()
 
+
         instructor = InstructorEtapaProductivaService.get_instructor(db, user["id"])
 
         if instructor is None or not InstructorEtapaProductivaService.ficha_pertenece_al_instructor(
